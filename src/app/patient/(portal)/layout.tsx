@@ -8,5 +8,6 @@ export default async function PatientPortalLayout({ children }: { children: Reac
     redirect((await getPendingPatient()) ? "/patient/verify" : "/patient/login");
   }
   if (actor.role !== "patient") redirect("/admin/dashboard");
+  if (await getPendingPatient()) redirect("/patient/verify");
   return <PatientPortalShell fullName={actor.fullName}>{children}</PatientPortalShell>;
 }

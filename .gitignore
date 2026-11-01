@@ -9,3 +9,5 @@ previews/
 *.log
 .DS_Store
 coverage/
+.vercel
+.env*

@@ -94,6 +94,11 @@ export async function startPatientRegistration(input: {
       });
     }
     userId = data.user.id;
+    // createUser writes app_metadata after the auth.users insert, so the
+    // on_auth_user_created trigger defaults the profile to active. Force the
+    // unverified state explicitly until the phone is verified.
+    const { error: profileError } = await admin.from("profiles").update({ is_active: false, role: "patient" }).eq("id", userId);
+    if (profileError) throw new AppError("INTERNAL", "Could not create your account", { cause: profileError });
   }
 
   const otp = await issueRegistrationOtp(userId, input.phone, { ignoreCooldown: true, locale: input.locale });

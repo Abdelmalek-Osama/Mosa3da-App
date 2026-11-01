@@ -65,7 +65,11 @@ export interface PendingPatient {
   fullName: string;
 }
 
-/** A signed-in patient who registered but has not verified their phone yet. */
+/**
+ * A signed-in patient who registered but has not verified their phone yet:
+ * an inactive patient profile, or an active one with no linked patients row
+ * (older registrations whose profile was created active by the auth trigger).
+ */
 export async function getPendingPatient(): Promise<PendingPatient | null> {
   const supabase = createSupabaseServerClient();
   const {
@@ -74,7 +78,11 @@ export async function getPendingPatient(): Promise<PendingPatient | null> {
   if (!user) return null;
 
   const { data } = await supabase.from("profiles").select("role, is_active").eq("id", user.id).maybeSingle();
-  if (!data || data.role !== "patient" || data.is_active) return null;
+  if (!data || data.role !== "patient") return null;
+  if (data.is_active) {
+    const { data: linked, error } = await supabase.from("patients").select("id").eq("auth_user_id", user.id).maybeSingle();
+    if (error || linked) return null;
+  }
 
   const meta = user.user_metadata as { phone?: string; full_name?: string };
   if (!meta.phone) return null;
