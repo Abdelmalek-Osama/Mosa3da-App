@@ -1,0 +1,387 @@
+// =============================================================================
+// Mosa3da (مساعدة) — Prisma schema (TYPED MIRROR ONLY)
+//
+// supabase/migrations/*.sql is the source of truth. Do NOT run `prisma migrate`
+// or `prisma db push` against this database. Use only:
+//   npx prisma db pull    (re-sync after SQL migrations)
+//   npx prisma generate   (typed client for server-only code, if desired)
+//
+// Not representable in Prisma (enforced in SQL only):
+//   * Partial unique indexes: single Current / single Ready per session,
+//     one active appointment per patient per day, one active queue entry per
+//     patient per session, one live OTP per phone + purpose, single doctor.
+//   * Exclusion constraints: overlapping working periods, overlapping slots.
+//   * CHECK constraints, triggers, RLS policies, SECURITY DEFINER RPCs.
+//   * Foreign keys into auth.users (auth schema is managed by Supabase).
+//   * DEFERRABLE unique (session_id, position).
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum AppRole {
+  doctor
+  secretary
+  patient
+
+  @@map("app_role")
+}
+
+enum QueueStatus {
+  scheduled
+  arrived
+  ready
+  current
+  late
+  finished
+  cancelled
+
+  @@map("queue_status")
+}
+
+enum AppointmentStatus {
+  scheduled
+  checked_in
+  completed
+  cancelled
+  no_show
+
+  @@map("appointment_status")
+}
+
+enum AppointmentSource {
+  patient_portal
+  staff
+  walk_in
+
+  @@map("appointment_source")
+}
+
+enum VisitReason {
+  pregnancy_confirmation
+  routine_antenatal
+  pregnancy_follow_up
+  ultrasound
+  ultrasound_4d
+  postpartum
+  gynecology
+  other
+
+  @@map("visit_reason")
+}
+
+enum ClinicSessionStatus {
+  planned
+  open
+  closed
+
+  @@map("clinic_session_status")
+}
+
+enum QueueEventType {
+  created
+  status_changed
+  missed_turn
+  late_policy_cancelled
+  late_policy_applied
+  reordered
+  duration_changed
+
+  @@map("queue_event_type")
+}
+
+enum OtpPurpose {
+  patient_registration
+  password_reset
+
+  @@map("otp_purpose")
+}
+
+enum NotificationChannel {
+  whatsapp_simulated
+  whatsapp
+
+  @@map("notification_channel")
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  skipped
+
+  @@map("notification_status")
+}
+
+// -----------------------------------------------------------------------------
+// Models
+// -----------------------------------------------------------------------------
+
+/// One row per Supabase Auth user (id = auth.users.id). Authoritative role.
+model Profile {
+  id        String   @id @db.Uuid
+  role      AppRole  @default(patient)
+  fullName  String   @map("full_name")
+  email     String?
+  phone     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdBy String?  @map("created_by") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  creator               Profile?             @relation("ProfileCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdProfiles       Profile[]            @relation("ProfileCreatedBy")
+  createdPatients       Patient[]            @relation("PatientCreatedBy")
+  doctorSettings        DoctorSettings[]     @relation("DoctorSettingsDoctor")
+  updatedDoctorSettings DoctorSettings[]     @relation("DoctorSettingsUpdatedBy")
+  bookedAppointments    Appointment[]        @relation("AppointmentBookedBy")
+  cancelledAppointments Appointment[]        @relation("AppointmentCancelledBy")
+  createdQueueEntries   QueueEntry[]         @relation("QueueEntryCreatedBy")
+  queueHistoryActions   QueueStatusHistory[]
+
+  @@index([role], map: "profiles_role_idx")
+  @@map("profiles")
+}
+
+/// Clinical identity. Walk-ins may exist without an auth account.
+model Patient {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId      String?   @unique @map("auth_user_id") @db.Uuid
+  fullName        String    @map("full_name")
+  normalizedPhone String    @unique @map("normalized_phone")
+  email           String?
+  dateOfBirth     DateTime? @map("date_of_birth") @db.Date
+  phoneVerifiedAt DateTime? @map("phone_verified_at") @db.Timestamptz(6)
+  isActive        Boolean   @default(true) @map("is_active")
+  createdBy       String?   @map("created_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  creator          Profile?          @relation("PatientCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  appointments     Appointment[]
+  queueEntries     QueueEntry[]
+  otpVerifications OtpVerification[]
+  notifications    NotificationLog[]
+
+  @@index([createdAt(sort: Desc)], map: "patients_created_at_idx")
+  @@map("patients")
+}
+
+/// Singleton clinic configuration (id is always 1).
+model DoctorSettings {
+  id                         Int      @id @default(1) @db.SmallInt
+  doctorProfileId            String?  @map("doctor_profile_id") @db.Uuid
+  clinicName                 String   @default("Mosa3da Clinic") @map("clinic_name")
+  clinicNameAr               String   @default("عيادة مساعدة") @map("clinic_name_ar")
+  doctorDisplayName          String   @default("Dr. Clinic Doctor") @map("doctor_display_name")
+  timezone                   String   @default("Africa/Cairo")
+  defaultConsultationMinutes Int      @default(20) @map("default_consultation_minutes")
+  whatsappThresholdMinutes   Int      @default(30) @map("whatsapp_threshold_minutes")
+  latePolicyConsultations    Int      @default(2) @map("late_policy_consultations")
+  bookingHorizonDays         Int      @default(30) @map("booking_horizon_days")
+  cancellationCutoffMinutes  Int      @default(120) @map("cancellation_cutoff_minutes")
+  slotIntervalMinutes        Int      @default(20) @map("slot_interval_minutes")
+  updatedBy                  String?  @map("updated_by") @db.Uuid
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  doctor  Profile? @relation("DoctorSettingsDoctor", fields: [doctorProfileId], references: [id], onDelete: SetNull)
+  updater Profile? @relation("DoctorSettingsUpdatedBy", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("doctor_settings")
+}
+
+/// Recurring weekly working periods. weekday: 0 = Sunday ... 6 = Saturday.
+model ClinicWorkingDay {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  weekday   Int      @db.SmallInt
+  startTime DateTime @map("start_time") @db.Time(6)
+  endTime   DateTime @map("end_time") @db.Time(6)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([weekday], map: "clinic_working_days_weekday_idx")
+  @@map("clinic_working_days")
+}
+
+/// One operational queue per clinic date (date in clinic timezone).
+model ClinicSession {
+  id                         String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clinicDate                 DateTime            @unique @map("clinic_date") @db.Date
+  opensAt                    DateTime            @map("opens_at") @db.Timestamptz(6)
+  closesAt                   DateTime            @map("closes_at") @db.Timestamptz(6)
+  status                     ClinicSessionStatus @default(planned)
+  actualStartedAt            DateTime?           @map("actual_started_at") @db.Timestamptz(6)
+  closedAt                   DateTime?           @map("closed_at") @db.Timestamptz(6)
+  nextQueueNumber            Int                 @default(1) @map("next_queue_number")
+  finishedConsultationsCount Int                 @default(0) @map("finished_consultations_count")
+  createdAt                  DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                  DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  queueEntries QueueEntry[]
+  history      QueueStatusHistory[]
+
+  @@unique([id, clinicDate], map: "clinic_sessions_id_date_key")
+  @@map("clinic_sessions")
+}
+
+/// A booking. Separate from queue participation.
+model Appointment {
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  patientId          String            @map("patient_id") @db.Uuid
+  clinicDate         DateTime          @map("clinic_date") @db.Date
+  scheduledStart     DateTime?         @map("scheduled_start") @db.Timestamptz(6)
+  scheduledEnd       DateTime?         @map("scheduled_end") @db.Timestamptz(6)
+  durationMinutes    Int               @default(20) @map("duration_minutes")
+  visitReason        VisitReason       @map("visit_reason")
+  visitReasonDetails String?           @map("visit_reason_details")
+  patientNotes       String?           @map("patient_notes")
+  consultationNotes  String?           @map("consultation_notes")
+  status             AppointmentStatus @default(scheduled)
+  source             AppointmentSource
+  bookedBy           String?           @map("booked_by") @db.Uuid
+  checkedInAt        DateTime?         @map("checked_in_at") @db.Timestamptz(6)
+  completedAt        DateTime?         @map("completed_at") @db.Timestamptz(6)
+  cancelledAt        DateTime?         @map("cancelled_at") @db.Timestamptz(6)
+  cancelledBy        String?           @map("cancelled_by") @db.Uuid
+  cancellationReason String?           @map("cancellation_reason")
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  patient       Patient           @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  booker        Profile?          @relation("AppointmentBookedBy", fields: [bookedBy], references: [id], onDelete: SetNull)
+  canceller     Profile?          @relation("AppointmentCancelledBy", fields: [cancelledBy], references: [id], onDelete: SetNull)
+  queueEntry    QueueEntry?
+  notifications NotificationLog[]
+
+  @@index([clinicDate, scheduledStart], map: "appointments_clinic_date_idx")
+  @@index([patientId, clinicDate(sort: Desc)], map: "appointments_patient_idx")
+  @@index([status, clinicDate], map: "appointments_status_idx")
+  @@map("appointments")
+}
+
+/// A patient's participation in one clinic-day queue.
+model QueueEntry {
+  id                       String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId                String      @map("session_id") @db.Uuid
+  clinicDate               DateTime    @map("clinic_date") @db.Date
+  patientId                String      @map("patient_id") @db.Uuid
+  appointmentId            String?     @unique @map("appointment_id") @db.Uuid
+  queueNumber              Int?        @map("queue_number")
+  position                 Int?
+  visitReason              VisitReason @map("visit_reason")
+  estimatedDurationMinutes Int         @default(20) @map("estimated_duration_minutes")
+  expectedStartAt          DateTime?   @map("expected_start_at") @db.Timestamptz(6)
+  status                   QueueStatus @default(arrived)
+  arrivedAt                DateTime?   @map("arrived_at") @db.Timestamptz(6)
+  readyAt                  DateTime?   @map("ready_at") @db.Timestamptz(6)
+  startedAt                DateTime?   @map("started_at") @db.Timestamptz(6)
+  finishedAt               DateTime?   @map("finished_at") @db.Timestamptz(6)
+  cancelledAt              DateTime?   @map("cancelled_at") @db.Timestamptz(6)
+  lateAt                   DateTime?   @map("late_at") @db.Timestamptz(6)
+  missedTurnAt             DateTime?   @map("missed_turn_at") @db.Timestamptz(6)
+  missedTurnBaseline       Int?        @map("missed_turn_baseline")
+  staffNotes               String?     @map("staff_notes")
+  version                  Int         @default(1)
+  createdBy                String?     @map("created_by") @db.Uuid
+  createdAt                DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  session       ClinicSession        @relation(fields: [sessionId, clinicDate], references: [id, clinicDate], onDelete: Cascade, map: "queue_entries_session_fk")
+  patient       Patient              @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  appointment   Appointment?         @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  creator       Profile?             @relation("QueueEntryCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  history       QueueStatusHistory[]
+  notifications NotificationLog[]
+
+  @@unique([sessionId, queueNumber], map: "queue_entries_session_number_key")
+  @@unique([sessionId, position], map: "queue_entries_session_position_key")
+  @@index([sessionId, position, createdAt, id], map: "queue_entries_session_order_idx")
+  @@index([patientId, clinicDate(sort: Desc)], map: "queue_entries_patient_idx")
+  @@map("queue_entries")
+}
+
+/// Append-only audit of every queue transition.
+model QueueStatusHistory {
+  id           BigInt         @id @default(autoincrement())
+  queueEntryId String         @map("queue_entry_id") @db.Uuid
+  sessionId    String         @map("session_id") @db.Uuid
+  eventType    QueueEventType @map("event_type")
+  fromStatus   QueueStatus?   @map("from_status")
+  toStatus     QueueStatus?   @map("to_status")
+  actorId      String?        @map("actor_id") @db.Uuid
+  reason       String?
+  metadata     Json           @default("{}")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  queueEntry QueueEntry    @relation(fields: [queueEntryId], references: [id], onDelete: Cascade)
+  session    ClinicSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  actor      Profile?      @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([queueEntryId, createdAt], map: "queue_status_history_entry_idx")
+  @@index([sessionId, createdAt(sort: Desc)], map: "queue_status_history_session_idx")
+  @@map("queue_status_history")
+}
+
+/// Hashed one-time codes (HMAC-SHA256 hex). Service-role access only.
+model OtpVerification {
+  id              String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  normalizedPhone String     @map("normalized_phone")
+  purpose         OtpPurpose
+  codeHash        String     @map("code_hash")
+  patientId       String?    @map("patient_id") @db.Uuid
+  authUserId      String?    @map("auth_user_id") @db.Uuid
+  attempts        Int        @default(0)
+  maxAttempts     Int        @default(5) @map("max_attempts")
+  expiresAt       DateTime   @map("expires_at") @db.Timestamptz(6)
+  consumedAt      DateTime?  @map("consumed_at") @db.Timestamptz(6)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt], map: "otp_verifications_expires_idx")
+  @@map("otp_verifications")
+}
+
+/// Simulated (and future real) WhatsApp notifications, idempotent per key.
+model NotificationLog {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  idempotencyKey    String              @unique @map("idempotency_key")
+  queueEntryId      String?             @map("queue_entry_id") @db.Uuid
+  appointmentId     String?             @map("appointment_id") @db.Uuid
+  patientId         String              @map("patient_id") @db.Uuid
+  channel           NotificationChannel @default(whatsapp_simulated)
+  templateKey       String              @default("consultation_approaching") @map("template_key")
+  recipientPhone    String              @map("recipient_phone")
+  messageBody       String              @map("message_body")
+  status            NotificationStatus  @default(pending)
+  expectedStartAt   DateTime?           @map("expected_start_at") @db.Timestamptz(6)
+  thresholdMinutes  Int?                @map("threshold_minutes")
+  attempts          Int                 @default(0)
+  providerMessageId String?             @map("provider_message_id")
+  errorMessage      String?             @map("error_message")
+  sentAt            DateTime?           @map("sent_at") @db.Timestamptz(6)
+  failedAt          DateTime?           @map("failed_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  queueEntry  QueueEntry?  @relation(fields: [queueEntryId], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt], map: "notification_logs_status_idx")
+  @@index([patientId, createdAt(sort: Desc)], map: "notification_logs_patient_idx")
+  @@index([createdAt(sort: Desc)], map: "notification_logs_recent_idx")
+  @@map("notification_logs")
+}

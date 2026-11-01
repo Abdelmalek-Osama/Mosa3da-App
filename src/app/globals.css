@@ -1,0 +1,366 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy-50: 241 245 251;
+    --navy-100: 223 232 245;
+    --navy-200: 196 212 236;
+    --navy-300: 154 182 222;
+    --navy-400: 105 144 204;
+    --navy-500: 70 113 185;
+    --navy-600: 53 88 156;
+    --navy-700: 44 71 127;
+    --navy-800: 39 61 105;
+    --navy-900: 27 43 75;
+    --navy-950: 17 28 51;
+    --teal-50: 239 252 250;
+    --teal-100: 200 245 239;
+    --teal-200: 147 234 223;
+    --teal-300: 85 216 203;
+    --teal-400: 40 191 179;
+    --teal-500: 17 163 153;
+    --teal-600: 11 131 124;
+    --teal-700: 13 105 101;
+    --teal-800: 16 84 81;
+    --teal-900: 18 70 68;
+    --teal-950: 3 41 40;
+    --slate-50: 248 250 252;
+    --slate-100: 241 245 249;
+    --slate-200: 226 232 240;
+    --slate-300: 203 213 225;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 51 65 85;
+    --slate-800: 30 41 59;
+    --slate-900: 15 23 42;
+    --slate-950: 2 6 23;
+    --amber-50: 255 251 235;
+    --amber-100: 254 243 199;
+    --amber-200: 253 230 138;
+    --amber-300: 252 211 77;
+    --amber-400: 251 191 36;
+    --amber-500: 245 158 11;
+    --amber-600: 217 119 6;
+    --amber-700: 180 83 9;
+    --amber-800: 146 64 14;
+    --amber-900: 120 53 15;
+    --amber-950: 69 26 3;
+    --emerald-50: 236 253 245;
+    --emerald-100: 209 250 229;
+    --emerald-200: 167 243 208;
+    --emerald-300: 110 231 183;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 5 150 105;
+    --emerald-700: 4 120 87;
+    --emerald-800: 6 95 70;
+    --emerald-900: 6 78 59;
+    --emerald-950: 2 44 34;
+    --red-50: 254 242 242;
+    --red-100: 254 226 226;
+    --red-200: 254 202 202;
+    --red-300: 252 165 165;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 220 38 38;
+    --red-700: 185 28 28;
+    --red-800: 153 27 27;
+    --red-900: 127 29 29;
+    --red-950: 69 10 10;
+    --blue-50: 239 246 255;
+    --blue-100: 219 234 254;
+    --blue-200: 191 219 254;
+    --blue-300: 147 197 253;
+    --blue-400: 96 165 250;
+    --blue-500: 59 130 246;
+    --blue-600: 37 99 235;
+    --blue-700: 29 78 216;
+    --blue-800: 30 64 175;
+    --blue-900: 30 58 138;
+    --blue-950: 23 37 84;
+    --orange-50: 255 247 237;
+    --orange-100: 255 237 213;
+    --orange-200: 254 215 170;
+    --orange-300: 253 186 116;
+    --orange-400: 251 146 60;
+    --orange-500: 249 115 22;
+    --orange-600: 234 88 12;
+    --orange-700: 194 65 12;
+    --orange-800: 154 52 18;
+    --orange-900: 124 45 18;
+    --orange-950: 67 20 7;
+  }
+  .dark {
+    --navy-50: 17 28 51;
+    --navy-100: 27 43 75;
+    --navy-200: 39 61 105;
+    --navy-300: 44 71 127;
+    --navy-400: 105 144 204;
+    --navy-500: 70 113 185;
+    --navy-600: 53 88 156;
+    --navy-700: 154 182 222;
+    --navy-800: 196 212 236;
+    --navy-900: 223 232 245;
+    --navy-950: 241 245 251;
+    --teal-50: 3 41 40;
+    --teal-100: 18 70 68;
+    --teal-200: 16 84 81;
+    --teal-300: 13 105 101;
+    --teal-400: 40 191 179;
+    --teal-500: 17 163 153;
+    --teal-600: 11 131 124;
+    --teal-700: 85 216 203;
+    --teal-800: 147 234 223;
+    --teal-900: 200 245 239;
+    --teal-950: 239 252 250;
+    --slate-50: 2 6 23;
+    --slate-100: 15 23 42;
+    --slate-200: 30 41 59;
+    --slate-300: 51 65 85;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 203 213 225;
+    --slate-800: 226 232 240;
+    --slate-900: 241 245 249;
+    --slate-950: 248 250 252;
+    --amber-50: 69 26 3;
+    --amber-100: 120 53 15;
+    --amber-200: 146 64 14;
+    --amber-300: 180 83 9;
+    --amber-400: 251 191 36;
+    --amber-500: 245 158 11;
+    --amber-600: 217 119 6;
+    --amber-700: 252 211 77;
+    --amber-800: 253 230 138;
+    --amber-900: 254 243 199;
+    --amber-950: 255 251 235;
+    --emerald-50: 2 44 34;
+    --emerald-100: 6 78 59;
+    --emerald-200: 6 95 70;
+    --emerald-300: 4 120 87;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 5 150 105;
+    --emerald-700: 110 231 183;
+    --emerald-800: 167 243 208;
+    --emerald-900: 209 250 229;
+    --emerald-950: 236 253 245;
+    --red-50: 69 10 10;
+    --red-100: 127 29 29;
+    --red-200: 153 27 27;
+    --red-300: 185 28 28;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 220 38 38;
+    --red-700: 252 165 165;
+    --red-800: 254 202 202;
+    --red-900: 254 226 226;
+    --red-950: 254 242 242;
+    --blue-50: 23 37 84;
+    --blue-100: 30 58 138;
+    --blue-200: 30 64 175;
+    --blue-300: 29 78 216;
+    --blue-400: 96 165 250;
+    --blue-500: 59 130 246;
+    --blue-600: 37 99 235;
+    --blue-700: 147 197 253;
+    --blue-800: 191 219 254;
+    --blue-900: 219 234 254;
+    --blue-950: 239 246 255;
+    --orange-50: 67 20 7;
+    --orange-100: 124 45 18;
+    --orange-200: 154 52 18;
+    --orange-300: 194 65 12;
+    --orange-400: 251 146 60;
+    --orange-500: 249 115 22;
+    --orange-600: 234 88 12;
+    --orange-700: 253 186 116;
+    --orange-800: 254 215 170;
+    --orange-900: 255 237 213;
+    --orange-950: 255 247 237;
+  }
+  
+  .dark .keep-palette {
+    --navy-50: 241 245 251;
+    --navy-100: 223 232 245;
+    --navy-200: 196 212 236;
+    --navy-300: 154 182 222;
+    --navy-400: 105 144 204;
+    --navy-500: 70 113 185;
+    --navy-600: 53 88 156;
+    --navy-700: 44 71 127;
+    --navy-800: 39 61 105;
+    --navy-900: 27 43 75;
+    --navy-950: 17 28 51;
+    --teal-50: 239 252 250;
+    --teal-100: 200 245 239;
+    --teal-200: 147 234 223;
+    --teal-300: 85 216 203;
+    --teal-400: 40 191 179;
+    --teal-500: 17 163 153;
+    --teal-600: 11 131 124;
+    --teal-700: 13 105 101;
+    --teal-800: 16 84 81;
+    --teal-900: 18 70 68;
+    --teal-950: 3 41 40;
+    --slate-50: 248 250 252;
+    --slate-100: 241 245 249;
+    --slate-200: 226 232 240;
+    --slate-300: 203 213 225;
+    --slate-400: 148 163 184;
+    --slate-500: 100 116 139;
+    --slate-600: 71 85 105;
+    --slate-700: 51 65 85;
+    --slate-800: 30 41 59;
+    --slate-900: 15 23 42;
+    --slate-950: 2 6 23;
+    --amber-50: 255 251 235;
+    --amber-100: 254 243 199;
+    --amber-200: 253 230 138;
+    --amber-300: 252 211 77;
+    --amber-400: 251 191 36;
+    --amber-500: 245 158 11;
+    --amber-600: 217 119 6;
+    --amber-700: 180 83 9;
+    --amber-800: 146 64 14;
+    --amber-900: 120 53 15;
+    --amber-950: 69 26 3;
+    --emerald-50: 236 253 245;
+    --emerald-100: 209 250 229;
+    --emerald-200: 167 243 208;
+    --emerald-300: 110 231 183;
+    --emerald-400: 52 211 153;
+    --emerald-500: 16 185 129;
+    --emerald-600: 5 150 105;
+    --emerald-700: 4 120 87;
+    --emerald-800: 6 95 70;
+    --emerald-900: 6 78 59;
+    --emerald-950: 2 44 34;
+    --red-50: 254 242 242;
+    --red-100: 254 226 226;
+    --red-200: 254 202 202;
+    --red-300: 252 165 165;
+    --red-400: 248 113 113;
+    --red-500: 239 68 68;
+    --red-600: 220 38 38;
+    --red-700: 185 28 28;
+    --red-800: 153 27 27;
+    --red-900: 127 29 29;
+    --red-950: 69 10 10;
+    --blue-50: 239 246 255;
+    --blue-100: 219 234 254;
+    --blue-200: 191 219 254;
+    --blue-300: 147 197 253;
+    --blue-400: 96 165 250;
+    --blue-500: 59 130 246;
+    --blue-600: 37 99 235;
+    --blue-700: 29 78 216;
+    --blue-800: 30 64 175;
+    --blue-900: 30 58 138;
+    --blue-950: 23 37 84;
+    --orange-50: 255 247 237;
+    --orange-100: 255 237 213;
+    --orange-200: 254 215 170;
+    --orange-300: 253 186 116;
+    --orange-400: 251 146 60;
+    --orange-500: 249 115 22;
+    --orange-600: 234 88 12;
+    --orange-700: 194 65 12;
+    --orange-800: 154 52 18;
+    --orange-900: 124 45 18;
+    --orange-950: 67 20 7;
+  }
+  :root {
+    --background: 216 33% 97%;
+    --foreground: 222 50% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 50% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 50% 13%;
+    --primary: 221 47% 20%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 175 81% 35%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 216 30% 94%;
+    --muted-foreground: 218 15% 44%;
+    --accent: 172 60% 94%;
+    --accent-foreground: 176 78% 22%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 216 25% 89%;
+    --input: 216 25% 86%;
+    --ring: 175 81% 35%;
+    --radius: 0.75rem;
+
+    --status-scheduled: 216 15% 52%;
+    --status-arrived: 217 80% 52%;
+    --status-ready: 38 92% 48%;
+    --status-current: 175 81% 35%;
+    --status-late: 0 72% 51%;
+    --status-finished: 152 55% 38%;
+    --status-cancelled: 216 12% 62%;
+  }
+
+  .dark {
+    --background: 224 44% 7%;
+    --foreground: 213 31% 92%;
+    --card: 223 40% 10%;
+    --card-foreground: 213 31% 92%;
+    --popover: 223 40% 11%;
+    --popover-foreground: 213 31% 92%;
+    --primary: 214 45% 88%;
+    --primary-foreground: 222 50% 13%;
+    --secondary: 175 70% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 223 30% 15%;
+    --muted-foreground: 217 16% 66%;
+    --accent: 177 45% 15%;
+    --accent-foreground: 172 60% 82%;
+    --destructive: 0 70% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 223 26% 19%;
+    --input: 223 26% 24%;
+    --ring: 175 70% 42%;
+
+    --status-scheduled: 216 15% 60%;
+    --status-arrived: 217 85% 64%;
+    --status-ready: 38 92% 56%;
+    --status-current: 175 70% 45%;
+    --status-late: 0 75% 62%;
+    --status-finished: 152 50% 48%;
+    --status-cancelled: 216 12% 52%;
+    color-scheme: dark;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  /* Navy header band that fades into the page background (auth + landing). */
+  .bg-hero {
+    background-image: linear-gradient(to bottom, #1b2b4b 0%, #1b2b4b 55%, hsl(var(--background)) 100%);
+    background-size: 100% var(--hero-height, 420px);
+    background-repeat: no-repeat;
+  }
+  .dark .bg-hero {
+    background-image: linear-gradient(to bottom, #111c33 0%, #111c33 55%, hsl(var(--background)) 100%);
+  }
+}
