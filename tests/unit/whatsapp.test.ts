@@ -30,7 +30,7 @@ describe("inbound message parsing", () => {
           {
             value: {
               messages: [
-                { from: "966501234567", id: "wamid.1", type: "text", text: { body: "رمز التحقق الخاص بي في مساعدة: 123456" } },
+                { from: "966501234567", id: "wamid.1", type: "text", text: { body: "رمز التحقق الخاص بي في عيادة د. رودينا مدحت: 1234" } },
                 { from: "966501234567", id: "wamid.2", type: "image" },
               ],
               statuses: [{ id: "x", status: "delivered" }],
@@ -43,18 +43,20 @@ describe("inbound message parsing", () => {
 
   it("returns only text messages, with E.164 senders", () => {
     expect(parseInboundTexts(payload)).toEqual([
-      { from: "+966501234567", id: "wamid.1", body: "رمز التحقق الخاص بي في مساعدة: 123456" },
+      { from: "+966501234567", id: "wamid.1", body: "رمز التحقق الخاص بي في عيادة د. رودينا مدحت: 1234" },
     ]);
     expect(parseInboundTexts({})).toEqual([]);
     expect(parseInboundTexts(null)).toEqual([]);
   });
 
   it("finds the code in Latin, Arabic-Indic and spaced digits", () => {
-    expect(extractCode("My Mosa3da verification code: 004211")).toBe("004211");
-    expect(extractCode("رمزي ١٢٣٤٥٦")).toBe("123456");
-    expect(extractCode("۹۸۷۶۵۴")).toBe("987654");
-    expect(extractCode("123 456")).toBe("123456");
+    expect(extractCode("My Dr. Rodaina Medhat Clinic verification code: 0042")).toBe("0042");
+    expect(extractCode("رمزي ١٢٣٤")).toBe("1234");
+    expect(extractCode("۹۸۷۶")).toBe("9876");
+    expect(extractCode("12 34")).toBe("1234");
+    expect(extractCode("Clinic 2026, my code: 5821")).toBe("5821");
     expect(extractCode("call me on 0501234567")).toBeNull();
+    expect(extractCode("123456")).toBeNull();
     expect(extractCode("hello")).toBeNull();
   });
 });
@@ -64,7 +66,7 @@ describe("Cloud API", () => {
     const fetchImpl = ok({ messages: [{ id: "wamid.abc" }] });
     const res = await sendTemplate(
       creds,
-      { to: "+966501234567", template: "mosa3da_otp", languageCode: "ar", components: otpComponents("123456") },
+      { to: "+966501234567", template: "mosa3da_otp", languageCode: "ar", components: otpComponents("1234") },
       fetchImpl as unknown as typeof fetch,
     );
     expect(res).toEqual({ ok: true, providerMessageId: "wamid.abc", simulated: false });
@@ -74,7 +76,7 @@ describe("Cloud API", () => {
     const sent = JSON.parse(String(init.body));
     expect(sent.to).toBe("966501234567");
     expect(sent.template).toMatchObject({ name: "mosa3da_otp", language: { code: "ar" } });
-    expect(sent.template.components[1]).toMatchObject({ type: "button", sub_type: "url", parameters: [{ text: "123456" }] });
+    expect(sent.template.components[1]).toMatchObject({ type: "button", sub_type: "url", parameters: [{ text: "1234" }] });
   });
 
   it("marks rate limits as retryable and bad requests as final", async () => {
@@ -91,11 +93,11 @@ describe("Cloud API", () => {
     const provider = new CloudApiWhatsAppProvider(creds, { appointment_reminder: "mosa3da_appointment_reminder" }, fetchImpl as unknown as typeof fetch);
     const res = await provider.send({
       to: "+966501234567", body: "…", templateKey: "appointment_reminder", locale: "en",
-      params: ["Sara", "Mosa3da Clinic", "Sunday 01 Nov 2026", "10:20"], idempotencyKey: "appointment_reminder:x",
+      params: ["Sara", "Dr. Rodaina Medhat Clinic", "Sunday 01 Nov 2026", "10:20"], idempotencyKey: "appointment_reminder:x",
     });
     expect(res.ok).toBe(true);
     const sent = JSON.parse(String((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].body));
-    expect(sent.template.components[0].parameters.map((p: { text: string }) => p.text)).toEqual(["Sara", "Mosa3da Clinic", "Sunday 01 Nov 2026", "10:20"]);
+    expect(sent.template.components[0].parameters.map((p: { text: string }) => p.text)).toEqual(["Sara", "Dr. Rodaina Medhat Clinic", "Sunday 01 Nov 2026", "10:20"]);
     const missing = await provider.send({ to: "+1", body: "", templateKey: "consultation_approaching", locale: "ar", params: [], idempotencyKey: "k" });
     expect(missing).toMatchObject({ ok: false, retryable: false });
   });

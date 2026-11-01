@@ -22,9 +22,9 @@ export function BrandLockup({ inverted = false, subtitle }: { inverted?: boolean
     <div className="flex min-w-0 items-center gap-3">
       <BrandMark className="shrink-0" />
       <div className="min-w-0 leading-tight">
-        <div className={cn("flex items-baseline gap-2 font-semibold", inverted ? "text-white" : "text-navy-900")}>
-          <span className="font-arabic">مساعدة</span>
-          <span className={cn("font-sans text-sm", inverted ? "text-teal-200" : "text-teal-600")}>Mosa3da</span>
+        <div className={cn("flex min-w-0 flex-wrap items-baseline gap-x-2 font-semibold", inverted ? "text-white" : "text-navy-900")}>
+          <span className="font-arabic">د. رودينا مدحت</span>
+          <span className={cn("font-sans text-sm", inverted ? "text-teal-200" : "text-teal-600")}>Dr. Rodaina Medhat</span>
         </div>
         {subtitle ? (
           <div className={cn("truncate text-xs", inverted ? "text-navy-200" : "text-muted-foreground")}>{subtitle}</div>

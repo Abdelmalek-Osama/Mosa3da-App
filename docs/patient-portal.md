@@ -1,11 +1,11 @@
-# Mosa3da — Patient portal & waiting-room display
+# Dr. Rodaina Medhat Clinic — Pregnancy portal & waiting-room display
 
 ## Routes
 
 | Route | Access | Purpose |
 |---|---|---|
 | `/patient/register` | public | Name, mobile, optional email, password. Creates an inactive patient account and issues an OTP. |
-| `/patient/verify` | signed-in, unverified | 6-digit code. On success the profile is activated and linked to an existing walk-in record with the same phone, if any. |
+| `/patient/verify` | signed-in, unverified | 4-digit code. On success the profile is activated and linked to an existing walk-in record with the same phone, if any. |
 | `/patient/login` | public | Mobile + password. Unverified accounts are sent back to verify with a fresh code. |
 | `/patient/dashboard` | patient | Live queue status for today (number, patients ahead, estimated wait, expected time), next appointment. |
 | `/patient/book-appointment` | patient | Day → time → reason → confirm. |

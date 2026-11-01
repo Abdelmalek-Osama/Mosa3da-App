@@ -70,9 +70,9 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
           <BrandMark className="h-[2.6em] w-[2.6em] [&_svg]:h-[1.4em] [&_svg]:w-[1.4em]" />
           <div className="leading-tight">
             <p className="text-[1.5em] font-semibold">
-              {ar ? (board?.clinic.name_ar ?? "مساعدة") : (board?.clinic.name ?? "Mosa3da Clinic")}{" "}
+              {ar ? (board?.clinic.name_ar ?? "عيادة د. رودينا مدحت") : (board?.clinic.name ?? "Dr. Rodaina Medhat Clinic")}{" "}
               <span className={cn("text-teal-300", ar ? "font-sans" : "font-arabic")}>
-                {ar ? (board?.clinic.name ?? "") : (board?.clinic.name_ar ?? "مساعدة")}
+                {ar ? (board?.clinic.name ?? "") : (board?.clinic.name_ar ?? "عيادة د. رودينا مدحت")}
               </span>
             </p>
             <p className="text-[0.95em] text-navy-200">{board?.clinic.doctor ?? ""}</p>

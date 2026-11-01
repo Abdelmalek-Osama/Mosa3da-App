@@ -21,7 +21,7 @@
    "walk_in": "Walk-in"
   },
   "cancelledReason": "Cancelled: {reason}",
-  "checkedInHint": "Checked-in patients are managed from",
+  "checkedInHint": "Checked-in pregnant women are managed from",
   "todaysQueue": "Today's queue",
   "row": {
    "checkedIn": "{name} checked in",
@@ -39,10 +39,10 @@
    "trigger": "New appointment",
    "title": "Book an appointment",
    "body": "Only times inside the doctor's working hours that are still free can be chosen.",
-   "patient": "Patient",
-   "change": "Change patient",
+   "patient": "Pregnant woman",
+   "change": "Change",
    "search": "Search by name or phone",
-   "noMatch": "No match. Register the patient first from the Patients page.",
+   "noMatch": "No match. Register her first from the Pregnant women page.",
    "date": "Date",
    "time": "Time",
    "free": "{count} free",
@@ -54,7 +54,7 @@
    "notes": "Notes (optional)",
    "cancel": "Cancel",
    "submit": "Book appointment",
-   "errPatient": "Select a patient",
+   "errPatient": "Select a pregnant woman",
    "errTime": "Choose a time",
    "errReason": "Choose a visit reason",
    "booked": "Appointment booked",
@@ -66,7 +66,7 @@
   "headline": "Less waiting, calmer clinic days.",
   "lead": "Book your visit, follow your turn live, and get reminders on WhatsApp.",
   "patients": {
-   "title": "Patients",
+   "title": "Pregnant women",
    "body": "Book a visit and follow your turn from your phone."
   },
   "staff": {
@@ -87,16 +87,16 @@
   "feature1": "Walk-ins and bookings in one live queue",
   "feature2": "Expected times recalculated on every change",
   "feature3": "Role-based access for doctor and secretaries",
-  "areYouPatient": "Are you a patient?",
-  "goToPortal": "Go to the patient portal",
+  "areYouPatient": "Are you a pregnant woman?",
+  "goToPortal": "Go to the pregnancy portal",
   "email": "Email",
   "password": "Password",
   "signIn": "Sign in",
   "signingIn": "Signing in…"
  },
  "patientAuth": {
-  "home": "Mosa3da home",
-  "portal": "Patient portal",
+  "home": "Dr. Rodaina Medhat Clinic home",
+  "portal": "Pregnancy portal",
   "staffQuestion": "Clinic staff?",
   "staffLink": "Staff sign in",
   "phone": "Mobile number",
@@ -104,12 +104,12 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "login": {
-   "metaTitle": "Patient sign in",
+   "metaTitle": "Pregnancy portal sign in",
    "title": "Welcome back",
    "subtitle": "Sign in with your mobile number.",
    "signIn": "Sign in",
    "signingIn": "Signing in…",
-   "newPatient": "New patient?",
+   "newPatient": "New here?",
    "createAccount": "Create an account"
   },
   "register": {
@@ -118,7 +118,6 @@
    "fullName": "Full name",
    "fullNamePlaceholder": "e.g. Sara Abdullah",
    "phoneHint": "We'll verify this number on WhatsApp.",
-   "email": "Email (optional)",
    "passwordHint": "At least 8 characters.",
    "confirmPassword": "Confirm password",
    "create": "Create account",
@@ -128,8 +127,8 @@
   "verify": {
    "metaTitle": "Verify your number",
    "title": "Verify your number",
-   "subtitleEnter": "Enter the 6-digit code for <phone>{number}</phone>. It expires in 10 minutes.",
-   "subtitleSent": "We sent a 6-digit code to <phone>{number}</phone> on WhatsApp. It expires in 10 minutes.",
+   "subtitleEnter": "Enter the 4-digit code for <phone>{number}</phone>. It expires in 10 minutes.",
+   "subtitleSent": "We sent a 4-digit code to <phone>{number}</phone> on WhatsApp. It expires in 10 minutes.",
    "subtitleInbound": "Send your code to the clinic on WhatsApp from <phone>{number}</phone>. It expires in 10 minutes.",
    "demoBadge": "Demo mode · not sent by WhatsApp",
    "demoNote": "In production this code would be delivered by WhatsApp. Shown here only for the demonstration.",
@@ -140,9 +139,9 @@
    "openWhatsApp": "Send the code on WhatsApp",
    "waiting": "Waiting for your message…",
    "verified": "Number verified. Opening your account…",
-   "prefill": "My Mosa3da verification code: {code}",
+   "prefill": "My Dr. Rodaina Medhat Clinic verification code: {code}",
    "noCode": "Your code expired or isn't available on this device. Get a new code.",
-   "codeGroup": "6-digit verification code",
+   "codeGroup": "4-digit verification code",
    "digit": "Digit {n}",
    "verify": "Verify and continue",
    "verifying": "Verifying…",
@@ -159,7 +158,7 @@
   "openQueue": "Open queue",
   "stats": {
    "appointments": "Today's appointments",
-   "patients": "Registered patients",
+   "patients": "Registered pregnant women",
    "consulting": "Consulting",
    "roomFree": "Room free",
    "ready": "Ready",
@@ -171,9 +170,9 @@
   "quick": {
    "title": "Quick actions",
    "body": "Most-used tasks for the front desk.",
-   "walkIn": "Register walk-in patient",
+   "walkIn": "Register a walk-in",
    "book": "Book an appointment",
-   "find": "Find a patient",
+   "find": "Find a pregnant woman",
    "queue": "Manage today's queue",
    "display": "Open waiting-room display"
   }
@@ -197,16 +196,16 @@
   "search": "Search"
  },
  "patients": {
-  "title": "Patients",
-  "count": "{count, plural, one {# patient registered} other {# patients registered}}",
-  "countMatching": "{count, plural, one {# patient} other {# patients}} matching “{q}”",
-  "register": "Register patient",
+  "title": "Pregnant women",
+  "count": "{count, plural, one {# pregnant woman registered} other {# pregnant women registered}}",
+  "countMatching": "{count, plural, one {# pregnant woman} other {# pregnant women}} matching “{q}”",
+  "register": "Register pregnant woman",
   "search": "Search by name or phone",
-  "emptyTitle": "No patients found",
+  "emptyTitle": "No pregnant women found",
   "emptySearch": "Try another name or the last digits of the phone number.",
-  "emptyBody": "Register the first patient to get started.",
+  "emptyBody": "Register the first pregnant woman to get started.",
   "col": {
-   "patient": "Patient",
+   "patient": "Name",
    "phone": "Phone",
    "email": "Email",
    "portal": "Portal",
@@ -223,27 +222,27 @@
    "unverified": "Unverified"
   },
   "form": {
-   "updated": "Patient updated",
-   "registered": "Patient registered",
-   "editTitle": "Edit patient",
-   "createTitle": "Register a patient",
-   "editBody": "Update the patient's contact details.",
-   "createBody": "Creates a patient record. The patient can later sign up to the portal with the same number.",
+   "updated": "Details updated",
+   "registered": "Pregnant woman registered",
+   "editTitle": "Edit details",
+   "createTitle": "Register a pregnant woman",
+   "editBody": "Update her contact details.",
+   "createBody": "Creates her record. She can later sign up to the pregnancy portal with the same number.",
    "fullName": "Full name",
    "phone": "Mobile number",
-   "phoneLocked": "This number is the patient's portal login and can't be changed here.",
-   "phoneHint": "Choose the country, then type the number as the patient says it.",
+   "phoneLocked": "This number is her portal login and can't be changed here.",
+   "phoneHint": "Choose the country, then type the number as she says it.",
    "email": "Email (optional)",
    "dob": "Date of birth (optional)",
    "cancel": "Cancel",
    "save": "Save changes",
-   "submit": "Register patient",
+   "submit": "Register",
    "language": "WhatsApp language",
    "languageHint": "Reminders are written in this language."
   },
   "detail": {
-   "metaTitle": "Patient",
-   "back": "All patients",
+   "metaTitle": "Pregnant woman",
+   "back": "All pregnant women",
    "age": "{count} years",
    "edit": "Edit",
    "book": "Book appointment",
@@ -302,7 +301,7 @@
   "hi": "Hi, {name}",
   "signOut": "Sign out",
   "nav": {
-   "label": "Patient navigation",
+   "label": "Portal navigation",
    "home": "Home",
    "book": "Book",
    "visits": "My visits"
@@ -342,13 +341,13 @@
   "cancel": {
    "button": "Cancel appointment",
    "title": "Cancel this appointment?",
-   "body": "The time will be released to other patients. You can book again at any time.",
+   "body": "The time will be released to other pregnant women. You can book again at any time.",
    "reason": "Reason",
    "optional": "(optional)",
    "keep": "Keep appointment",
    "confirm": "Yes, cancel",
    "done": "Appointment cancelled",
-   "doneBody": "The time is now free for other patients.",
+   "doneBody": "The time is now free for other pregnant women.",
    "failed": "Could not cancel"
   },
   "booking": {
@@ -434,11 +433,11 @@
    "startWith": "Start with {name} (#{number})"
   },
   "next": {
-   "title": "Next patient",
+   "title": "Next pregnant woman",
    "expected": "Expected",
    "absent": "Absent",
    "finishFirst": "Finish the current consultation before starting the next one.",
-   "none": "No patient waiting. Add a walk-in to get started."
+   "none": "Nobody is waiting. Add a walk-in to get started."
   },
   "waiting": {
    "title": "Waiting queue",
@@ -447,7 +446,7 @@
   },
   "col": {
    "number": "No.",
-   "patient": "Patient",
+   "patient": "Name",
    "reason": "Visit reason",
    "duration": "Duration",
    "expected": "Expected",
@@ -477,17 +476,17 @@
    "back": "Back",
    "start_consultation": {
     "title": "Start consultation with {name}?",
-    "body": "Ticket {number} will show as \"with the doctor\" on the waiting-room screen and the next present patient becomes Ready.",
+    "body": "Ticket {number} will show as \"with the doctor\" on the waiting-room screen and the next pregnant woman present becomes Ready.",
     "confirm": "Start consultation"
    },
    "finish_consultation": {
     "title": "Finish {name}'s consultation?",
-    "body": "The next patient will not be started automatically. You will confirm it separately. Expected times are recalculated for everyone.",
+    "body": "The next pregnant woman will not be started automatically. You will confirm it separately. Expected times are recalculated for everyone.",
     "confirm": "Finish consultation"
    },
    "mark_absent": {
     "title": "Mark {name} as absent?",
-    "body": "The next present patient becomes Ready. If {name} hasn't returned after {lateAfter} more finished consultations, they move to the end of the queue as Late.",
+    "body": "The next pregnant woman present becomes Ready. If {name} hasn't returned after {lateAfter} more finished consultations, she moves to the end of the queue as Late.",
     "confirm": "Mark absent"
    },
    "mark_late": {
@@ -503,7 +502,7 @@
   },
   "duration": {
    "title": "Consultation duration",
-   "body": "{name} · expected times update for everyone after this patient.",
+   "body": "{name} · expected times update for everyone after her.",
    "minutes": "Minutes",
    "cancel": "Cancel",
    "save": "Save"
@@ -516,7 +515,7 @@
    "finish_consultation": "{name}'s consultation finished",
    "mark_late": "{name} moved to the end of the queue",
    "cancel": "{name}'s visit cancelled",
-   "movedLate": "{count} absent patient(s) moved to Late",
+   "movedLate": "Absent pregnant women moved to Late: {count}",
    "moved": "{name} moved",
    "duration": "Duration updated"
   }
@@ -535,7 +534,7 @@
    "doneBody": "Share the email and password with them privately.",
    "trigger": "Add secretary",
    "title": "Add a secretary",
-   "body": "They sign in on the staff page and can manage patients, appointments and the queue, but not settings or staff.",
+   "body": "They sign in on the staff page and can manage pregnant women, appointments and the queue, but not settings or staff.",
    "fullName": "Full name",
    "email": "Email (used to sign in)",
    "password": "Temporary password",
@@ -571,11 +570,11 @@
   "readOnly": "Only the doctor can change these settings. You can view them here.",
   "hours": {
    "title": "Working hours",
-   "body": "Patients can only book inside these periods. Several periods per day are allowed.",
+   "body": "Pregnant women can only book inside these periods. Several periods per day are allowed.",
    "errOrder": "Ends before it starts",
    "errOverlap": "Overlaps the period above",
    "saved": "Working hours saved",
-   "savedBody": "Patients can only book inside these hours from now on.",
+   "savedBody": "Pregnant women can only book inside these hours from now on.",
    "open": "Open",
    "closed": "Closed",
    "start": "{day} start",
@@ -589,7 +588,7 @@
   },
   "rules": {
    "title": "Clinic & queue rules",
-   "body": "Name shown to patients and on the waiting-room screen, plus timing rules."
+   "body": "Name shown to pregnant women and on the waiting-room screen, plus timing rules."
   },
   "form": {
    "saved": "Clinic settings saved",
@@ -612,26 +611,26 @@
    },
    "whatsappThresholdMinutes": {
     "label": "Turn reminder",
-    "hint": "Remind the patient on WhatsApp when her turn is this close."
+    "hint": "Remind her on WhatsApp when her turn is this close."
    },
    "latePolicyConsultations": {
     "label": "Late policy",
-    "hint": "Absent patient becomes Late after this many consultations."
+    "hint": "An absent pregnant woman becomes Late after this many consultations."
    },
    "bookingHorizonDays": {
     "label": "Booking window",
-    "hint": "How far ahead patients can book."
+    "hint": "How far ahead pregnant women can book."
    },
    "cancellationCutoffMinutes": {
     "label": "Online cancellation cutoff",
-    "hint": "Patients can't cancel online closer than this."
+    "hint": "Pregnant women can't cancel online closer than this."
    }
   }
  },
  "meta": {
-  "brand": "Mosa3da",
-  "title": "Mosa3da — Clinic assistant",
-  "description": "Queue, appointments and patient portal for obstetrics & gynecology clinics."
+  "brand": "Dr. Rodaina Medhat Clinic",
+  "title": "Dr. Rodaina Medhat Clinic",
+  "description": "Queue, appointments and pregnancy portal for Dr. Rodaina Medhat's obstetrics & gynecology clinic."
  },
  "prefs": {
   "theme": "Theme",
@@ -649,14 +648,14 @@
   "roles": {
    "doctor": "Doctor",
    "secretary": "Secretary",
-   "patient": "Patient"
+   "patient": "Pregnant woman"
   }
  },
  "nav": {
   "dashboard": "Dashboard",
   "queue": "Today's queue",
   "appointments": "Appointments",
-  "patients": "Patients",
+  "patients": "Pregnant women",
   "settings": "Clinic settings",
   "secretaries": "Secretaries",
   "display": "Waiting-room display"
@@ -678,19 +677,19 @@
  "walkIn": {
   "trigger": "Add walk-in",
   "title": "Walk-in registration",
-  "body": "Adds the patient to today's queue as Arrived and calculates their expected time.",
-  "type": "Patient type",
-  "new": "New patient",
-  "existing": "Existing patient",
+  "body": "Adds her to today's queue as Arrived and calculates her expected time.",
+  "type": "Record",
+  "new": "New",
+  "existing": "Already registered",
   "fullName": "Full name",
   "namePlaceholder": "e.g. Sara Abdullah",
   "phone": "Phone number",
-  "phoneHint": "If this number already exists, the existing patient record is used.",
-  "find": "Find patient",
-  "change": "Change patient",
+  "phoneHint": "If this number already exists, her existing record is used.",
+  "find": "Find pregnant woman",
+  "change": "Change",
   "searchPlaceholder": "Name or phone",
   "noMatch": "No match.",
-  "registerNew": "Register as new patient",
+  "registerNew": "Register as new",
   "reason": "Visit reason",
   "selectReasonPlaceholder": "Select a reason",
   "selectReason": "Select a visit reason",
@@ -702,7 +701,7 @@
   "submit": "Add to queue",
   "added": "Added as #{number}",
   "expectedAt": "Expected at {time}",
-  "created": "new patient record created"
+  "created": "new record created"
  },
  "reminders": {
   "title": "WhatsApp reminders",
@@ -728,7 +727,7 @@
   },
   "toastNew": "{count, plural, =0 {No new reminders} one {# new reminder} other {# new reminders}}",
   "toastNewAuto": "{count, plural, =0 {No new reminders} one {# reminder sent} other {# reminders sent}}",
-  "toastNoneDesc": "Turn alerts appear when a patient is within the reminder window. Appointment reminders are prepared for tomorrow's bookings.",
+  "toastNoneDesc": "Turn alerts appear when a pregnant woman is within the reminder window. Appointment reminders are prepared for tomorrow's bookings.",
   "toastLinkDesc": "Nothing is sent until you press Send in WhatsApp.",
   "rowAction": "WhatsApp reminder",
   "rowOpened": "WhatsApp opened with the reminder. Press Send there.",

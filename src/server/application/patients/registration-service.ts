@@ -48,7 +48,6 @@ export async function startPatientRegistration(input: {
   fullName: string;
   phone: string; // normalized E.164
   password: string;
-  email?: string;
   locale?: Locale;
 }): Promise<{ userId: string; authEmail: string; otp: IssuedOtp }> {
   const admin = createSupabaseAdminClient();
@@ -66,7 +65,7 @@ export async function startPatientRegistration(input: {
     });
   }
 
-  const metadata = { full_name: input.fullName, phone: input.phone, contact_email: input.email ?? null, locale: input.locale ?? "ar" };
+  const metadata = { full_name: input.fullName, phone: input.phone, contact_email: null, locale: input.locale ?? "ar" };
   let userId = await findAuthUserIdByEmail(admin, authEmail);
 
   if (userId) {

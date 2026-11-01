@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FormAlert, SubmitButton } from "../form-bits";
 
-const LENGTH = 6;
+const LENGTH = 4;
 const POLL_MS = 3000;
 
 type Mode = "demo" | "inbound" | "cloud_api";

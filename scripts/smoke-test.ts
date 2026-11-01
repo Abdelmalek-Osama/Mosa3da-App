@@ -51,7 +51,7 @@ async function main() {
   const testPhone = `+20109990${String(Date.now()).slice(-4)}`;
   let doctor!: SupabaseClient, secretary!: SupabaseClient, patient!: SupabaseClient;
 
-  console.log(`\nMosa3da smoke test\n  Supabase: ${SUPABASE_URL}\n  App:      ${APP_URL}\n\nPublic`);
+  console.log(`\nDr. Rodaina Medhat Clinic smoke test\n  Supabase: ${SUPABASE_URL}\n  App:      ${APP_URL}\n\nPublic`);
   await check("Waiting-room board is public and anonymized", async () => {
     const { data, error } = await client().rpc("get_display_board");
     if (error) throw error;

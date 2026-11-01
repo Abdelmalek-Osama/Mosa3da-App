@@ -36,11 +36,15 @@ export function parseInboundTexts(payload: unknown): InboundText[] {
   return out;
 }
 
-/** Finds a 6-digit code in a message. Accepts Arabic-Indic and Persian digits. */
+/**
+ * Finds a 4-digit code in a message (the last standalone one, since the
+ * prefilled text puts the code at the end). Accepts Arabic-Indic and Persian digits.
+ */
 export function extractCode(text: string): string | null {
   const latin = text
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
     .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0));
-  const match = latin.match(/(?<!\d)\d{6}(?!\d)/) ?? latin.replace(/[\s-]/g, "").match(/(?<!\d)\d{6}(?!\d)/);
-  return match ? match[0] : null;
+  const code = /(?<!\d)\d{4}(?!\d)/g;
+  const matches = latin.match(code) ?? latin.replace(/[\s-]/g, "").match(code);
+  return matches ? matches[matches.length - 1]! : null;
 }

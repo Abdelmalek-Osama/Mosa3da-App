@@ -33,7 +33,7 @@ export function LoginForm({ next }: { next?: string }) {
           name="email"
           type="email"
           autoComplete="username"
-          placeholder="doctor@mosa3da.app"
+          placeholder="name@example.com"
           dir="ltr"
           className="text-start"
           aria-invalid={!!state.fieldErrors?.email}

@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { next
             <li className="flex gap-3"><ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-teal-300" /> {t("feature3")}</li>
           </ul>
         </div>
-        <p className="relative text-xs text-navy-300">© {new Date().getFullYear()} Mosa3da</p>
+        <p className="relative text-xs text-navy-300">© {new Date().getFullYear()} Dr. Rodaina Medhat Clinic</p>
       </section>
 
       <section className="flex flex-col px-5 py-6 sm:px-10">

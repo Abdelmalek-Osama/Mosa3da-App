@@ -1,4 +1,4 @@
-# Mosa3da — Database
+# Dr. Rodaina Medhat Clinic — Database
 
 Source of truth: `supabase/migrations/*.sql`. `prisma/schema.prisma` is a typed mirror for introspection and client typing only; never run `prisma migrate` or `prisma db push`.
 

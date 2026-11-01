@@ -21,9 +21,6 @@ export function RegisterForm() {
       <Field id="phone" label={t("phone")} error={e.phone} hint={t("register.phoneHint")}>
         <PhoneInput id="phone" name="phone" invalid={!!e.phone} className="[&_input]:h-12 [&_select]:h-12" />
       </Field>
-      <Field id="email" label={t("register.email")} error={e.email}>
-        <Input id="email" name="email" type="email" dir="ltr" autoComplete="email" className="h-12 text-start" aria-invalid={!!e.email} />
-      </Field>
       <Field id="password" label={t("password")} error={e.password} hint={t("register.passwordHint")}>
         <PasswordInput id="password" name="password" autoComplete="new-password" aria-invalid={!!e.password} required />
       </Field>

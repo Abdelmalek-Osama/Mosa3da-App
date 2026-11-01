@@ -1,4 +1,4 @@
-# Mosa3da (مساعدة) — clinic queue POC
+# Dr. Rodaina Medhat Clinic (عيادة د. رودينا مدحت) — clinic queue POC
 
 Next.js 14 + Supabase. Staff app at `/admin`, patient portal at `/patient`, waiting-room TV at `/display`.
 

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * Inbound messages. Receiving is free, and we never reply (replies are billed).
- * A 6-digit code from a number with a pending registration verifies that account.
+ * A 4-digit code from a number with a pending registration verifies that account.
  */
 export async function POST(request: NextRequest) {
   const { appSecret } = whatsAppConfig();

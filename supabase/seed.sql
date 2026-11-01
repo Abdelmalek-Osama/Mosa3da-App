@@ -1,5 +1,5 @@
 -- =============================================================================
--- Mosa3da — Demo seed (non-auth data only)
+-- Dr. Rodaina Medhat Clinic — Demo seed (non-auth data only)
 -- Doctor / secretary / patient auth accounts are created by the TypeScript seed
 -- script through the Supabase Admin API (scripts/seed-demo.ts, Thread 2), which
 -- then links patients.auth_user_id. This file is safe to re-run.
@@ -8,8 +8,8 @@
 begin;
 
 update public.doctor_settings
-set clinic_name                  = 'Mosa3da Women''s Clinic',
-    clinic_name_ar               = 'عيادة مساعدة لأمراض النساء والتوليد',
+set clinic_name                  = 'Dr. Rodaina Medhat Clinic',
+    clinic_name_ar               = 'عيادة د. رودينا مدحت',
     doctor_display_name          = 'Dr. Nadia El-Sayed',
     timezone                     = 'Africa/Cairo',
     default_consultation_minutes = 20,

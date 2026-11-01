@@ -38,7 +38,7 @@ const SENTINELS: Record<string, string> = {
 };
 
 async function main() {
-  console.log("\nMosa3da setup\n");
+  console.log("\nDr. Rodaina Medhat Clinic setup\n");
   if (!existsSync(ENV_FILE)) fail(`${ENV_FILE} not found. Copy .env.example to ${ENV_FILE} and fill in your Supabase values.`);
   const env = loadEnv(ENV_FILE);
 

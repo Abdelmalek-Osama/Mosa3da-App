@@ -16,8 +16,8 @@ export async function PatientPortalShell({ fullName, children }: { fullName: str
           <Link href="/patient/dashboard" className="flex min-w-0 items-center gap-2.5" aria-label={t("home")}>
             <BrandMark className="h-8 w-8 shrink-0" />
             <span className="min-w-0 leading-tight">
-              <span className="block text-sm font-semibold">
-                <span className="font-arabic">مساعدة</span> <span className="font-sans text-teal-200">Mosa3da</span>
+              <span className="block truncate text-sm font-semibold">
+                <span className="font-arabic">د. رودينا مدحت</span> <span className="font-sans text-teal-200">Dr. Rodaina Medhat</span>
               </span>
               <span className="block truncate text-[11px] text-navy-200">{t("hi", { name: firstName })}</span>
             </span>
