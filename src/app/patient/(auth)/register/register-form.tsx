@@ -16,7 +16,10 @@ export function RegisterForm() {
   return (
     <form action={action} className="space-y-4" noValidate>
       <Field id="fullName" label={t("register.fullName")} error={e.fullName}>
-        <Input id="fullName" name="fullName" autoComplete="name" className="h-12" placeholder={t("register.fullNamePlaceholder")} aria-invalid={!!e.fullName} required />
+        <Input id="fullName" name="fullName" dir="rtl" lang="ar" autoComplete="name" className="h-12" placeholder={t("register.fullNamePlaceholder")} aria-invalid={!!e.fullName} required />
+      </Field>
+      <Field id="fullNameEn" label={t("register.fullNameEn")} error={e.fullNameEn}>
+        <Input id="fullNameEn" name="fullNameEn" dir="ltr" lang="en" autoComplete="off" className="h-12 text-start" placeholder="e.g. Sara Ahmed Hassan" aria-invalid={!!e.fullNameEn} />
       </Field>
       <Field id="phone" label={t("phone")} error={e.phone} hint={t("register.phoneHint")}>
         <PhoneInput id="phone" name="phone" invalid={!!e.phone} className="[&_input]:h-12 [&_select]:h-12" />

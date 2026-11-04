@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "@/lib/auth/patient-identity";
+import { arabicTripleNameSchema, optionalEnglishNameSchema } from "@/lib/names";
 
 const optional = (s: z.ZodType<string, z.ZodTypeDef, string>) =>
   z
@@ -8,7 +9,8 @@ const optional = (s: z.ZodType<string, z.ZodTypeDef, string>) =>
     .transform((v) => (v ? v : undefined));
 
 export const staffPatientSchema = z.object({
-  fullName: z.string().trim().min(2, "Enter the patient's full name").max(120),
+  fullName: arabicTripleNameSchema,
+  fullNameEn: optionalEnglishNameSchema,
   phone: z
     .string()
     .trim()

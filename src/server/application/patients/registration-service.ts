@@ -46,6 +46,7 @@ async function findAuthUserIdByEmail(admin: Admin, email: string): Promise<strin
  */
 export async function startPatientRegistration(input: {
   fullName: string;
+  fullNameEn?: string;
   phone: string; // normalized E.164
   password: string;
   locale?: Locale;
@@ -65,7 +66,13 @@ export async function startPatientRegistration(input: {
     });
   }
 
-  const metadata = { full_name: input.fullName, phone: input.phone, contact_email: null, locale: input.locale ?? "ar" };
+  const metadata = {
+    full_name: input.fullName,
+    full_name_en: input.fullNameEn ?? null,
+    phone: input.phone,
+    contact_email: null,
+    locale: input.locale ?? "ar",
+  };
   let userId = await findAuthUserIdByEmail(admin, authEmail);
 
   if (userId) {
@@ -201,7 +208,13 @@ export async function completePatientVerification(
 
   const { data: userRes, error: userError } = await admin.auth.admin.getUserById(authUserId);
   if (userError || !userRes.user) throw new AppError("UNAUTHENTICATED", "Please register again.");
-  const meta = userRes.user.user_metadata as { full_name?: string; phone?: string; contact_email?: string | null; locale?: string };
+  const meta = userRes.user.user_metadata as {
+    full_name?: string;
+    full_name_en?: string | null;
+    phone?: string;
+    contact_email?: string | null;
+    locale?: string;
+  };
   const preferredLocale: Locale = meta.locale === "en" ? "en" : "ar";
   const phone = meta.phone;
   if (!phone) throw new AppError("INTERNAL", "Registration is missing a phone number");
@@ -255,12 +268,19 @@ export async function completePatientVerification(
   if (existing) {
     const { error: linkError } = await admin
       .from("patients")
-      .update({ auth_user_id: authUserId, phone_verified_at: now, email: existing.email ?? meta.contact_email ?? null, preferred_locale: preferredLocale })
+      .update({
+        auth_user_id: authUserId,
+        phone_verified_at: now,
+        email: existing.email ?? meta.contact_email ?? null,
+        preferred_locale: preferredLocale,
+        ...(meta.full_name_en ? { full_name_en: meta.full_name_en } : {}),
+      })
       .eq("id", existing.id);
     if (linkError) throw fromPostgrestError(linkError);
   } else {
     const { error: insertError } = await admin.from("patients").insert({
       full_name: meta.full_name ?? "Patient",
+      full_name_en: meta.full_name_en ?? null,
       normalized_phone: phone,
       email: meta.contact_email ?? null,
       auth_user_id: authUserId,

@@ -153,6 +153,12 @@ const EXACT: Record<string, string> = {
   "Not allowed to change role or activation status": "غير مسموح بتغيير الدور أو حالة التفعيل",
   "Patients may only update name, email and date of birth": "يمكن للزائرات تعديل الاسم والبريد وتاريخ الميلاد فقط",
 
+  // Names (P1-07)
+  "Enter the full name in Arabic": "أدخل الاسم الكامل بالعربية",
+  "Write the name in Arabic letters only": "اكتب الاسم بحروف عربية فقط",
+  "Enter the full triple name: first, father's and family name": "أدخل الاسم الثلاثي: الاسم الأول واسم الأب واسم العائلة",
+  "Write the English name in English letters only": "اكتب الاسم الإنجليزي بحروف إنجليزية فقط",
+
   // Reception portal activation
   "Enter the visitor's full name": "أدخل الاسم الكامل للزائرة",
   "Registration not found. Send a new code.": "لم يتم العثور على التسجيل. أرسل رمزًا جديدًا.",

@@ -99,7 +99,7 @@ export function NotificationsCard({
                 <div className="flex items-center justify-between gap-2">
                   <span className="flex min-w-0 items-center gap-1.5">
                     <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-label={t(n.kind === "appointment" ? "appointment" : "turn")} />
-                    <span className="truncate text-sm font-medium">{n.patientName}</span>
+                    <span dir="auto" className="truncate text-sm font-medium">{n.patientName}</span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="tabular text-xs text-muted-foreground">{formatTime(n.sentAt ?? n.createdAt, timezone, locale)}</span>

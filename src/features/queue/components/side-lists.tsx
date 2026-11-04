@@ -42,7 +42,7 @@ export function AbsentList({ entries }: { entries: QueueEntryView[] }) {
             <li key={e.id} className="flex items-center gap-3 rounded-lg bg-orange-50/60 p-3">
               <QueueNumber value={e.queueNumber} />
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{e.patientName}</div>
+                <div dir="auto" className="truncate text-start font-medium">{e.patientName}</div>
                 <div className="text-xs text-orange-700">
                   {remaining === 0 ? t("nextFinish") : t("untilLate", { count: remaining })}
                 </div>
@@ -75,7 +75,7 @@ export function ScheduledList({ entries }: { entries: QueueEntryView[] }) {
           {entries.map((e) => (
             <li key={e.id} className="flex items-center gap-3 rounded-lg border p-3">
               <div className="tabular w-20 shrink-0 text-sm font-semibold text-navy-800">{formatTime(e.expectedStartAt, timezone, locale)}</div>
-              <div className="min-w-0 flex-1 truncate font-medium">{e.patientName}</div>
+              <div dir="auto" className="min-w-0 flex-1 truncate text-start font-medium">{e.patientName}</div>
               <Button size="sm" variant="outline" onClick={() => request(e, "mark_arrived")} disabled={pending}>
                 <UserCheck /> {t("arrived")}
               </Button>
@@ -104,7 +104,7 @@ export function DoneList({ entries }: { entries: QueueEntryView[] }) {
           {entries.map((e) => (
             <li key={e.id} className="flex items-center gap-3 py-2.5 text-sm">
               <span className="tabular w-10 font-semibold text-muted-foreground">#{e.queueNumber ?? "—"}</span>
-              <span className="min-w-0 flex-1 truncate">{e.patientName}</span>
+              <span dir="auto" className="min-w-0 flex-1 truncate text-start">{e.patientName}</span>
               <span className="tabular text-xs text-muted-foreground">{e.finishedAt ? formatTime(e.finishedAt, timezone, locale) : ""}</span>
               <StatusBadge status={e.status} />
             </li>

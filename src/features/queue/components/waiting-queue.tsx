@@ -55,7 +55,7 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                   <TableRow key={entry.id} className={cn(entry.status === "ready" && "bg-amber-50/50")}>
                     <TableCell><QueueNumber value={entry.queueNumber} /></TableCell>
                     <TableCell>
-                      <div className="font-medium text-navy-900">{entry.patientName}</div>
+                      <div dir="auto" className="text-start font-medium text-navy-900">{entry.patientName}</div>
                       <div className="tabular text-xs text-muted-foreground">{formatPhone(entry.patientPhone)}</div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{tReason(entry.visitReason)}</TableCell>
@@ -76,7 +76,7 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                 <QueueNumber value={entry.queueNumber} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="truncate font-medium text-navy-900">{entry.patientName}</span>
+                    <span dir="auto" className="truncate font-medium text-navy-900">{entry.patientName}</span>
                   </div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span className="tabular font-semibold text-foreground">{time(entry.expectedStartAt)}</span>

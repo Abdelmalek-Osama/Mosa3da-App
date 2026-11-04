@@ -68,7 +68,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
                 <Link href={`/admin/patients/${p.id}`} className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-soft active:bg-muted">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-navy-50 text-sm font-semibold text-navy-700">{initials(p.fullName)}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium text-navy-900">{p.fullName}</span>
+                    <span dir="auto" className="block truncate text-start font-medium text-navy-900">{p.fullName}</span>
                     <span className="tabular block text-sm text-muted-foreground">{formatPhone(p.phone)}</span>
                   </span>
                   <AccountBadge hasAccount={p.hasAccount} verified={p.phoneVerified} compact />
@@ -97,7 +97,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
                     <TableCell>
                       <Link href={`/admin/patients/${p.id}`} className="flex items-center gap-3 font-medium text-navy-900 hover:underline">
                         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-navy-50 text-xs font-semibold text-navy-700">{initials(p.fullName)}</span>
-                        {p.fullName}
+                        <span dir="auto" className="truncate">{p.fullName}</span>
                       </Link>
                     </TableCell>
                     <TableCell className="tabular">{formatPhone(p.phone)}</TableCell>

@@ -167,7 +167,7 @@ export function BookAppointmentDialog({
             {patient ? (
               <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-accent/60 px-3 py-2.5">
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{patient.fullName}</div>
+                  <div dir="auto" className="truncate text-start font-medium">{patient.fullName}</div>
                   <div className="tabular text-xs text-muted-foreground">{formatPhone(patient.phone)}</div>
                 </div>
                 {fixedPatient ? null : (
@@ -188,7 +188,7 @@ export function BookAppointmentDialog({
                     {results.map((p) => (
                       <li key={p.id}>
                         <button type="button" onClick={() => setPatient(p)} className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-start text-sm hover:bg-muted">
-                          <span className="truncate font-medium">{p.fullName}</span>
+                          <span dir="auto" className="truncate font-medium">{p.fullName}</span>
                           <span className="tabular shrink-0 text-xs text-muted-foreground">{formatPhone(p.phone)}</span>
                         </button>
                       </li>

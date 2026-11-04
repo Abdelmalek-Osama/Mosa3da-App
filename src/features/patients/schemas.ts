@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizePhone } from "@/lib/auth/patient-identity";
+import { arabicTripleNameSchema, optionalEnglishNameSchema } from "@/lib/names";
 
 const phone = z
   .string()
@@ -16,7 +17,8 @@ const phone = z
 
 export const patientRegisterSchema = z
   .object({
-    fullName: z.string().trim().min(3, "Enter your full name").max(120),
+    fullName: arabicTripleNameSchema,
+    fullNameEn: optionalEnglishNameSchema,
     phone,
     password: z.string().min(8, "Use at least 8 characters").max(72),
     confirmPassword: z.string(),

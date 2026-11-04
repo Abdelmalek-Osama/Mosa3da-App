@@ -14,6 +14,7 @@ import { createPatientAction, updatePatientAction } from "@/features/patients/st
 
 export interface PatientFormValues {
   fullName: string;
+  fullNameEn: string;
   phone: string;
   email: string;
   dateOfBirth: string;
@@ -38,6 +39,7 @@ export function PatientFormDialog({
   const editing = !!patientId;
   const empty: PatientFormValues = {
     fullName: initial?.fullName ?? "",
+    fullNameEn: initial?.fullNameEn ?? "",
     phone: initial?.phone ?? "",
     email: initial?.email ?? "",
     dateOfBirth: initial?.dateOfBirth ?? "",
@@ -88,8 +90,11 @@ export function PatientFormDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4" noValidate>
-          <Field id="pf-name" label={t("fullName")} error={errors.fullName?.[0]}>
-            <Input id="pf-name" value={values.fullName} onChange={set("fullName")} autoComplete="off" aria-invalid={!!errors.fullName} autoFocus />
+          <Field id="pf-name" label={t("fullName")} error={errors.fullName?.[0]} hint={t("fullNameHint")}>
+            <Input id="pf-name" dir="rtl" lang="ar" value={values.fullName} onChange={set("fullName")} autoComplete="off" placeholder={t("fullNamePlaceholder")} aria-invalid={!!errors.fullName} autoFocus />
+          </Field>
+          <Field id="pf-name-en" label={t("fullNameEn")} error={errors.fullNameEn?.[0]}>
+            <Input id="pf-name-en" dir="ltr" lang="en" className="text-start" value={values.fullNameEn} onChange={set("fullNameEn")} autoComplete="off" placeholder="e.g. Sara Ahmed Hassan" aria-invalid={!!errors.fullNameEn} />
           </Field>
           <Field
             id="pf-phone"

@@ -115,14 +115,15 @@
   "register": {
    "title": "Create your account",
    "subtitle": "Book visits and follow your turn from your phone.",
-   "fullName": "Full name",
-   "fullNamePlaceholder": "e.g. Sara Abdullah",
+   "fullName": "Full name in Arabic (triple name)",
+   "fullNamePlaceholder": "e.g. سارة أحمد حسن",
    "phoneHint": "We'll verify this number on WhatsApp.",
    "passwordHint": "At least 8 characters.",
    "confirmPassword": "Confirm password",
    "create": "Create account",
    "creating": "Creating account…",
-   "already": "Already registered?"
+   "already": "Already registered?",
+   "fullNameEn": "Name in English (optional)"
   },
   "verify": {
    "metaTitle": "Verify your number",
@@ -228,7 +229,7 @@
    "createTitle": "Register a visitor",
    "editBody": "Update her contact details.",
    "createBody": "Creates her record. She can later sign up to the visitor portal with the same number.",
-   "fullName": "Full name",
+   "fullName": "Full name in Arabic (triple name)",
    "phone": "Mobile number",
    "phoneLocked": "This number is her portal login and can't be changed here.",
    "phoneHint": "Choose the country, then type the number as she says it.",
@@ -238,7 +239,10 @@
    "save": "Save changes",
    "submit": "Register",
    "language": "WhatsApp language",
-   "languageHint": "Reminders are written in this language."
+   "languageHint": "Reminders are written in this language.",
+   "fullNameHint": "First, father's and family name, in Arabic letters.",
+   "fullNamePlaceholder": "e.g. سارة أحمد حسن",
+   "fullNameEn": "Name in English (optional)"
   },
   "detail": {
    "metaTitle": "Visitor",
@@ -684,8 +688,8 @@
   "type": "Record",
   "new": "New",
   "existing": "Already registered",
-  "fullName": "Full name",
-  "namePlaceholder": "e.g. Sara Abdullah",
+  "fullName": "Full name in Arabic (triple name)",
+  "namePlaceholder": "e.g. سارة أحمد حسن",
   "phone": "Phone number",
   "phoneHint": "If this number already exists, her existing record is used.",
   "find": "Find visitor",
@@ -704,7 +708,8 @@
   "submit": "Add to queue",
   "added": "Added as #{number}",
   "expectedAt": "Expected at {time}",
-  "created": "new record created"
+  "created": "new record created",
+  "fullNameEn": "Name in English (optional)"
  },
  "reminders": {
   "title": "WhatsApp reminders",

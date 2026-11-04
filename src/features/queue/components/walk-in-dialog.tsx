@@ -55,6 +55,7 @@ export function WalkInDialog({
 
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [fullName, setFullName] = useState("");
+  const [fullNameEn, setFullNameEn] = useState("");
   const [phone, setPhone] = useState("");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<FoundPatient[]>([]);
@@ -69,6 +70,7 @@ export function WalkInDialog({
   function reset() {
     setMode("new");
     setFullName("");
+    setFullNameEn("");
     setPhone("");
     setQuery("");
     setResults([]);
@@ -106,6 +108,7 @@ export function WalkInDialog({
         mode,
         patientId: selected?.id,
         fullName: mode === "new" ? fullName : undefined,
+        fullNameEn: mode === "new" ? fullNameEn || undefined : undefined,
         phone: mode === "new" ? phone : undefined,
         visitReason,
         visitReasonDetails: details || undefined,
@@ -167,8 +170,13 @@ export function WalkInDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="wi-name">{t("fullName")}</Label>
-                <Input id="wi-name" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="off" placeholder={t("namePlaceholder")} aria-invalid={!!errors.fullName} autoFocus />
+                <Input id="wi-name" dir="rtl" lang="ar" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="off" placeholder={t("namePlaceholder")} aria-invalid={!!errors.fullName} autoFocus />
                 <FieldError errors={errors} name="fullName" />
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="wi-name-en">{t("fullNameEn")}</Label>
+                <Input id="wi-name-en" dir="ltr" lang="en" className="text-start" value={fullNameEn} onChange={(e) => setFullNameEn(e.target.value)} autoComplete="off" placeholder="e.g. Sara Ahmed Hassan" aria-invalid={!!errors.fullNameEn} />
+                <FieldError errors={errors} name="fullNameEn" />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="wi-phone">{t("phone")}</Label>
@@ -186,7 +194,7 @@ export function WalkInDialog({
               {selected ? (
                 <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-accent/60 px-3 py-2.5">
                   <div>
-                    <div className="font-medium">{selected.fullName}</div>
+                    <div dir="auto" className="text-start font-medium">{selected.fullName}</div>
                     <div className="tabular text-xs text-muted-foreground">{formatPhone(selected.phone)}</div>
                   </div>
                   <Button type="button" size="icon" variant="ghost" onClick={() => setSelected(null)} aria-label={t("change")}>
@@ -208,7 +216,7 @@ export function WalkInDialog({
                       {results.map((p) => (
                         <li key={p.id}>
                           <button type="button" onClick={() => setSelected(p)} className="flex w-full items-center justify-between px-3 py-2.5 text-start text-sm hover:bg-muted">
-                            <span className="font-medium">{p.fullName}</span>
+                            <span dir="auto" className="font-medium">{p.fullName}</span>
                             <span className="tabular text-xs text-muted-foreground">{formatPhone(p.phone)}</span>
                           </button>
                         </li>

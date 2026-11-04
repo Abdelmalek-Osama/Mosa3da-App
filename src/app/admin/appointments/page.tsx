@@ -160,7 +160,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Link href={`/admin/patients/${a.patient.id}`} className="truncate font-medium text-navy-900 hover:underline">
+                    <Link href={`/admin/patients/${a.patient.id}`} dir="auto" className="truncate font-medium text-navy-900 hover:underline">
                       {a.patient.fullName}
                     </Link>
                     <AppointmentStatusPill status={a.status} />

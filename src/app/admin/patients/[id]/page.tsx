@@ -64,7 +64,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-navy-900 text-lg font-semibold text-white">{initials(patient.fullName)}</span>
             <div className="min-w-0 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="truncate text-xl font-semibold text-navy-900 sm:text-2xl">{patient.fullName}</h1>
+                <h1 dir="auto" className="truncate text-start text-xl font-semibold text-navy-900 sm:text-2xl">{patient.fullName}</h1>
                 <AccountBadge hasAccount={patient.hasAccount} verified={patient.phoneVerified} />
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -88,7 +88,7 @@ export default async function PatientDetailPage({ params }: { params: { id: stri
             <PatientFormDialog
               patientId={patient.id}
               phoneLocked={patient.hasAccount}
-              initial={{ fullName: patient.fullName, phone: patient.phone, email: patient.email ?? "", dateOfBirth: patient.dateOfBirth ?? "", preferredLocale: patient.preferredLocale }}
+              initial={{ fullName: patient.fullName, fullNameEn: patient.fullNameEn ?? "", phone: patient.phone, email: patient.email ?? "", dateOfBirth: patient.dateOfBirth ?? "", preferredLocale: patient.preferredLocale }}
               trigger={
                 <Button variant="outline">
                   <Pencil /> {t("edit")}

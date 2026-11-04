@@ -10,6 +10,7 @@ const PAGE_SIZE = 25;
 const patientRow = z.object({
   id: z.string().uuid(),
   full_name: z.string(),
+  full_name_en: z.string().nullable(),
   normalized_phone: z.string(),
   email: z.string().nullable(),
   date_of_birth: z.string().nullable(),
@@ -23,6 +24,7 @@ const patientRow = z.object({
 export interface PatientSummary {
   id: string;
   fullName: string;
+  fullNameEn: string | null;
   phone: string;
   email: string | null;
   dateOfBirth: string | null;
@@ -36,6 +38,7 @@ export interface PatientSummary {
 const toSummary = (p: z.infer<typeof patientRow>): PatientSummary => ({
   id: p.id,
   fullName: p.full_name,
+  fullNameEn: p.full_name_en,
   phone: p.normalized_phone,
   email: p.email,
   dateOfBirth: p.date_of_birth,
@@ -46,7 +49,7 @@ const toSummary = (p: z.infer<typeof patientRow>): PatientSummary => ({
   createdAt: p.created_at,
 });
 
-const SELECT = "id, full_name, normalized_phone, email, date_of_birth, auth_user_id, phone_verified_at, is_active, preferred_locale, created_at";
+const SELECT = "id, full_name, full_name_en, normalized_phone, email, date_of_birth, auth_user_id, phone_verified_at, is_active, preferred_locale, created_at";
 
 const historyRow = z.object({
   id: z.string().uuid(),
@@ -63,6 +66,7 @@ export type PatientVisit = z.infer<typeof historyRow>;
 
 export interface PatientInput {
   fullName: string;
+  fullNameEn?: string;
   phone: string;
   email?: string;
   dateOfBirth?: string;
@@ -120,6 +124,7 @@ export class PatientAdminService {
       .from("patients")
       .insert({
         full_name: input.fullName,
+        full_name_en: input.fullNameEn ?? null,
         normalized_phone: input.phone,
         email: input.email ?? null,
         date_of_birth: input.dateOfBirth ?? null,
@@ -146,6 +151,7 @@ export class PatientAdminService {
       .from("patients")
       .update({
         full_name: input.fullName,
+        full_name_en: input.fullNameEn ?? null,
         normalized_phone: input.phone,
         email: input.email ?? null,
         date_of_birth: input.dateOfBirth ?? null,

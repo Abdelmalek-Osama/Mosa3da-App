@@ -27,7 +27,7 @@ export function NextPanel({ ready }: { ready: QueueEntryView | null }) {
           <div className="flex items-start gap-3">
             <QueueNumber value={ready.queueNumber} className="h-12 min-w-12 bg-amber-50 text-lg text-amber-800 ring-amber-200" />
             <div className="min-w-0 flex-1">
-              <div className="truncate text-lg font-semibold text-navy-900">{ready.patientName}</div>
+              <div dir="auto" className="truncate text-start text-lg font-semibold text-navy-900">{ready.patientName}</div>
               <div className="text-sm text-muted-foreground">
                 {tReason(ready.visitReason)} · {formatPhone(ready.patientPhone)}
               </div>

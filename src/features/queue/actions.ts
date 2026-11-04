@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { parseInput, runAction, type ActionResult } from "@/lib/action-result";
 import { isAppError } from "@/lib/errors/app-error";
+import { fromPostgrestError } from "@/lib/errors/postgres";
 import { requirePatient, requireStaff } from "@/server/authorization/actor";
 import { QueueService } from "@/server/application/queue/queue-service";
 import {
@@ -55,6 +56,10 @@ export async function registerWalkInAction(input: WalkInInput) {
       durationMinutes: data.durationMinutes,
       notes: data.notes,
     });
+    if (data.mode === "new" && data.fullNameEn && result.patient_created) {
+      const { error } = await actor.supabase.from("patients").update({ full_name_en: data.fullNameEn }).eq("id", result.patient_id);
+      if (error) throw fromPostgrestError(error);
+    }
     await afterMutation();
     return result;
   });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { arabicTripleNameSchema, optionalEnglishNameSchema } from "@/lib/names";
 import { QUEUE_ACTIONS, QUEUE_STATUSES, VISIT_REASONS } from "@/server/domain/queue/constants";
 
 const uuid = z.string().uuid();
@@ -22,6 +23,7 @@ export const walkInSchema = z
     mode: z.enum(["existing", "new"]),
     patientId: uuid.optional(),
     fullName: z.string().trim().max(120).optional(),
+    fullNameEn: optionalEnglishNameSchema,
     phone: z.string().trim().max(32).optional(),
     visitReason: z.enum(VISIT_REASONS),
     visitReasonDetails: optionalText(200),
@@ -33,8 +35,9 @@ export const walkInSchema = z
       ctx.addIssue({ code: "custom", path: ["patientId"], message: "Select a patient" });
     }
     if (value.mode === "new") {
-      if (!value.fullName || value.fullName.length < 2) {
-        ctx.addIssue({ code: "custom", path: ["fullName"], message: "Enter the patient's full name" });
+      const name = arabicTripleNameSchema.safeParse(value.fullName ?? "");
+      if (!name.success) {
+        ctx.addIssue({ code: "custom", path: ["fullName"], message: name.error.issues[0]?.message ?? "Enter the full name in Arabic" });
       }
       if (!value.phone || value.phone.replace(/\D/g, "").length < 8) {
         ctx.addIssue({ code: "custom", path: ["phone"], message: "Enter a valid phone number" });

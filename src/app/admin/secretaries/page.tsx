@@ -58,7 +58,7 @@ export default async function SecretariesPage() {
                 </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="truncate font-medium text-navy-900">{s.fullName}</span>
+                    <span dir="auto" className="truncate font-medium text-navy-900">{s.fullName}</span>
                     <span
                       className={cn(
                         "rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset",

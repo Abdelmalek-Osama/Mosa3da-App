@@ -40,6 +40,8 @@ const SENTINELS: Record<string, string> = {
   "20261104000700_cancel_scheduled_entry.sql":
     "select position('cancelled' in pg_get_constraintdef(oid)) > 0 as applied from pg_constraint where conname = 'queue_entries_position_required'",
   "20261104000800_working_hours_conflicts.sql": "select to_regprocedure('public.save_working_days(jsonb,boolean)') is not null as applied",
+  "20261104000900_patient_english_name.sql":
+    "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'patients' and column_name = 'full_name_en') as applied",
 };
 
 async function main() {

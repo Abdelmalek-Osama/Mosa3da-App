@@ -25,7 +25,7 @@ function UserCard({ user }: Pick<AdminShellProps, "user">) {
         {initials(user.fullName)}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium text-white">{user.fullName}</div>
+        <div dir="auto" className="truncate text-start text-sm font-medium text-white">{user.fullName}</div>
         <div className="text-xs text-navy-300">{t(`roles.${user.role}`)}</div>
       </div>
       <form action={signOutAction}>

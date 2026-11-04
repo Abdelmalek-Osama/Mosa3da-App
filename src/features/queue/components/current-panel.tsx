@@ -29,7 +29,7 @@ export function CurrentPanel({ current }: { current: QueueEntryView | null }) {
           <div className="flex items-start gap-3">
             <QueueNumber value={current.queueNumber} className="h-12 min-w-12 bg-teal-50 text-lg text-teal-800 ring-teal-200" />
             <div className="min-w-0">
-              <div className="truncate text-lg font-semibold text-navy-900">{current.patientName}</div>
+              <div dir="auto" className="truncate text-start text-lg font-semibold text-navy-900">{current.patientName}</div>
               <div className="text-sm text-muted-foreground">{tReason(current.visitReason)}</div>
             </div>
           </div>
