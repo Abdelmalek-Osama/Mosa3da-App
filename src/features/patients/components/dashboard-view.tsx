@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { PatientAppointment } from "@/server/application/appointments/booking-service";
 import type { MyQueueStatus } from "@/features/queue/schemas";
 import { AppointmentCard } from "./appointment-card";
+import { AppointmentCountdown } from "./appointment-countdown";
 import { LiveQueueStatus, QueueRefreshWatcher } from "./live-queue-status";
 
 export interface PatientDashboardViewProps {
@@ -56,6 +57,7 @@ export function PatientDashboardView({ fullName, status, upcoming, settings, wel
         </div>
         {next ? (
           <AppointmentCard appointment={next} timeZone={tz} emphasis>
+            {next.scheduledStart && next.status === "scheduled" ? <AppointmentCountdown at={next.scheduledStart} /> : null}
             <Link
               href="/patient/my-appointments"
               className="flex items-center justify-between rounded-lg text-sm font-medium text-teal-700 hover:underline"

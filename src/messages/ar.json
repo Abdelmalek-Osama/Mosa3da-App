@@ -448,6 +448,13 @@
    "goDashboard": "الذهاب إلى لوحتي",
    "viewAppointments": "عرض مواعيدي",
    "edit": "تعديل"
+  },
+  "countdown": {
+   "left": "متبقي على موعدك: {time}",
+   "days": "{count, plural, one {يوم} two {يومان} few {# أيام} other {# يومًا}}",
+   "hours": "{count, plural, one {ساعة} two {ساعتان} few {# ساعات} other {# ساعة}}",
+   "minutes": "{count, plural, one {دقيقة} two {دقيقتان} few {# دقائق} other {# دقيقة}}",
+   "and": " و"
   }
  },
  "queue": {
@@ -785,7 +792,8 @@
   "rowOpened": "فُتح واتساب ومعه رسالة التذكير. اضغط إرسال هناك.",
   "rowSent": "أُرسل التذكير عبر واتساب.",
   "rowQueued": "التذكير في قائمة الإرسال وسيُرسَل قريبًا.",
-  "rowFailed": "تعذّر على واتساب إرسال التذكير: {error}"
+  "rowFailed": "تعذّر على واتساب إرسال التذكير: {error}",
+  "soon": "تنبيه قبل 30 دقيقة"
  },
  "reception": {
   "title": "حساب البوابة",

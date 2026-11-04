@@ -36,6 +36,7 @@ export function whatsAppConfig() {
       otp: process.env.WHATSAPP_TEMPLATE_OTP?.trim() || "mosa3da_otp",
       appointment_reminder: process.env.WHATSAPP_TEMPLATE_APPOINTMENT?.trim() || "mosa3da_appointment_reminder",
       consultation_approaching: process.env.WHATSAPP_TEMPLATE_TURN?.trim() || "mosa3da_turn_approaching",
+      appointment_soon: process.env.WHATSAPP_TEMPLATE_SOON?.trim() || "mosa3da_appointment_soon",
     } as Record<string, string>,
   };
 }

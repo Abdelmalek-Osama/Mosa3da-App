@@ -43,10 +43,10 @@ Meta writes the text for you. Choose **Copy code**, which gives "*{{1}}* is your
 
 ### `mosa3da_appointment_reminder` (category: Utility)
 
-- **ar:** مرحبًا {{1}}، نذكّركِ بموعدكِ في {{2}} يوم {{3}} الساعة {{4}}. إذا تعذّر عليكِ الحضور، يُرجى إلغاء الموعد من حسابكِ.
-- **en:** Hello {{1}}, this is a reminder of your appointment at {{2}} on {{3}} at {{4}}. If you can't make it, please cancel it from your patient account.
+- **ar:** مرحبًا {{1}}، نذكّركِ بموعد كشفكِ في {{2}} {{3}} الساعة {{4}}. نرجو التواجد في العيادة لتأكيد دوركِ. إذا تعذّر عليكِ الحضور، يُرجى إلغاء الموعد من حسابكِ أو إخبار السكرتيرة لإتاحة الفرصة لحالة أخرى.
+- **en:** Hello {{1}}, a reminder of your appointment at {{2}} {{3}} at {{4}}. Please be at the clinic to confirm your turn. If you can't make it, please cancel it from your account or tell the secretary so another visitor can take the slot.
 
-The variables are: {{1}} first name, {{2}} clinic name, {{3}} day and date, {{4}} time.
+The variables are: {{1}} first name, {{2}} clinic name, {{3}} "اليوم" / "today" for same-day reminders, otherwise "يوم الثلاثاء 03/11" / "on Tuesday 03 Nov", {{4}} 12-hour time ("04:10 مساءً" / "4:10 PM").
 
 ### `mosa3da_turn_approaching` (category: Utility)
 
@@ -55,11 +55,23 @@ The variables are: {{1}} first name, {{2}} clinic name, {{3}} day and date, {{4}
 
 The variables are: {{1}} first name, {{2}} time.
 
-You can rename any template with `WHATSAPP_TEMPLATE_OTP`, `WHATSAPP_TEMPLATE_APPOINTMENT` or `WHATSAPP_TEMPLATE_TURN`.
+### `mosa3da_appointment_soon` (category: Utility)
+
+- **ar:** أهلاً بحضرتك يا فندم، متبقي 30 دقيقة على موعد كشفك في {{1}}. نرجو التواجد للعيادة. {{2}}
+- **en:** Hello, your appointment at {{1}} is in 30 minutes. Please make your way to the clinic. {{2}}
+
+The variables are: {{1}} clinic name, {{2}} the clinic's map link from Clinic settings (may be empty).
+
+You can rename any template with `WHATSAPP_TEMPLATE_OTP`, `WHATSAPP_TEMPLATE_APPOINTMENT`, `WHATSAPP_TEMPLATE_TURN` or `WHATSAPP_TEMPLATE_SOON`.
 
 ## Who gets what
 
 - **Appointment reminders** go to patients who have a portal account. The cron at `/api/cron/notifications` prepares them for tomorrow's scheduled bookings. Staff can send one for any scheduled booking from **Appointments**.
+- **30-minute alerts** go to every visitor with a booking today that starts within 30 minutes while she has not checked in yet.
 - **Turn alerts** go to everyone in today's queue when their expected time falls within the reminder window set in Clinic settings.
 - Every message uses the patient's language. That is the language she used when she registered, or her latest choice in the language switcher. Staff can change it in the patient form.
 - Each message is created once per appointment or queue entry, so a cron that runs twice never sends a message twice.
+
+## How often alerts are checked
+
+Turn alerts and 30-minute alerts depend on the clock. Vercel's Hobby plan runs the cron only once a day, so the app also checks every time staff act on the queue and, at most once a minute, whenever the waiting-room screen refreshes (it polls every 5 seconds while it is open). For alerts without the TV open, point any external scheduler (for example cron-job.org, every 5 minutes) at `GET /api/cron/notifications` with the header `Authorization: Bearer <CRON_SECRET>`. Every run is idempotent.

@@ -448,6 +448,13 @@
    "goDashboard": "Go to my dashboard",
    "viewAppointments": "View my appointments",
    "edit": "Edit"
+  },
+  "countdown": {
+   "left": "Time left until your appointment: {time}",
+   "days": "{count, plural, one {# day} other {# days}}",
+   "hours": "{count, plural, one {# hour} other {# hours}}",
+   "minutes": "{count, plural, one {# minute} other {# minutes}}",
+   "and": " and "
   }
  },
  "queue": {
@@ -785,7 +792,8 @@
   "rowOpened": "WhatsApp opened with the reminder. Press Send there.",
   "rowSent": "Reminder sent by WhatsApp.",
   "rowQueued": "Reminder queued. It will be sent shortly.",
-  "rowFailed": "WhatsApp couldn't send the reminder: {error}"
+  "rowFailed": "WhatsApp couldn't send the reminder: {error}",
+  "soon": "30-minute alert"
  },
  "reception": {
   "title": "Portal account",

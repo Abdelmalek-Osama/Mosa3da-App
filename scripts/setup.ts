@@ -47,6 +47,8 @@ const SENTINELS: Record<string, string> = {
   "20261104001100_reschedule_appointment.sql":
     "select to_regprocedure('public.staff_reschedule_appointment(uuid,timestamptz)') is not null as applied",
   "20261104001200_lobby_display.sql": "select to_regprocedure('public.set_display_bilingual(boolean)') is not null as applied",
+  "20261104001300_whatsapp_copy_and_soon.sql":
+    "select to_regprocedure('public.enqueue_pre_appointment_alerts(public.notification_channel)') is not null as applied",
 };
 
 async function main() {

@@ -72,7 +72,7 @@ export async function getDashboardData(db: SupabaseClient): Promise<DashboardDat
         message: n.message_body,
         status: n.status,
         channel: n.channel,
-        kind: n.template_key === "appointment_reminder" ? ("appointment" as const) : ("turn" as const),
+        kind: n.template_key.startsWith("appointment") ? ("appointment" as const) : ("turn" as const),
         createdAt: n.created_at,
         sentAt: n.sent_at,
         openedAt: n.opened_at,

@@ -44,6 +44,11 @@ export async function processDueNotifications(
   if (turn.error) throw fromPostgrestError(turn.error);
   let enqueued = Array.isArray(turn.data) ? turn.data.length : 0;
 
+  // 30 minutes before a booking that has not checked in yet (P2-18).
+  const soon = await db.rpc("enqueue_pre_appointment_alerts", { p_channel: channel });
+  if (soon.error) throw fromPostgrestError(soon.error);
+  enqueued += Array.isArray(soon.data) ? soon.data.length : 0;
+
   if (includeAppointmentReminders) {
     const appts = await db.rpc("enqueue_appointment_reminders", { p_channel: channel });
     if (appts.error) throw fromPostgrestError(appts.error);
@@ -124,4 +129,20 @@ export async function processDueNotificationsSafely(): Promise<void> {
   } catch (error) {
     logger.warn("notifications.run_failed", { error });
   }
+}
+
+const TICK_MS = 60_000;
+let lastTick = 0;
+
+/**
+ * Time-based alerts (turn approaching, 30 minutes before a booking) need a
+ * frequent trigger, but Vercel Hobby cron runs once a day. The lobby TV polls
+ * /api/display every few seconds all day, so it doubles as the ticker: at most
+ * one run per minute per server instance. Every run is idempotent.
+ */
+export async function tickNotifications(): Promise<void> {
+  const now = Date.now();
+  if (now - lastTick < TICK_MS) return;
+  lastTick = now;
+  await processDueNotificationsSafely();
 }
