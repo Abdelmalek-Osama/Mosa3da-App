@@ -1,4 +1,4 @@
-# Dr. Rodaina Medhat Clinic — Pregnancy portal & waiting-room display
+# Dr. Rodaina Medhat Clinic — Visitor portal & waiting-room display
 
 ## Routes
 

@@ -6,6 +6,8 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export type LiveStatus = "connecting" | "live" | "polling";
 
+const LIVE_TICK_MS = 60_000;
+
 /**
  * Subscribes to Postgres changes (RLS-filtered) and refreshes the Server
  * Components on change. Falls back to polling while the socket is down and
@@ -52,9 +54,10 @@ export function useRealtimeRefresh({
     };
   }, [channel, tablesKey, router]);
 
+  // Polling while the socket is down; a slow tick while live so time-based values
+  // (expected times, countdowns) keep moving even when no row changes.
   useEffect(() => {
-    if (status === "live") return;
-    const id = setInterval(() => router.refresh(), pollMs);
+    const id = setInterval(() => router.refresh(), status === "live" ? LIVE_TICK_MS : pollMs);
     return () => clearInterval(id);
   }, [status, pollMs, router]);
 

@@ -18,12 +18,12 @@ export async function updateClinicSettingsAction(input: ClinicSettingsInput) {
   });
 }
 
-export async function saveWorkingDaysAction(input: WorkingDaysInput) {
+export async function saveWorkingDaysAction(input: WorkingDaysInput, force = false) {
   return runAction("settings.working_days", async () => {
     const actor = await requireDoctor();
     const periods = parseInput(workingDaysSchema, input);
-    const count = await new SettingsAdminService(actor.supabase).saveWorkingDays(periods);
-    revalidatePath("/", "layout");
-    return { count };
+    const result = await new SettingsAdminService(actor.supabase).saveWorkingDays(periods, force);
+    if (result.saved) revalidatePath("/", "layout");
+    return result;
   });
 }

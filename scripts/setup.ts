@@ -37,6 +37,9 @@ const SENTINELS: Record<string, string> = {
   "20261031000500_whatsapp.sql": "select to_regprocedure('public.mark_notification_opened(uuid)') is not null as applied",
   "20261104000600_queue_version_meaningful.sql":
     "select position('missed_turn_baseline' in pg_get_functiondef('public.queue_entries_bump_version()'::regprocedure)) > 0 as applied",
+  "20261104000700_cancel_scheduled_entry.sql":
+    "select position('cancelled' in pg_get_constraintdef(oid)) > 0 as applied from pg_constraint where conname = 'queue_entries_position_required'",
+  "20261104000800_working_hours_conflicts.sql": "select to_regprocedure('public.save_working_days(jsonb,boolean)') is not null as applied",
 };
 
 async function main() {

@@ -17,6 +17,20 @@ const settingsRow = z.object({
   updated_at: z.string(),
 });
 
+const workingDaysSaveResultSchema = z.object({
+  saved: z.boolean(),
+  count: z.number().int(),
+  conflicts: z.array(
+    z.object({
+      appointment_id: z.string().uuid(),
+      clinic_date: z.string(),
+      scheduled_start: z.string(),
+      patient_name: z.string(),
+    }),
+  ),
+});
+export type WorkingDaysSaveResult = z.infer<typeof workingDaysSaveResultSchema>;
+
 export interface FullClinicSettings {
   clinicName: string;
   clinicNameAr: string;
@@ -97,11 +111,16 @@ export class SettingsAdminService {
     return (data?.length ?? 0) > 0;
   }
 
-  async saveWorkingDays(periods: WorkingPeriod[]): Promise<number> {
+  /**
+   * Replaces the weekly hours. Unless `force`, nothing is saved when upcoming
+   * bookings would fall outside the new hours; those bookings are returned instead.
+   */
+  async saveWorkingDays(periods: WorkingPeriod[], force = false): Promise<WorkingDaysSaveResult> {
     const { data, error } = await this.db.rpc("save_working_days", {
       p_periods: periods.map((p) => ({ weekday: p.weekday, start_time: p.start, end_time: p.end })),
+      p_force: force,
     });
     if (error) throw fromPostgrestError(error);
-    return z.number().int().parse(data);
+    return workingDaysSaveResultSchema.parse(data);
   }
 }

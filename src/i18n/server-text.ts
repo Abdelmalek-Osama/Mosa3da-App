@@ -28,7 +28,7 @@ const EXACT: Record<string, string> = {
   "Incorrect email or password.": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "This account has been deactivated. Please contact the doctor.": "تم إيقاف هذا الحساب. يرجى التواصل مع الطبيب.",
   "This sign-in is for clinic staff. Patients sign in from the patient portal.":
-    "هذا الدخول مخصص لطاقم العيادة. تسجّل الحوامل الدخول من بوابة الحوامل.",
+    "هذا الدخول مخصص لطاقم العيادة. تسجّل الزائرات الدخول من بوابة الزائرات.",
 
   // Patient auth / OTP
   "Enter your mobile number": "أدخل رقم الجوال",
@@ -43,7 +43,7 @@ const EXACT: Record<string, string> = {
   "Enter the 4-digit code": "أدخلي الرمز المكوّن من 4 أرقام",
   "Incorrect mobile number or password.": "رقم الجوال أو كلمة المرور غير صحيحة.",
   "This sign-in is for patients. Clinic staff sign in at /login.":
-    "هذا الدخول مخصص للحوامل. يسجّل طاقم العيادة الدخول من صفحة دخول الطاقم.",
+    "هذا الدخول مخصص للزائرات. يسجّل طاقم العيادة الدخول من صفحة دخول الطاقم.",
   "Your account is not active. Please contact the clinic.": "حسابك غير مفعّل. يرجى التواصل مع العيادة.",
   "This phone number is already registered. Please sign in instead.": "هذا الرقم مسجّل مسبقًا. يرجى تسجيل الدخول بدلًا من ذلك.",
   "Already registered — sign in instead": "مسجّل مسبقًا — سجّل الدخول",
@@ -69,17 +69,17 @@ const EXACT: Record<string, string> = {
     "لم يتم التحقق من رقمك بعد. أرسل الرمز من واتساب ثم أعد المحاولة.",
 
   // Patients (staff)
-  "Enter the patient's full name": "أدخل الاسم الكامل للحامل",
+  "Enter the patient's full name": "أدخل الاسم الكامل للزائرة",
   "Enter the full name": "أدخل الاسم الكامل",
   "Use the date picker": "استخدم منتقي التاريخ",
   "Enter a valid date of birth": "أدخل تاريخ ميلاد صالحًا",
-  "Patient not found.": "لم يتم العثور على الحامل.",
-  "Patient not found": "لم يتم العثور على الحامل",
-  "A patient with this phone number already exists.": "توجد حامل مسجّلة بهذا الرقم.",
+  "Patient not found.": "لم يتم العثور على الزائرة.",
+  "Patient not found": "لم يتم العثور على الزائرة",
+  "A patient with this phone number already exists.": "توجد زائرة مسجّلة بهذا الرقم.",
   "Already in use": "مستخدم مسبقًا",
   "This patient signs in with her phone number, so it can't be changed here.":
-    "تسجّل هذه الحامل الدخول برقم جوالها، لذلك لا يمكن تغييره من هنا.",
-  "Linked to the patient's portal login": "مرتبط بحساب الحامل في البوابة",
+    "تسجّل هذه الزائرة الدخول برقم جوالها، لذلك لا يمكن تغييره من هنا.",
+  "Linked to the patient's portal login": "مرتبط بحساب الزائرة في البوابة",
   "Type at least 2 characters": "اكتب حرفين على الأقل",
 
   // Appointments
@@ -90,42 +90,42 @@ const EXACT: Record<string, string> = {
   "Describe the visit reason": "صف سبب الزيارة",
   "Please describe the reason for the visit": "يرجى وصف سبب الزيارة",
   "Please describe the reason for your visit": "يرجى وصف سبب زيارتك",
-  "Select a patient": "اختر الحامل",
+  "Select a patient": "اختر الزائرة",
   "Appointment not found": "لم يتم العثور على الموعد",
   "This time slot is no longer available.": "هذا الموعد لم يعد متاحًا.",
   "This time is no longer available. Please choose another.": "هذا الوقت لم يعد متاحًا. يرجى اختيار وقت آخر.",
   "This time is outside the clinic's working hours": "هذا الوقت خارج ساعات عمل العيادة",
-  "This patient already has an appointment on this day.": "لدى هذه الحامل موعد في هذا اليوم.",
-  "This patient already has an appointment on this day": "لدى هذه الحامل موعد في هذا اليوم",
+  "This patient already has an appointment on this day.": "لدى هذه الزائرة موعد في هذا اليوم.",
+  "This patient already has an appointment on this day": "لدى هذه الزائرة موعد في هذا اليوم",
   "You already have an appointment on this day. Cancel it first to choose another time.":
     "لديكِ موعد في هذا اليوم. ألغيه أولًا لاختيار وقت آخر.",
   "This appointment can no longer be cancelled online. Please contact the clinic.":
     "لم يعد بالإمكان إلغاء هذا الموعد عبر الإنترنت. يرجى التواصل مع العيادة.",
   "Only scheduled appointments can be cancelled here. Checked-in patients are managed from the queue.":
-    "يمكن إلغاء المواعيد المجدولة فقط من هنا. تتم إدارة الحوامل الحاضرات من قائمة الانتظار.",
+    "يمكن إلغاء المواعيد المجدولة فقط من هنا. تتم إدارة الزائرات الحاضرات من قائمة الانتظار.",
   "Only today's appointments can be checked in": "يمكن تسجيل حضور مواعيد اليوم فقط",
   "This appointment is not waiting for check-in": "هذا الموعد لا ينتظر تسجيل الحضور",
   "No queue entry found for this appointment": "لا يوجد دور مرتبط بهذا الموعد",
-  "Patient is already checked in": "تم تسجيل حضور الحامل مسبقًا",
-  "Only verified patients can book appointments": "يمكن للحوامل الموثّقات فقط حجز المواعيد",
-  "Patient account required": "يلزم حساب حامل",
+  "Patient is already checked in": "تم تسجيل حضور الزائرة مسبقًا",
+  "Only verified patients can book appointments": "يمكن للزائرات الموثّقات فقط حجز المواعيد",
+  "Patient account required": "يلزم حساب زائرة",
   "Sign in to view availability": "سجّلي الدخول لعرض المواعيد المتاحة",
 
   // Queue
   "Only active clinic staff can manage the queue": "يمكن لطاقم العيادة النشط فقط إدارة قائمة الانتظار",
   "Queue entry not found": "لم يتم العثور على الدور",
   "Another consultation is already in progress.": "هناك كشف آخر قيد التنفيذ.",
-  "Another patient is already marked as next.": "هناك حامل أخرى محددة كالتالية.",
-  "This patient is already in today's queue.": "هذه الحامل موجودة في قائمة انتظار اليوم.",
+  "Another patient is already marked as next.": "هناك زائرة أخرى محددة كالتالية.",
+  "This patient is already in today's queue.": "هذه الزائرة موجودة في قائمة انتظار اليوم.",
   "Finish the consultation instead of cancelling it": "أنهِ الكشف بدلًا من إلغائه",
   "Finish the current consultation first": "أنهِ الكشف الحالي أولًا",
-  "Only a waiting patient can be marked late": "يمكن تحديد الحامل المنتظرة فقط كمتأخرة",
-  "Only a waiting patient who is present can be marked ready": "يمكن تحديد الحامل المنتظرة الحاضرة فقط كجاهزة",
-  "Only the Ready patient can be marked absent": "يمكن تحديد الحامل الجاهزة فقط كغائبة",
+  "Only a waiting patient can be marked late": "يمكن تحديد الزائرة المنتظرة فقط كمتأخرة",
+  "Only a waiting patient who is present can be marked ready": "يمكن تحديد الزائرة المنتظرة الحاضرة فقط كجاهزة",
+  "Only the Ready patient can be marked absent": "يمكن تحديد الزائرة الجاهزة فقط كغائبة",
   "Only the current consultation can be finished": "يمكن إنهاء الكشف الحالي فقط",
-  "Only waiting patients can be reordered": "يمكن إعادة ترتيب الحوامل المنتظرات فقط",
-  "This patient cannot start a consultation now": "لا يمكن بدء كشف هذه الحامل الآن",
-  "This patient was updated by someone else. Refresh and try again.": "تم تحديث بيانات هذه الحامل من قبل شخص آخر. حدّث الصفحة وحاول مجددًا.",
+  "Only waiting patients can be reordered": "يمكن إعادة ترتيب الزائرات المنتظرات فقط",
+  "This patient cannot start a consultation now": "لا يمكن بدء كشف هذه الزائرة الآن",
+  "This patient was updated by someone else. Refresh and try again.": "تم تحديث بيانات هذه الزائرة من قبل شخص آخر. حدّث الصفحة وحاول مجددًا.",
   "Duration must be between 5 and 180 minutes": "يجب أن تكون المدة بين 5 و180 دقيقة",
   "Enter a duration in minutes": "أدخل المدة بالدقائق",
   "Minimum 5 minutes": "5 دقائق على الأقل",
@@ -151,11 +151,11 @@ const EXACT: Record<string, string> = {
     "تم حفظ الحالة، لكن تعذّر تحديث صلاحية الدخول. يرجى المحاولة مرة أخرى.",
   "The doctor account cannot be demoted or deactivated": "لا يمكن تخفيض صلاحية حساب الطبيب أو إيقافه",
   "Not allowed to change role or activation status": "غير مسموح بتغيير الدور أو حالة التفعيل",
-  "Patients may only update name, email and date of birth": "يمكن للحوامل تعديل الاسم والبريد وتاريخ الميلاد فقط",
+  "Patients may only update name, email and date of birth": "يمكن للزائرات تعديل الاسم والبريد وتاريخ الميلاد فقط",
 
   // WhatsApp
   "WhatsApp is not configured.": "لم يتم إعداد واتساب.",
-  "This patient has no WhatsApp reminders enabled.": "التذكيرات عبر واتساب غير مفعّلة لهذه الحامل.",
+  "This patient has no WhatsApp reminders enabled.": "التذكيرات عبر واتساب غير مفعّلة لهذه الزائرة.",
 };
 
 const PATTERNS: Array<[RegExp, (...groups: string[]) => string]> = [
@@ -166,7 +166,7 @@ const PATTERNS: Array<[RegExp, (...groups: string[]) => string]> = [
     `يمكن إلغاء المواعيد عبر الإنترنت قبل ${h} ساعات على الأقل. يرجى الاتصال بالعيادة.`],
   [/^The clinic is not open on (.+)$/, (d) => `العيادة مغلقة يوم ${d}`],
   [/^The clinic session for (.+) is closed$/, (d) => `تم إغلاق جلسة العيادة ليوم ${d}`],
-  [/^This patient is already in today's queue \(#(\d+)\)$/, (n) => `هذه الحامل موجودة في قائمة انتظار اليوم (رقم ${n})`],
+  [/^This patient is already in today's queue \(#(\d+)\)$/, (n) => `هذه الزائرة موجودة في قائمة انتظار اليوم (رقم ${n})`],
   [/^This visit is already (\w+)$/, () => "تم تحديث حالة هذه الزيارة مسبقًا"],
   [/^Invalid IANA timezone: (.+)$/, (z) => `منطقة زمنية غير صالحة: ${z}`],
   [/^Invalid phone number: .+$/, () => "رقم هاتف غير صالح"],

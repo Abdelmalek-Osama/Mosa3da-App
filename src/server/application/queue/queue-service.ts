@@ -17,6 +17,7 @@ import {
   type QueueAction,
   type VisitReason,
 } from "@/server/domain/queue/constants";
+import { projectQueue } from "@/server/domain/queue/projection";
 import type { QueueBoard, QueueEntryView } from "@/server/domain/queue/types";
 
 const entryRowSchema = z.object({
@@ -183,7 +184,28 @@ export class QueueService {
     if (entriesRes.error) throw fromPostgrestError(entriesRes.error);
 
     const session = sessionRowSchema.parse(sessionRes.data);
-    const entries = z.array(entryRowSchema).parse(entriesRes.data).map(toView);
+    const rows = z.array(entryRowSchema).parse(entriesRes.data);
+    // Stored expected times only move when someone acts on the queue. Re-project
+    // at read time (same formula as _recalculate_queue) so ETAs never sit in the past.
+    const live = projectQueue({
+      entries: rows.map((r) => ({
+        id: r.id,
+        status: r.status,
+        position: r.position,
+        createdAt: new Date(r.created_at),
+        estimatedDurationMinutes: r.estimated_duration_minutes,
+        startedAt: r.started_at ? new Date(r.started_at) : null,
+        missedTurnAt: r.missed_turn_at ? new Date(r.missed_turn_at) : null,
+        missedTurnBaseline: r.missed_turn_baseline,
+      })),
+      opensAt: new Date(session.opens_at),
+      now: new Date(),
+    });
+    const entries = rows.map((r) => {
+      const view = toView(r);
+      const projected = live.order.includes(r.id) ? live.expectedStart.get(r.id) : undefined;
+      return projected ? { ...view, expectedStartAt: projected.toISOString() } : view;
+    });
 
     const current = entries.find((e) => e.status === "current") ?? null;
     const ready = entries.find((e) => e.status === "ready") ?? null;

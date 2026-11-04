@@ -21,7 +21,7 @@
    "walk_in": "Walk-in"
   },
   "cancelledReason": "Cancelled: {reason}",
-  "checkedInHint": "Checked-in pregnant women are managed from",
+  "checkedInHint": "Checked-in visitors are managed from",
   "todaysQueue": "Today's queue",
   "row": {
    "checkedIn": "{name} checked in",
@@ -39,10 +39,10 @@
    "trigger": "New appointment",
    "title": "Book an appointment",
    "body": "Only times inside the doctor's working hours that are still free can be chosen.",
-   "patient": "Pregnant woman",
+   "patient": "Visitor",
    "change": "Change",
    "search": "Search by name or phone",
-   "noMatch": "No match. Register her first from the Pregnant women page.",
+   "noMatch": "No match. Register her first from the Visitors page.",
    "date": "Date",
    "time": "Time",
    "free": "{count} free",
@@ -54,7 +54,7 @@
    "notes": "Notes (optional)",
    "cancel": "Cancel",
    "submit": "Book appointment",
-   "errPatient": "Select a pregnant woman",
+   "errPatient": "Select a visitor",
    "errTime": "Choose a time",
    "errReason": "Choose a visit reason",
    "booked": "Appointment booked",
@@ -66,7 +66,7 @@
   "headline": "Less waiting, calmer clinic days.",
   "lead": "Book your visit, follow your turn live, and get reminders on WhatsApp.",
   "patients": {
-   "title": "Pregnant women",
+   "title": "Visitors",
    "body": "Book a visit and follow your turn from your phone."
   },
   "staff": {
@@ -87,8 +87,8 @@
   "feature1": "Walk-ins and bookings in one live queue",
   "feature2": "Expected times recalculated on every change",
   "feature3": "Role-based access for doctor and secretaries",
-  "areYouPatient": "Are you a pregnant woman?",
-  "goToPortal": "Go to the pregnancy portal",
+  "areYouPatient": "Are you a visitor?",
+  "goToPortal": "Go to the visitor portal",
   "email": "Email",
   "password": "Password",
   "signIn": "Sign in",
@@ -96,7 +96,7 @@
  },
  "patientAuth": {
   "home": "Dr. Rodaina Medhat Clinic home",
-  "portal": "Pregnancy portal",
+  "portal": "Visitor portal",
   "staffQuestion": "Clinic staff?",
   "staffLink": "Staff sign in",
   "phone": "Mobile number",
@@ -104,7 +104,7 @@
   "showPassword": "Show password",
   "hidePassword": "Hide password",
   "login": {
-   "metaTitle": "Pregnancy portal sign in",
+   "metaTitle": "Visitor portal sign in",
    "title": "Welcome back",
    "subtitle": "Sign in with your mobile number.",
    "signIn": "Sign in",
@@ -158,7 +158,7 @@
   "openQueue": "Open queue",
   "stats": {
    "appointments": "Today's appointments",
-   "patients": "Registered pregnant women",
+   "patients": "Registered visitors",
    "consulting": "Consulting",
    "roomFree": "Room free",
    "ready": "Ready",
@@ -172,7 +172,7 @@
    "body": "Most-used tasks for the front desk.",
    "walkIn": "Register a walk-in",
    "book": "Book an appointment",
-   "find": "Find a pregnant woman",
+   "find": "Find a visitor",
    "queue": "Manage today's queue",
    "display": "Open waiting-room display"
   }
@@ -196,14 +196,14 @@
   "search": "Search"
  },
  "patients": {
-  "title": "Pregnant women",
-  "count": "{count, plural, one {# pregnant woman registered} other {# pregnant women registered}}",
-  "countMatching": "{count, plural, one {# pregnant woman} other {# pregnant women}} matching “{q}”",
-  "register": "Register pregnant woman",
+  "title": "Visitors",
+  "count": "{count, plural, one {# visitor registered} other {# visitors registered}}",
+  "countMatching": "{count, plural, one {# visitor} other {# visitors}} matching “{q}”",
+  "register": "Register visitor",
   "search": "Search by name or phone",
-  "emptyTitle": "No pregnant women found",
+  "emptyTitle": "No visitors found",
   "emptySearch": "Try another name or the last digits of the phone number.",
-  "emptyBody": "Register the first pregnant woman to get started.",
+  "emptyBody": "Register the first visitor to get started.",
   "col": {
    "patient": "Name",
    "phone": "Phone",
@@ -223,11 +223,11 @@
   },
   "form": {
    "updated": "Details updated",
-   "registered": "Pregnant woman registered",
+   "registered": "Visitor registered",
    "editTitle": "Edit details",
-   "createTitle": "Register a pregnant woman",
+   "createTitle": "Register a visitor",
    "editBody": "Update her contact details.",
-   "createBody": "Creates her record. She can later sign up to the pregnancy portal with the same number.",
+   "createBody": "Creates her record. She can later sign up to the visitor portal with the same number.",
    "fullName": "Full name",
    "phone": "Mobile number",
    "phoneLocked": "This number is her portal login and can't be changed here.",
@@ -241,8 +241,8 @@
    "languageHint": "Reminders are written in this language."
   },
   "detail": {
-   "metaTitle": "Pregnant woman",
-   "back": "All pregnant women",
+   "metaTitle": "Visitor",
+   "back": "All visitors",
    "age": "{count} years",
    "edit": "Edit",
    "book": "Book appointment",
@@ -341,13 +341,13 @@
   "cancel": {
    "button": "Cancel appointment",
    "title": "Cancel this appointment?",
-   "body": "The time will be released to other pregnant women. You can book again at any time.",
+   "body": "The time will be released to other visitors. You can book again at any time.",
    "reason": "Reason",
    "optional": "(optional)",
    "keep": "Keep appointment",
    "confirm": "Yes, cancel",
    "done": "Appointment cancelled",
-   "doneBody": "The time is now free for other pregnant women.",
+   "doneBody": "The time is now free for other visitors.",
    "failed": "Could not cancel"
   },
   "booking": {
@@ -432,7 +432,7 @@
    "none": "No consultation in progress."
   },
   "next": {
-   "title": "Next pregnant woman",
+   "title": "Next visitor",
    "expected": "Expected",
    "absent": "Absent",
    "finishFirst": "Finish the current consultation before starting the next one.",
@@ -475,17 +475,17 @@
    "back": "Back",
    "start_consultation": {
     "title": "Start consultation with {name}?",
-    "body": "Ticket {number} will show as \"with the doctor\" on the waiting-room screen and the next pregnant woman present becomes Ready.",
+    "body": "Ticket {number} will show as \"with the doctor\" on the waiting-room screen and the next visitor present becomes Ready.",
     "confirm": "Start consultation"
    },
    "finish_consultation": {
     "title": "Finish {name}'s consultation?",
-    "body": "The next pregnant woman will not be started automatically. You will confirm it separately. Expected times are recalculated for everyone.",
+    "body": "The next visitor will not be started automatically. You will confirm it separately. Expected times are recalculated for everyone.",
     "confirm": "Finish consultation"
    },
    "mark_absent": {
     "title": "Mark {name} as absent?",
-    "body": "The next pregnant woman present becomes Ready. If {name} hasn't returned after {lateAfter} more finished consultations, she moves to the end of the queue as Late.",
+    "body": "The next visitor present becomes Ready. If {name} hasn't returned after {lateAfter} more finished consultations, she moves to the end of the queue as Late.",
     "confirm": "Mark absent"
    },
    "mark_late": {
@@ -514,7 +514,7 @@
    "finish_consultation": "{name}'s consultation finished",
    "mark_late": "{name} moved to the end of the queue",
    "cancel": "{name}'s visit cancelled",
-   "movedLate": "Absent pregnant women moved to Late: {count}",
+   "movedLate": "Absent visitors moved to Late: {count}",
    "moved": "{name} moved",
    "duration": "Duration updated"
   }
@@ -533,7 +533,7 @@
    "doneBody": "Share the email and password with them privately.",
    "trigger": "Add secretary",
    "title": "Add a secretary",
-   "body": "They sign in on the staff page and can manage pregnant women, appointments and the queue, but not settings or staff.",
+   "body": "They sign in on the staff page and can manage visitors, appointments and the queue, but not settings or staff.",
    "fullName": "Full name",
    "email": "Email (used to sign in)",
    "password": "Temporary password",
@@ -569,11 +569,11 @@
   "readOnly": "Only the doctor can change these settings. You can view them here.",
   "hours": {
    "title": "Working hours",
-   "body": "Pregnant women can only book inside these periods. Several periods per day are allowed.",
+   "body": "Visitors can only book inside these periods. Several periods per day are allowed.",
    "errOrder": "Ends before it starts",
    "errOverlap": "Overlaps the period above",
    "saved": "Working hours saved",
-   "savedBody": "Pregnant women can only book inside these hours from now on.",
+   "savedBody": "Visitors can only book inside these hours from now on.",
    "open": "Open",
    "closed": "Closed",
    "start": "{day} start",
@@ -583,11 +583,15 @@
    "openDay": "Open this day",
    "total": "<b>{hours}</b> clinic hours per week",
    "unsaved": "Unsaved changes",
-   "save": "Save working hours"
+   "save": "Save working hours",
+   "conflictTitle": "{count, plural, one {# booking falls outside these hours} other {# bookings fall outside these hours}}",
+   "conflictBody": "These upcoming appointments are on a day you are closing, or outside the new times. Cancel or move them first, or save anyway and contact these visitors.",
+   "conflictBack": "Go back",
+   "conflictSaveAnyway": "Save anyway"
   },
   "rules": {
    "title": "Clinic & queue rules",
-   "body": "Name shown to pregnant women and on the waiting-room screen, plus timing rules."
+   "body": "Name shown to visitors and on the waiting-room screen, plus timing rules."
   },
   "form": {
    "saved": "Clinic settings saved",
@@ -614,22 +618,22 @@
    },
    "latePolicyConsultations": {
     "label": "Late policy",
-    "hint": "An absent pregnant woman becomes Late after this many consultations."
+    "hint": "An absent visitor becomes Late after this many consultations."
    },
    "bookingHorizonDays": {
     "label": "Booking window",
-    "hint": "How far ahead pregnant women can book."
+    "hint": "How far ahead visitors can book."
    },
    "cancellationCutoffMinutes": {
     "label": "Online cancellation cutoff",
-    "hint": "Pregnant women can't cancel online closer than this."
+    "hint": "Visitors can't cancel online closer than this."
    }
   }
  },
  "meta": {
   "brand": "Dr. Rodaina Medhat Clinic",
   "title": "Dr. Rodaina Medhat Clinic",
-  "description": "Queue, appointments and pregnancy portal for Dr. Rodaina Medhat's obstetrics & gynecology clinic."
+  "description": "Queue, appointments and visitor portal for Dr. Rodaina Medhat's obstetrics & gynecology clinic."
  },
  "prefs": {
   "theme": "Theme",
@@ -647,14 +651,14 @@
   "roles": {
    "doctor": "Doctor",
    "secretary": "Secretary",
-   "patient": "Pregnant woman"
+   "patient": "Visitor"
   }
  },
  "nav": {
   "dashboard": "Dashboard",
   "queue": "Today's queue",
   "appointments": "Appointments",
-  "patients": "Pregnant women",
+  "patients": "Visitors",
   "settings": "Clinic settings",
   "secretaries": "Secretaries",
   "display": "Waiting-room display"
@@ -684,7 +688,7 @@
   "namePlaceholder": "e.g. Sara Abdullah",
   "phone": "Phone number",
   "phoneHint": "If this number already exists, her existing record is used.",
-  "find": "Find pregnant woman",
+  "find": "Find visitor",
   "change": "Change",
   "searchPlaceholder": "Name or phone",
   "noMatch": "No match.",
@@ -726,7 +730,7 @@
   },
   "toastNew": "{count, plural, =0 {No new reminders} one {# new reminder} other {# new reminders}}",
   "toastNewAuto": "{count, plural, =0 {No new reminders} one {# reminder sent} other {# reminders sent}}",
-  "toastNoneDesc": "Turn alerts appear when a pregnant woman is within the reminder window. Appointment reminders are prepared for tomorrow's bookings.",
+  "toastNoneDesc": "Turn alerts appear when a visitor is within the reminder window. Appointment reminders are prepared for tomorrow's bookings.",
   "toastLinkDesc": "Nothing is sent until you press Send in WhatsApp.",
   "rowAction": "WhatsApp reminder",
   "rowOpened": "WhatsApp opened with the reminder. Press Send there.",

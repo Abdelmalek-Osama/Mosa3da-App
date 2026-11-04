@@ -2,11 +2,23 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { Locale } from "@/i18n/config";
+import { formatClinicDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { saveWorkingDaysAction } from "@/features/settings/actions";
 
@@ -27,6 +39,7 @@ function dayName(weekday: number, locale: string) {
 }
 
 type Row = Period & { key: number };
+type Conflict = { appointment_id: string; clinic_date: string; scheduled_start: string; patient_name: string };
 let seq = 0;
 
 function minutes(t: string) {
@@ -51,6 +64,7 @@ export function WorkingHoursEditor({ initial, readOnly }: { initial: Period[]; r
   const [rows, setRows] = useState<Row[]>(() => initial.map((p) => ({ ...p, key: ++seq })));
   const [dirty, setDirty] = useState(false);
   const [pending, start] = useTransition();
+  const [conflicts, setConflicts] = useState<Conflict[]>([]);
   const errors = useMemo(() => validate(rows, { order: t("errOrder"), overlap: t("errOverlap") }), [rows, t]);
   const hasErrors = Object.keys(errors).length > 0;
 
@@ -67,13 +81,22 @@ export function WorkingHoursEditor({ initial, readOnly }: { initial: Period[]; r
   const set = (key: number, field: "start" | "end", value: string) => update(rows.map((r) => (r.key === key ? { ...r, [field]: value } : r)));
   const remove = (key: number) => update(rows.filter((r) => r.key !== key));
 
-  const save = () =>
+  const save = (force = false) =>
     start(async () => {
-      const res = await saveWorkingDaysAction(rows.map(({ weekday, start: s, end }) => ({ weekday, start: s, end })));
+      const res = await saveWorkingDaysAction(
+        rows.map(({ weekday, start: s, end }) => ({ weekday, start: s, end })),
+        force,
+      );
       if (!res.ok) {
         toast.error(res.error.message);
         return;
       }
+      if (!res.data.saved) {
+        // Bookings would end up on closed days / outside hours: ask first.
+        setConflicts(res.data.conflicts);
+        return;
+      }
+      setConflicts([]);
       toast.success(t("saved"), { description: t("savedBody") });
       setDirty(false);
       router.refresh();
@@ -145,11 +168,43 @@ export function WorkingHoursEditor({ initial, readOnly }: { initial: Period[]; r
           {dirty ? <span className="ms-2 text-amber-700">· {t("unsaved")}</span> : null}
         </p>
         {readOnly ? null : (
-          <Button onClick={save} disabled={pending || !dirty || hasErrors} className="w-full sm:w-auto">
+          <Button onClick={() => save()} disabled={pending || !dirty || hasErrors} className="w-full sm:w-auto">
             {pending ? <Loader2 className="animate-spin" /> : <Save />} {t("save")}
           </Button>
         )}
       </div>
+      <AlertDialog open={conflicts.length > 0} onOpenChange={(open) => !open && !pending && setConflicts([])}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600" /> {t("conflictTitle", { count: conflicts.length })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>{t("conflictBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <ul className="max-h-60 divide-y overflow-y-auto rounded-lg border text-sm">
+            {conflicts.map((c) => (
+              <li key={c.appointment_id} className="flex items-center justify-between gap-3 px-3 py-2">
+                <span dir="auto" className="min-w-0 truncate font-medium text-navy-900">{c.patient_name}</span>
+                <span className="tabular shrink-0 text-muted-foreground">
+                  {formatClinicDate(c.clinic_date, { year: undefined }, locale as Locale)} · {formatTime(c.scheduled_start, undefined, locale as Locale)}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={pending}>{t("conflictBack")}</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={(e) => {
+                e.preventDefault();
+                save(true);
+              }}
+            >
+              {pending ? <Loader2 className="animate-spin" /> : null} {t("conflictSaveAnyway")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
