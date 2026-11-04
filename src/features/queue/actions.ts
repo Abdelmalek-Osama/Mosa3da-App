@@ -6,6 +6,7 @@ import { isAppError } from "@/lib/errors/app-error";
 import { fromPostgrestError } from "@/lib/errors/postgres";
 import { requirePatient, requireStaff } from "@/server/authorization/actor";
 import { QueueService } from "@/server/application/queue/queue-service";
+import { reasonDuration } from "@/server/application/settings/visit-reasons";
 import {
   processDueNotifications,
   processDueNotificationsSafely,
@@ -53,7 +54,7 @@ export async function registerWalkInAction(input: WalkInInput) {
       phone: data.mode === "new" ? data.phone : undefined,
       visitReason: data.visitReason,
       visitReasonDetails: data.visitReasonDetails,
-      durationMinutes: data.durationMinutes,
+      durationMinutes: data.durationMinutes ?? (await reasonDuration(actor.supabase, data.visitReason).catch(() => undefined)),
       notes: data.notes,
     });
     if (data.mode === "new" && data.fullNameEn && result.patient_created) {

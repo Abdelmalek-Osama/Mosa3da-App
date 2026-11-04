@@ -94,7 +94,8 @@ export interface RegisterWalkInParams {
   phone?: string;
   visitReason: VisitReason;
   visitReasonDetails?: string;
-  durationMinutes: number;
+  /** Omitted: the database falls back to the clinic default duration. */
+  durationMinutes?: number;
   notes?: string;
 }
 
@@ -123,7 +124,7 @@ export class QueueService {
         p_phone: params.phone ?? null,
         p_visit_reason: params.visitReason,
         p_visit_reason_details: params.visitReasonDetails ?? null,
-        p_duration_minutes: params.durationMinutes,
+        p_duration_minutes: params.durationMinutes ?? null,
         p_notes: params.notes ?? null,
         p_patient_id: params.patientId ?? null,
       },

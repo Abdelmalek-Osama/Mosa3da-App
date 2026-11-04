@@ -49,6 +49,7 @@ const SENTINELS: Record<string, string> = {
   "20261104001200_lobby_display.sql": "select to_regprocedure('public.set_display_bilingual(boolean)') is not null as applied",
   "20261104001300_whatsapp_copy_and_soon.sql":
     "select to_regprocedure('public.enqueue_pre_appointment_alerts(public.notification_channel)') is not null as applied",
+  "20261104001400_visit_reason_settings.sql": "select to_regclass('public.visit_reason_settings') is not null as applied",
 };
 
 async function main() {

@@ -164,6 +164,9 @@ const EXACT: Record<string, string> = {
   "Only scheduled appointments can be rescheduled. Checked-in patients are managed from the queue.":
     "يمكن تعديل المواعيد المجدولة فقط. تتم إدارة الزائرات الحاضرات من قائمة الانتظار.",
 
+  "This visit reason is not available": "سبب الزيارة هذا غير متاح",
+  "Keep at least one reason available": "أبقِ سببًا واحدًا على الأقل متاحًا",
+
   // Password reset (P1-09)
   "No account is registered with this number.": "لا يوجد حساب مسجّل بهذا الرقم.",
   "No account with this number": "لا يوجد حساب بهذا الرقم",

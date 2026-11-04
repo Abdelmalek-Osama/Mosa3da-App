@@ -20,7 +20,8 @@ import { createPatientAction } from "@/features/patients/staff-actions";
 import { formatClinicDate, formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
-import { VISIT_REASONS, type VisitReason } from "@/server/domain/queue/constants";
+import { useVisitReasons } from "@/features/settings/use-visit-reasons";
+import type { VisitReason } from "@/server/domain/queue/constants";
 import type { Slot } from "@/server/application/appointments/booking-service";
 
 interface PatientRef {
@@ -52,6 +53,7 @@ export function BookAppointmentDialog({
   const tReason = useTranslations("visitReason");
   const locale = useLocale() as Locale;
   const [open, setOpen] = useState(false);
+  const reasons = useVisitReasons(open && !reschedule);
   const [patient, setPatient] = useState<PatientRef | null>(fixedPatient ?? null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PatientRef[]>([]);
@@ -350,7 +352,7 @@ export function BookAppointmentDialog({
                   <SelectValue placeholder={t("selectReason")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {VISIT_REASONS.map((r) => (
+                  {reasons.map(({ reason: r }) => (
                     <SelectItem key={r} value={r}>
                       {tReason(r)}
                     </SelectItem>

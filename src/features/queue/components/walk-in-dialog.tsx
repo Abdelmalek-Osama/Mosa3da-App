@@ -18,9 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
-import { VISIT_REASONS, type VisitReason } from "@/server/domain/queue/constants";
-
-const DURATIONS = [10, 15, 20, 30, 45];
+import { useVisitReasons } from "@/features/settings/use-visit-reasons";
+import type { VisitReason } from "@/server/domain/queue/constants";
 
 interface FoundPatient {
   id: string;
@@ -50,6 +49,8 @@ export function WalkInDialog({
   const tq = useTranslations("queue");
   const locale = useLocale() as Locale;
   const [open, setOpen] = useState(false);
+  // Reason decides the duration (doctor's settings, P3-19); no manual pills.
+  const reasons = useVisitReasons(open);
   const [formKey, setFormKey] = useState(0);
   const [pending, startTransition] = useTransition();
 
@@ -63,7 +64,6 @@ export function WalkInDialog({
   const [selected, setSelected] = useState<FoundPatient | null>(null);
   const [visitReason, setVisitReason] = useState<VisitReason | "">("");
   const [details, setDetails] = useState("");
-  const [duration, setDuration] = useState(defaultDuration);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -77,7 +77,6 @@ export function WalkInDialog({
     setSelected(null);
     setVisitReason("");
     setDetails("");
-    setDuration(defaultDuration);
     setNotes("");
     setErrors({});
     setFormKey((k) => k + 1);
@@ -112,7 +111,6 @@ export function WalkInDialog({
         phone: mode === "new" ? phone : undefined,
         visitReason,
         visitReasonDetails: details || undefined,
-        durationMinutes: duration,
         notes: notes || undefined,
       });
       if (!res.ok) {
@@ -244,7 +242,7 @@ export function WalkInDialog({
                   <SelectValue placeholder={t("selectReasonPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {VISIT_REASONS.map((r) => (
+                  {reasons.map(({ reason: r }) => (
                     <SelectItem key={r} value={r}>
                       {tReason(r)}
                     </SelectItem>
@@ -260,26 +258,11 @@ export function WalkInDialog({
                 <FieldError errors={errors} name="visitReasonDetails" />
               </div>
             ) : null}
-            <div className="space-y-2 sm:col-span-2">
-              <Label>{t("duration")}</Label>
-              <div className="flex flex-wrap gap-2">
-                {DURATIONS.map((d) => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => setDuration(d)}
-                    className={cn(
-                      "tabular h-10 rounded-md border px-4 text-sm font-medium transition-colors",
-                      d === duration ? "border-secondary bg-secondary text-secondary-foreground" : "bg-card hover:bg-muted",
-                    )}
-                    aria-pressed={d === duration}
-                  >
-                    {tq("min", { count: d })}
-                  </button>
-                ))}
-              </div>
-              <FieldError errors={errors} name="durationMinutes" />
-            </div>
+            {visitReason ? (
+              <p className="text-sm text-muted-foreground sm:col-span-2">
+                {t("autoDuration", { minutes: reasons.find((r) => r.reason === visitReason)?.durationMinutes ?? defaultDuration })}
+              </p>
+            ) : null}
             <div className="space-y-2 sm:col-span-2">
               <Label htmlFor="wi-notes">{t("notes")}</Label>
               <Textarea id="wi-notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} placeholder={t("notesPlaceholder")} />

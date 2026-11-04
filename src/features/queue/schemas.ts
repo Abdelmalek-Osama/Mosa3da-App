@@ -27,7 +27,8 @@ export const walkInSchema = z
     phone: z.string().trim().max(32).optional(),
     visitReason: z.enum(VISIT_REASONS),
     visitReasonDetails: optionalText(200),
-    durationMinutes: duration.default(20),
+    /** Omitted by reception: the visit reason's configured duration applies (P3-19). */
+    durationMinutes: duration.optional(),
     notes: optionalText(1000),
   })
   .superRefine((value, ctx) => {

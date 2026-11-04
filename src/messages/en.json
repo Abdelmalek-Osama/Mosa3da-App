@@ -683,6 +683,19 @@
    "clinicAddressHint": "Included in WhatsApp booking confirmations.",
    "clinicMapUrl": "Google Maps link (optional)",
    "clinicMapUrlHint": "Paste the clinic's location link. It is added to booking confirmations."
+  },
+  "reasons": {
+   "title": "Reasons for visit",
+   "body": "Set the expected consultation length for each reason. Reception only picks the reason; its duration is used for the queue and the waiting-room times.",
+   "offered": "Offer {reason}",
+   "duration": "Duration for {reason}",
+   "min": "min",
+   "up": "Move up",
+   "down": "Move down",
+   "hint": "Unticked reasons are hidden from reception and online booking.",
+   "unsaved": "Unsaved changes",
+   "save": "Save reasons",
+   "saved": "Reasons for visit saved"
   }
  },
  "meta": {
@@ -760,7 +773,8 @@
   "added": "Added as #{number}",
   "expectedAt": "Expected at {time}",
   "created": "new record created",
-  "fullNameEn": "Name in English (optional)"
+  "fullNameEn": "Name in English (optional)",
+  "autoDuration": "Expected duration: {minutes} min (set by the reason for visit)"
  },
  "reminders": {
   "title": "WhatsApp reminders",

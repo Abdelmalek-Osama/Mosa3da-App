@@ -13,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { formatClinicDate, formatTime } from "@/lib/format";
-import { VISIT_REASONS, type VisitReason } from "@/server/domain/queue/constants";
+import { useVisitReasons } from "@/features/settings/use-visit-reasons";
+import type { VisitReason } from "@/server/domain/queue/constants";
 import type { BookingCalendar, Slot } from "@/server/application/appointments/booking-service";
 import { bookAppointmentAction, getSlotsAction } from "@/features/appointments/actions";
 
@@ -46,6 +47,7 @@ export function BookingFlow({
   const [slotError, setSlotError] = useState<string | null>(null);
   const [slotStart, setSlotStart] = useState<string | null>(null);
   const [reason, setReason] = useState<VisitReason | null>(null);
+  const reasons = useVisitReasons();
   const [details, setDetails] = useState("");
   const [notes, setNotes] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -260,7 +262,7 @@ export function BookingFlow({
           <div>
             <h2 className="mb-2 text-sm font-semibold text-navy-900">{t("whatFor")}</h2>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("reasonLabel")}>
-              {VISIT_REASONS.map((r) => {
+              {reasons.map(({ reason: r }) => {
                 const selected = reason === r;
                 return (
                   <button

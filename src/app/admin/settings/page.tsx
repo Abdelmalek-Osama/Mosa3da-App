@@ -5,7 +5,9 @@ import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClinicSettingsForm } from "@/features/settings/components/clinic-settings-form";
+import { VisitReasonsEditor } from "@/features/settings/components/visit-reasons-editor";
 import { WorkingHoursEditor } from "@/features/settings/components/working-hours-editor";
+import { listVisitReasons } from "@/server/application/settings/visit-reasons";
 import { SettingsAdminService } from "@/server/application/settings/settings-admin-service";
 import { requireStaff } from "@/server/authorization/actor";
 
@@ -19,7 +21,11 @@ export default async function SettingsPage() {
   const actor = await requireStaff().catch(() => null);
   if (!actor) redirect("/login");
 
-  const { settings, periods } = await new SettingsAdminService(actor.supabase).get();
+  const [{ settings, periods }, reasons] = await Promise.all([
+    new SettingsAdminService(actor.supabase).get(),
+    // Empty until the visit-reason migration is applied; the card is hidden then.
+    listVisitReasons(actor.supabase).catch(() => []),
+  ]);
   const readOnly = actor.role !== "doctor";
   const t = await getTranslations("settings");
   const { updatedAt: _u, timezone, ...editable } = settings;
@@ -55,6 +61,17 @@ export default async function SettingsPage() {
             <ClinicSettingsForm initial={editable} readOnly={readOnly} />
           </CardContent>
         </Card>
+        {reasons.length ? (
+          <Card className="xl:col-span-2">
+            <CardHeader>
+              <CardTitle>{t("reasons.title")}</CardTitle>
+              <CardDescription>{t("reasons.body")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <VisitReasonsEditor initial={reasons} readOnly={readOnly} />
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </>
   );
