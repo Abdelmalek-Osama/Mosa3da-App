@@ -91,6 +91,12 @@ export class AppointmentAdminService {
     return z.object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string() }).parse(data);
   }
 
+  async reschedule(appointmentId: string, slotStart: string) {
+    const { data, error } = await this.db.rpc("staff_reschedule_appointment", { p_appointment_id: appointmentId, p_slot_start: slotStart });
+    if (error) throw fromPostgrestError(error);
+    return z.object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string() }).parse(data);
+  }
+
   async cancel(appointmentId: string, reason?: string) {
     const { error } = await this.db.rpc("staff_cancel_appointment", { p_appointment_id: appointmentId, p_reason: reason ?? null });
     if (error) throw fromPostgrestError(error);

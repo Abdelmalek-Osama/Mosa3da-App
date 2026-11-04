@@ -198,7 +198,20 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                 </div>
                 {canCancel ? (
                   <div className="col-span-2 sm:col-span-1">
-                    <AppointmentRowActions appointmentId={a.id} patientName={a.patient.fullName} canCheckIn={canCheckIn} canCancel={canCancel} autoSend={autoSend} confirmHref={confirmHref} />
+                    <AppointmentRowActions appointmentId={a.id} patientName={a.patient.fullName} canCheckIn={canCheckIn} canCancel={canCancel} autoSend={autoSend}
+                      confirmHref={confirmHref}
+                      reschedule={
+                        a.scheduledStart
+                          ? {
+                              timezone: tz,
+                              today,
+                              clinicDate: a.clinicDate,
+                              scheduledStart: a.scheduledStart,
+                              patient: { id: a.patient.id, fullName: a.patient.fullName, phone: a.patient.phone },
+                            }
+                          : undefined
+                      }
+                    />
                   </div>
                 ) : null}
               </li>

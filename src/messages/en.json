@@ -33,7 +33,8 @@
    "body": "The time becomes available for booking again.",
    "reason": "Reason (optional)",
    "keep": "Keep",
-   "confirm": "Cancel appointment"
+   "confirm": "Cancel appointment",
+   "reschedule": "Reschedule"
   },
   "book": {
    "trigger": "New appointment",
@@ -42,7 +43,7 @@
    "patient": "Visitor",
    "change": "Change",
    "search": "Search by name or phone",
-   "noMatch": "No match. Register her first from the Visitors page.",
+   "noMatch": "No match. Use the New visitor tab to register her.",
    "date": "Date",
    "time": "Time",
    "free": "{count} free",
@@ -58,7 +59,17 @@
    "errTime": "Choose a time",
    "errReason": "Choose a visit reason",
    "booked": "Appointment booked",
-   "bookedBody": "{name} · {date} at {time}"
+   "bookedBody": "{name} · {date} at {time}",
+   "rescheduleTitle": "Reschedule appointment",
+   "rescheduleBody": "Currently {current}. Pick a new free time; the old time becomes available right away.",
+   "rescheduleSubmit": "Move appointment",
+   "rescheduled": "Appointment moved",
+   "existingVisitor": "Registered visitor",
+   "newVisitor": "New visitor",
+   "newName": "Full name in Arabic (triple name)",
+   "newNamePlaceholder": "e.g. سارة أحمد حسن",
+   "newNameEn": "Name in English (optional)",
+   "newPhone": "Mobile number"
   },
   "confirmWa": {
    "button": "Confirm via WhatsApp",

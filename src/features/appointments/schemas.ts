@@ -21,6 +21,11 @@ export const cancelAppointmentSchema = z.object({
   reason: z.string().trim().max(500).optional().transform((v) => v || undefined),
 });
 
+export const rescheduleSchema = z.object({
+  appointmentId: z.string().uuid(),
+  slotStart: z.string().datetime({ offset: true, message: "Choose a time" }),
+});
+
 export const staffBookSchema = z
   .object({
     patientId: z.string().uuid({ message: "Select a patient" }),

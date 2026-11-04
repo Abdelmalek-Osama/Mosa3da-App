@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCheck, Loader2, MessageCircle, UserCheck, XCircle } from "lucide-react";
+import { CalendarClock, CheckCheck, Loader2, MessageCircle, UserCheck, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { checkInAppointmentAction, staffCancelAppointmentAction } from "@/features/appointments/staff-actions";
+import { BookAppointmentDialog } from "./book-appointment-dialog";
 import { sendAppointmentReminderAction } from "@/features/notifications/actions";
 
 export function AppointmentRowActions({
@@ -28,6 +29,7 @@ export function AppointmentRowActions({
   canCancel,
   autoSend = false,
   confirmHref,
+  reschedule,
 }: {
   appointmentId: string;
   patientName: string;
@@ -36,6 +38,14 @@ export function AppointmentRowActions({
   autoSend?: boolean;
   /** wa.me link with the booking confirmation ready (P1-12). */
   confirmHref?: string;
+  /** Data for the Reschedule button (P1-08). */
+  reschedule?: {
+    timezone: string;
+    today: string;
+    clinicDate: string;
+    scheduledStart: string;
+    patient: { id: string; fullName: string; phone: string };
+  };
 }) {
   const router = useRouter();
   const t = useTranslations("appointments.row");
@@ -100,6 +110,19 @@ export function AppointmentRowActions({
         <Button size="sm" variant="secondary" onClick={checkIn} disabled={checking}>
           {checking ? <Loader2 className="animate-spin" /> : <UserCheck />} {t("checkIn")}
         </Button>
+      ) : null}
+      {canCancel && reschedule ? (
+        <BookAppointmentDialog
+          timezone={reschedule.timezone}
+          today={reschedule.today}
+          patient={reschedule.patient}
+          reschedule={{ appointmentId, clinicDate: reschedule.clinicDate, currentStart: reschedule.scheduledStart }}
+          trigger={
+            <Button size="sm" variant="outline">
+              <CalendarClock /> {t("reschedule")}
+            </Button>
+          }
+        />
       ) : null}
       {confirmHref ? (
         <Button asChild size="sm" variant="outline">

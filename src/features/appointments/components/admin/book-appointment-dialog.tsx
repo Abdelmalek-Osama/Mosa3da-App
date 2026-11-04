@@ -2,18 +2,21 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Loader2, Search, X } from "lucide-react";
+import { CalendarClock, CalendarPlus, Loader2, Search, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { PhoneInput } from "@/components/shared/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { searchPatientsAction } from "@/features/queue/actions";
-import { staffBookAppointmentAction, staffGetSlotsAction } from "@/features/appointments/staff-actions";
+import { staffBookAppointmentAction, staffGetSlotsAction, staffRescheduleAppointmentAction } from "@/features/appointments/staff-actions";
+import { createPatientAction } from "@/features/patients/staff-actions";
 import { formatClinicDate, formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
@@ -34,12 +37,15 @@ export function BookAppointmentDialog({
   defaultDate,
   patient: fixedPatient,
   trigger,
+  reschedule,
 }: {
   timezone: string;
   today: string;
   defaultDate?: string;
   patient?: PatientRef;
   trigger?: React.ReactNode;
+  /** Move this existing booking to a new free time instead of booking (P1-08). */
+  reschedule?: { appointmentId: string; clinicDate: string; currentStart: string };
 }) {
   const router = useRouter();
   const t = useTranslations("appointments.book");
@@ -50,7 +56,8 @@ export function BookAppointmentDialog({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PatientRef[]>([]);
   const [searching, setSearching] = useState(false);
-  const [date, setDate] = useState(defaultDate && defaultDate >= today ? defaultDate : today);
+  const initialDate = reschedule ? reschedule.clinicDate : defaultDate;
+  const [date, setDate] = useState(initialDate && initialDate >= today ? initialDate : today);
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slotError, setSlotError] = useState<string | null>(null);
   const [slotStart, setSlotStart] = useState<string | null>(null);
@@ -59,12 +66,23 @@ export function BookAppointmentDialog({
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, start] = useTransition();
+  // "New visitor" tab: register her inline, then book (P1-08).
+  const [newVisitor, setNewVisitor] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newNameEn, setNewNameEn] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [formKey, setFormKey] = useState(0);
 
   function reset() {
+    setNewVisitor(false);
+    setNewName("");
+    setNewNameEn("");
+    setNewPhone("");
+    setFormKey((k) => k + 1);
     setPatient(fixedPatient ?? null);
     setQuery("");
     setResults([]);
-    setDate(defaultDate && defaultDate >= today ? defaultDate : today);
+    setDate(initialDate && initialDate >= today ? initialDate : today);
     setSlotStart(null);
     setReason("");
     setDetails("");
@@ -105,16 +123,56 @@ export function BookAppointmentDialog({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const local: Errors = {};
-    if (!patient) local.patientId = [t("errPatient")];
+    if (!patient && !newVisitor) local.patientId = [t("errPatient")];
     if (!slotStart) local.slotStart = [t("errTime")];
-    if (!reason) local.visitReason = [t("errReason")];
+    if (!reason && !reschedule) local.visitReason = [t("errReason")];
     if (Object.keys(local).length) {
       setErrors(local);
       return;
     }
+    if (reschedule) {
+      start(async () => {
+        const res = await staffRescheduleAppointmentAction({ appointmentId: reschedule.appointmentId, slotStart: slotStart! });
+        if (!res.ok) {
+          toast.error(res.error.message);
+          if (res.error.code === "CONFLICT") staffGetSlotsAction(date).then((r) => r.ok && setSlots(r.data));
+          return;
+        }
+        toast.success(t("rescheduled"), {
+          description: t("bookedBody", {
+            name: patient!.fullName,
+            date: formatClinicDate(res.data.clinic_date, { year: undefined }, locale),
+            time: formatTime(res.data.scheduled_start, timezone, locale),
+          }),
+        });
+        setOpen(false);
+        reset();
+        router.refresh();
+      });
+      return;
+    }
     start(async () => {
+      let target = patient;
+      if (!target) {
+        const created = await createPatientAction({
+          fullName: newName,
+          fullNameEn: newNameEn,
+          phone: newPhone,
+          email: "",
+          dateOfBirth: "",
+          preferredLocale: "ar",
+        });
+        if (!created.ok) {
+          setErrors(created.error.fieldErrors ?? {});
+          toast.error(created.error.message);
+          return;
+        }
+        target = { id: created.data.id, fullName: newName.trim().replace(/\s+/g, " "), phone: newPhone };
+        setPatient(target);
+        setNewVisitor(false);
+      }
       const res = await staffBookAppointmentAction({
-        patientId: patient!.id,
+        patientId: target.id,
         slotStart: slotStart!,
         visitReason: reason as VisitReason,
         visitReasonDetails: reason === "other" ? details : undefined,
@@ -128,7 +186,7 @@ export function BookAppointmentDialog({
       }
       toast.success(t("booked"), {
         description: t("bookedBody", {
-          name: patient!.fullName,
+          name: target.fullName,
           date: formatClinicDate(res.data.clinic_date, { year: undefined }, locale),
           time: formatTime(res.data.scheduled_start, timezone, locale),
         }),
@@ -158,13 +216,49 @@ export function BookAppointmentDialog({
       </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("body")}</DialogDescription>
+          <DialogTitle>{reschedule ? t("rescheduleTitle") : t("title")}</DialogTitle>
+          <DialogDescription>
+            {reschedule
+              ? t("rescheduleBody", { current: `${formatClinicDate(reschedule.clinicDate, { year: undefined }, locale)} · ${formatTime(reschedule.currentStart, timezone, locale)}` })
+              : t("body")}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-5" noValidate>
           <div className="space-y-2">
             <Label htmlFor="ba-search">{t("patient")}</Label>
-            {patient ? (
+            {!fixedPatient && !patient ? (
+              <RadioGroup
+                value={newVisitor ? "new" : "existing"}
+                onValueChange={(v) => {
+                  setNewVisitor(v === "new");
+                  setErrors({});
+                }}
+                className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+                aria-label={t("patient")}
+              >
+                <RadioGroupItem value="existing">{t("existingVisitor")}</RadioGroupItem>
+                <RadioGroupItem value="new">{t("newVisitor")}</RadioGroupItem>
+              </RadioGroup>
+            ) : null}
+            {!patient && newVisitor ? (
+              <div className="grid gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ba-new-name">{t("newName")}</Label>
+                  <Input id="ba-new-name" dir="rtl" lang="ar" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t("newNamePlaceholder")} autoComplete="off" aria-invalid={!!errors.fullName} />
+                  {errors.fullName ? <p className="text-sm text-destructive">{errors.fullName[0]}</p> : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ba-new-name-en">{t("newNameEn")}</Label>
+                  <Input id="ba-new-name-en" dir="ltr" lang="en" className="text-start" value={newNameEn} onChange={(e) => setNewNameEn(e.target.value)} placeholder="e.g. Sara Ahmed Hassan" autoComplete="off" aria-invalid={!!errors.fullNameEn} />
+                  {errors.fullNameEn ? <p className="text-sm text-destructive">{errors.fullNameEn[0]}</p> : null}
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="ba-new-phone">{t("newPhone")}</Label>
+                  <PhoneInput key={formKey} id="ba-new-phone" defaultValue={newPhone} onChange={setNewPhone} invalid={!!errors.phone} />
+                  {errors.phone ? <p className="text-sm text-destructive">{errors.phone[0]}</p> : null}
+                </div>
+              </div>
+            ) : patient ? (
               <div className="flex items-center justify-between rounded-lg border border-teal-200 bg-accent/60 px-3 py-2.5">
                 <div className="min-w-0">
                   <div dir="auto" className="truncate text-start font-medium">{patient.fullName}</div>
@@ -247,6 +341,7 @@ export function BookAppointmentDialog({
             {errors.slotStart ? <p className="text-sm text-destructive">{errors.slotStart[0]}</p> : null}
           </div>
 
+          {reschedule ? null : (
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label>{t("reason")}</Label>
@@ -276,14 +371,15 @@ export function BookAppointmentDialog({
               <Textarea id="ba-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} />
             </div>
           </div>
+          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
               {t("cancel")}
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? <Loader2 className="animate-spin" /> : <CalendarPlus />}
-              {t("submit")}
+              {pending ? <Loader2 className="animate-spin" /> : reschedule ? <CalendarClock /> : <CalendarPlus />}
+              {reschedule ? t("rescheduleSubmit") : t("submit")}
             </Button>
           </DialogFooter>
         </form>

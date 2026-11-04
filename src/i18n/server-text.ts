@@ -161,6 +161,9 @@ const EXACT: Record<string, string> = {
   "Enter the full triple name: first, father's and family name": "أدخل الاسم الثلاثي: الاسم الأول واسم الأب واسم العائلة",
   "Write the English name in English letters only": "اكتب الاسم الإنجليزي بحروف إنجليزية فقط",
 
+  "Only scheduled appointments can be rescheduled. Checked-in patients are managed from the queue.":
+    "يمكن تعديل المواعيد المجدولة فقط. تتم إدارة الزائرات الحاضرات من قائمة الانتظار.",
+
   // Password reset (P1-09)
   "No account is registered with this number.": "لا يوجد حساب مسجّل بهذا الرقم.",
   "No account with this number": "لا يوجد حساب بهذا الرقم",

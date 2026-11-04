@@ -6,7 +6,7 @@ import { parseInput, runAction } from "@/lib/action-result";
 import { AppointmentAdminService } from "@/server/application/appointments/appointment-admin-service";
 import { BookingService } from "@/server/application/appointments/booking-service";
 import { requireStaff } from "@/server/authorization/actor";
-import { cancelAppointmentSchema, dateSchema, staffBookSchema, type StaffBookInput } from "./schemas";
+import { cancelAppointmentSchema, dateSchema, rescheduleSchema, staffBookSchema, type StaffBookInput } from "./schemas";
 
 function revalidateAll() {
   revalidatePath("/admin/appointments");
@@ -27,6 +27,16 @@ export async function staffBookAppointmentAction(input: StaffBookInput) {
     const actor = await requireStaff();
     const data = parseInput(staffBookSchema, input);
     const result = await new AppointmentAdminService(actor.supabase).book(data);
+    revalidateAll();
+    return result;
+  });
+}
+
+export async function staffRescheduleAppointmentAction(input: { appointmentId: string; slotStart: string }) {
+  return runAction("appointments.staff_reschedule", async () => {
+    const actor = await requireStaff();
+    const data = parseInput(rescheduleSchema, input);
+    const result = await new AppointmentAdminService(actor.supabase).reschedule(data.appointmentId, data.slotStart);
     revalidateAll();
     return result;
   });
