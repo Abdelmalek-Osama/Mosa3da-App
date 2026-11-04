@@ -805,5 +805,12 @@
   "sendWelcome": "Send welcome message on WhatsApp",
   "welcomeNote": "Opens WhatsApp with the message ready. Press Send there.",
   "welcome": "Welcome {name} to Dr. Rodaina Medhat Clinic!\nYour account is now active.\n\nSign in: {url}\nUsername: {phone}\nPassword: {password}"
+ },
+ "displayMode": {
+  "arabic": "TV: Arabic only",
+  "bilingual": "TV: Arabic + English",
+  "hint": "Switch the waiting-room TV between Arabic only and two columns (Arabic and English).",
+  "nowArabic": "Waiting-room TV switched to Arabic only",
+  "nowBilingual": "Waiting-room TV switched to Arabic + English"
  }
 }

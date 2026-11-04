@@ -105,7 +105,7 @@ export interface RegisterWalkInParams {
 export class QueueService {
   constructor(private readonly db: SupabaseClient) {}
 
-  private async rpc<T>(fn: string, args: Record<string, unknown>, schema: z.ZodType<T>): Promise<T> {
+  private async rpc<T>(fn: string, args: Record<string, unknown>, schema: z.ZodType<T, z.ZodTypeDef, unknown>): Promise<T> {
     const { data, error } = await this.db.rpc(fn, args);
     if (error) throw fromPostgrestError(error);
     return schema.parse(data);

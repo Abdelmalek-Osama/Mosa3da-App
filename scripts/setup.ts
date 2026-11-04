@@ -46,6 +46,7 @@ const SENTINELS: Record<string, string> = {
     "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'doctor_settings' and column_name = 'clinic_map_url') as applied",
   "20261104001100_reschedule_appointment.sql":
     "select to_regprocedure('public.staff_reschedule_appointment(uuid,timestamptz)') is not null as applied",
+  "20261104001200_lobby_display.sql": "select to_regprocedure('public.set_display_bilingual(boolean)') is not null as applied",
 };
 
 async function main() {

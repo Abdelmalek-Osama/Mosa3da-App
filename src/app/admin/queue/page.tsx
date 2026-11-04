@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { LiveIndicator } from "@/components/shared/live-indicator";
 import { QueueBoardView } from "@/features/queue/components/queue-board-view";
 import { WalkInDialog } from "@/features/queue/components/walk-in-dialog";
+import { DisplayModeToggle } from "@/features/display/components/display-mode-toggle";
 import { formatClinicDate, formatTime } from "@/lib/format";
 import { QueueService } from "@/server/application/queue/queue-service";
 import { getClinicSettings } from "@/server/application/settings/clinic-settings";
@@ -42,7 +43,12 @@ export default async function QueuePage() {
             <LiveIndicator channel="admin-queue" />
           </span>
         }
-        actions={<WalkInDialog defaultDuration={settings.defaultConsultationMinutes} timezone={settings.timezone} />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <DisplayModeToggle initial={settings.displayBilingual} />
+            <WalkInDialog defaultDuration={settings.defaultConsultationMinutes} timezone={settings.timezone} />
+          </div>
+        }
       />
       <QueueBoardView board={board} timezone={settings.timezone} latePolicyConsultations={settings.latePolicyConsultations} />
     </>

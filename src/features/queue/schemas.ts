@@ -110,16 +110,32 @@ export const myQueueStatusSchema = z.union([
 ]);
 export type MyQueueStatus = z.infer<typeof myQueueStatusSchema>;
 
-const displayPerson = z.object({ queue_number: z.number().int().nullable(), display_name: z.string() });
+/** name_ar / name_en are full names (lobby P2-14); display_name is kept for older payloads. */
+const displayPerson = z.object({
+  queue_number: z.number().int().nullable(),
+  display_name: z.string(),
+  name_ar: z.string().optional(),
+  name_en: z.string().nullable().optional(),
+});
 
 export const displayBoardSchema = z.object({
-  clinic: z.object({ name: z.string(), name_ar: z.string(), doctor: z.string(), timezone: z.string() }),
+  clinic: z.object({
+    name: z.string(),
+    name_ar: z.string(),
+    doctor: z.string(),
+    timezone: z.string(),
+    bilingual: z.boolean().default(false),
+  }),
   session_open: z.boolean(),
   current: displayPerson.extend({ started_at: z.string().nullable() }).nullable(),
   next: displayPerson.extend({ expected_start_at: z.string().nullable() }).nullable(),
   waiting: z.array(
     displayPerson.extend({ expected_start_at: z.string().nullable(), is_late: z.boolean() }),
   ),
+  /** Today's online bookings that have not checked in yet (P2-15). */
+  booked: z
+    .array(z.object({ name_ar: z.string(), name_en: z.string().nullable(), slot_start: z.string(), slot_end: z.string().nullable() }))
+    .default([]),
   generated_at: z.string(),
 });
 export type DisplayBoard = z.infer<typeof displayBoardSchema>;
