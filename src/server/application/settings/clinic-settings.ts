@@ -11,6 +11,8 @@ const settingsSchema = z.object({
   default_consultation_minutes: z.number().int(),
   whatsapp_threshold_minutes: z.number().int(),
   late_policy_consultations: z.number().int(),
+  clinic_address: z.string().nullable(),
+  clinic_map_url: z.string().nullable(),
 });
 
 export interface ClinicSettings {
@@ -21,13 +23,15 @@ export interface ClinicSettings {
   defaultConsultationMinutes: number;
   whatsappThresholdMinutes: number;
   latePolicyConsultations: number;
+  clinicAddress: string | null;
+  clinicMapUrl: string | null;
 }
 
 export async function getClinicSettings(db: SupabaseClient): Promise<ClinicSettings> {
   const { data, error } = await db
     .from("doctor_settings")
     .select(
-      "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations",
+      "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations, clinic_address, clinic_map_url",
     )
     .eq("id", 1)
     .single();
@@ -41,5 +45,7 @@ export async function getClinicSettings(db: SupabaseClient): Promise<ClinicSetti
     defaultConsultationMinutes: s.default_consultation_minutes,
     whatsappThresholdMinutes: s.whatsapp_threshold_minutes,
     latePolicyConsultations: s.late_policy_consultations,
+    clinicAddress: s.clinic_address,
+    clinicMapUrl: s.clinic_map_url,
   };
 }

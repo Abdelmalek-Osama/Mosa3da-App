@@ -59,6 +59,14 @@
    "errReason": "Choose a visit reason",
    "booked": "Appointment booked",
    "bookedBody": "{name} · {date} at {time}"
+  },
+  "confirmWa": {
+   "button": "Confirm via WhatsApp",
+   "today": "today",
+   "message": "Hello {name}, your appointment at {clinic} is confirmed {day} at {time}. Please arrive 10 minutes early and check in at reception.",
+   "address": "Address: {address}",
+   "map": "Location: {url}",
+   "onDay": "on {date}"
   }
  },
  "landing": {
@@ -631,7 +639,11 @@
    "cancellationCutoffMinutes": {
     "label": "Online cancellation cutoff",
     "hint": "Visitors can't cancel online closer than this."
-   }
+   },
+   "clinicAddress": "Clinic address (optional)",
+   "clinicAddressHint": "Included in WhatsApp booking confirmations.",
+   "clinicMapUrl": "Google Maps link (optional)",
+   "clinicMapUrlHint": "Paste the clinic's location link. It is added to booking confirmations."
   }
  },
  "meta": {

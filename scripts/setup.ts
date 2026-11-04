@@ -42,6 +42,8 @@ const SENTINELS: Record<string, string> = {
   "20261104000800_working_hours_conflicts.sql": "select to_regprocedure('public.save_working_days(jsonb,boolean)') is not null as applied",
   "20261104000900_patient_english_name.sql":
     "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'patients' and column_name = 'full_name_en') as applied",
+  "20261104001000_clinic_location.sql":
+    "select exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'doctor_settings' and column_name = 'clinic_map_url') as applied",
 };
 
 async function main() {

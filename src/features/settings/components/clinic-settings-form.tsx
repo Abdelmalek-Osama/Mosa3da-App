@@ -60,6 +60,12 @@ export function ClinicSettingsForm({ initial, readOnly }: { initial: ClinicSetti
         <Field id="cs-doctor" label={t("doctorName")} error={errors.doctorName?.[0]} className="sm:col-span-2">
           <Input id="cs-doctor" value={values.doctorName} onChange={set("doctorName")} />
         </Field>
+        <Field id="cs-address" label={t("clinicAddress")} error={errors.clinicAddress?.[0]} hint={t("clinicAddressHint")} className="sm:col-span-2">
+          <Input id="cs-address" dir="auto" value={values.clinicAddress} onChange={set("clinicAddress")} />
+        </Field>
+        <Field id="cs-map" label={t("clinicMapUrl")} error={errors.clinicMapUrl?.[0]} hint={t("clinicMapUrlHint")} className="sm:col-span-2">
+          <Input id="cs-map" type="url" dir="ltr" className="text-start" placeholder="https://maps.app.goo.gl/…" value={values.clinicMapUrl} onChange={set("clinicMapUrl")} />
+        </Field>
       </fieldset>
       <Separator />
       <fieldset disabled={readOnly || pending} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

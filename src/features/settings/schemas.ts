@@ -17,6 +17,13 @@ export const clinicSettingsSchema = z.object({
   bookingHorizonDays: int(1, 365, "a number of days"),
   cancellationCutoffMinutes: int(0, 10080, "a number of minutes"),
   slotIntervalMinutes: int(5, 120, "an interval"),
+  clinicAddress: z.string().trim().max(300).default(""),
+  clinicMapUrl: z
+    .string()
+    .trim()
+    .max(500)
+    .default("")
+    .refine((v) => v === "" || /^https:\/\/\S+$/.test(v), "Paste a link that starts with https://"),
 });
 export type ClinicSettingsInput = { [K in keyof z.output<typeof clinicSettingsSchema>]: string | number };
 

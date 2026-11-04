@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { AppointmentAdminService } from "@/server/application/appointments/appointment-admin-service";
 import { getClinicSettings } from "@/server/application/settings/clinic-settings";
 import { requireStaff } from "@/server/authorization/actor";
-import { whatsAppConfig } from "@/server/integrations/whatsapp/config";
+import { waMeLink, whatsAppConfig } from "@/server/integrations/whatsapp/config";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -40,6 +40,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
   const settings = await getClinicSettings(actor.supabase);
   const t = await getTranslations("appointments");
   const tReason = await getTranslations("visitReason");
+  const tConfirm = await getTranslations("appointments.confirmWa");
   const locale = (await getLocale()) as Locale;
   const tz = settings.timezone;
   const today = clinicDateOf(Date.now(), tz);
@@ -144,6 +145,28 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
             const reason = a.visitReason === "other" && a.visitReasonDetails ? a.visitReasonDetails : tReason(a.visitReason);
             const canCancel = a.status === "scheduled";
             const canCheckIn = canCancel && a.clinicDate === today;
+            // One-tap booking confirmation from the clinic phone (P1-12). Opens WhatsApp only.
+            const confirmHref =
+              canCancel && a.scheduledStart
+                ? waMeLink(
+                    a.patient.phone,
+                    [
+                      tConfirm("message", {
+                        name: a.patient.fullName.split(" ")[0] ?? a.patient.fullName,
+                        clinic: locale === "ar" ? settings.clinicNameAr : settings.clinicName,
+                        day:
+                          a.clinicDate === today
+                            ? tConfirm("today")
+                            : tConfirm("onDay", { date: formatClinicDate(a.clinicDate, { year: undefined }, locale) }),
+                        time: formatTime(a.scheduledStart, tz, locale),
+                      }),
+                      settings.clinicAddress ? tConfirm("address", { address: settings.clinicAddress }) : null,
+                      settings.clinicMapUrl ? tConfirm("map", { url: settings.clinicMapUrl }) : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n"),
+                  )
+                : undefined;
             return (
               <li
                 key={a.id}
@@ -175,7 +198,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                 </div>
                 {canCancel ? (
                   <div className="col-span-2 sm:col-span-1">
-                    <AppointmentRowActions appointmentId={a.id} patientName={a.patient.fullName} canCheckIn={canCheckIn} canCancel={canCancel} autoSend={autoSend} />
+                    <AppointmentRowActions appointmentId={a.id} patientName={a.patient.fullName} canCheckIn={canCheckIn} canCancel={canCancel} autoSend={autoSend} confirmHref={confirmHref} />
                   </div>
                 ) : null}
               </li>

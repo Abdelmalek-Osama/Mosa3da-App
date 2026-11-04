@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, MessageCircle, UserCheck, XCircle } from "lucide-react";
+import { CheckCheck, Loader2, MessageCircle, UserCheck, XCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,16 +27,20 @@ export function AppointmentRowActions({
   canCheckIn,
   canCancel,
   autoSend = false,
+  confirmHref,
 }: {
   appointmentId: string;
   patientName: string;
   canCheckIn: boolean;
   canCancel: boolean;
   autoSend?: boolean;
+  /** wa.me link with the booking confirmation ready (P1-12). */
+  confirmHref?: string;
 }) {
   const router = useRouter();
   const t = useTranslations("appointments.row");
   const tr = useTranslations("reminders");
+  const tc = useTranslations("appointments.confirmWa");
   const [reminding, startRemind] = useTransition();
   const [checking, startCheck] = useTransition();
   const [cancelling, startCancel] = useTransition();
@@ -95,6 +99,13 @@ export function AppointmentRowActions({
       {canCheckIn ? (
         <Button size="sm" variant="secondary" onClick={checkIn} disabled={checking}>
           {checking ? <Loader2 className="animate-spin" /> : <UserCheck />} {t("checkIn")}
+        </Button>
+      ) : null}
+      {confirmHref ? (
+        <Button asChild size="sm" variant="outline">
+          <a href={confirmHref} target="_blank" rel="noopener noreferrer">
+            <CheckCheck className="text-[#1fa855]" /> {tc("button")}
+          </a>
         </Button>
       ) : null}
       {canCancel ? (

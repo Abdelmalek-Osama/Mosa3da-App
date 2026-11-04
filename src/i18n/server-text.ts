@@ -153,6 +153,8 @@ const EXACT: Record<string, string> = {
   "Not allowed to change role or activation status": "غير مسموح بتغيير الدور أو حالة التفعيل",
   "Patients may only update name, email and date of birth": "يمكن للزائرات تعديل الاسم والبريد وتاريخ الميلاد فقط",
 
+  "Paste a link that starts with https://": "الصق رابطًا يبدأ بـ https://",
+
   // Names (P1-07)
   "Enter the full name in Arabic": "أدخل الاسم الكامل بالعربية",
   "Write the name in Arabic letters only": "اكتب الاسم بحروف عربية فقط",
