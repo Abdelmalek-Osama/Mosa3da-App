@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { registerWalkInAction, searchPatientsAction } from "@/features/queue/actions";
+import { ReceptionActivation } from "@/features/patients/components/reception-activation";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { PhoneInput } from "@/components/shared/phone-input";
@@ -175,6 +176,9 @@ export function WalkInDialog({
                 <p className="text-xs text-muted-foreground">{t("phoneHint")}</p>
                 <FieldError errors={errors} name="phone" />
               </div>
+              <div className="sm:col-span-2">
+                <ReceptionActivation key={formKey} fullName={fullName} phone={phone} />
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -189,6 +193,9 @@ export function WalkInDialog({
                     <X />
                   </Button>
                 </div>
+              ) : null}
+              {selected ? (
+                <ReceptionActivation key={selected.id} fullName={selected.fullName} phone={selected.phone} />
               ) : (
                 <>
                   <div className="relative">

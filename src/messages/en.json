@@ -737,5 +737,24 @@
   "rowSent": "Reminder sent by WhatsApp.",
   "rowQueued": "Reminder queued. It will be sent shortly.",
   "rowFailed": "WhatsApp couldn't send the reminder: {error}"
+ },
+ "reception": {
+  "title": "Portal account",
+  "hint": "Send a 4-digit code to her WhatsApp, verify it, and she gets a password for the visitor portal.",
+  "send": "Send verification code",
+  "resend": "Send a new code",
+  "sentWhatsApp": "Code sent to her WhatsApp. Enter the code she reads out.",
+  "demoCode": "Demo mode, not sent by WhatsApp. Code:",
+  "inbound": "Ask her to send this code to the clinic's WhatsApp from her phone. Waiting…",
+  "codeLabel": "Verification code",
+  "verify": "Verify",
+  "activated": "Portal account activated",
+  "password": "Password",
+  "copy": "Copy password",
+  "copied": "Password copied",
+  "passwordOnce": "Shown only once. Give it to her now or send the welcome message.",
+  "sendWelcome": "Send welcome message on WhatsApp",
+  "welcomeNote": "Opens WhatsApp with the message ready. Press Send there.",
+  "welcome": "Welcome {name} to Dr. Rodaina Medhat Clinic!\nYour account is now active.\n\nSign in: {url}\nUsername: {phone}\nPassword: {password}"
  }
 }

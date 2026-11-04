@@ -153,6 +153,13 @@ const EXACT: Record<string, string> = {
   "Not allowed to change role or activation status": "غير مسموح بتغيير الدور أو حالة التفعيل",
   "Patients may only update name, email and date of birth": "يمكن للزائرات تعديل الاسم والبريد وتاريخ الميلاد فقط",
 
+  // Reception portal activation
+  "Enter the visitor's full name": "أدخل الاسم الكامل للزائرة",
+  "Registration not found. Send a new code.": "لم يتم العثور على التسجيل. أرسل رمزًا جديدًا.",
+  "Not verified yet. Ask the visitor to send the code from her WhatsApp, then try again.":
+    "لم يتم التحقق بعد. اطلب من الزائرة إرسال الرمز من واتساب ثم حاول مجددًا.",
+  "Could not set the password": "تعذّر تعيين كلمة المرور",
+
   // WhatsApp
   "WhatsApp is not configured.": "لم يتم إعداد واتساب.",
   "This patient has no WhatsApp reminders enabled.": "التذكيرات عبر واتساب غير مفعّلة لهذه الزائرة.",

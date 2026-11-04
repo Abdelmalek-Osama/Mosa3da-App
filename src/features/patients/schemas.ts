@@ -29,6 +29,8 @@ export const patientSignInSchema = z.object({
   next: z.string().optional(),
 });
 
+export const otpCodeSchema = z.string().trim().regex(/^\d{4}$/, "Enter the 4-digit code");
+
 export const otpSchema = z.object({
-  code: z.string().trim().regex(/^\d{4}$/, "Enter the 4-digit code"),
+  code: otpCodeSchema,
 });
