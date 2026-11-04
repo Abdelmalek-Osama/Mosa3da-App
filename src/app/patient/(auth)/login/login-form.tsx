@@ -19,6 +19,11 @@ export function PatientLoginForm({ next }: { next?: string }) {
       </Field>
       <Field id="password" label={t("password")} error={e.password}>
         <PasswordInput id="password" name="password" autoComplete="current-password" aria-invalid={!!e.password} required />
+        <div className="text-end">
+          <Link href="/patient/forgot" className="text-sm font-medium text-secondary hover:underline">
+            {t("login.forgot")}
+          </Link>
+        </div>
       </Field>
       <FormAlert message={state.error} />
       <SubmitButton pendingLabel={t("login.signingIn")}>{t("login.signIn")}</SubmitButton>

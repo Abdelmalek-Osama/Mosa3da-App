@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { logger } from "@/lib/logger";
 import { normalizePhone } from "@/lib/auth/patient-identity";
+import { verifyInboundResetCode } from "@/server/application/patients/password-reset-service";
 import { verifyInboundWhatsAppCode } from "@/server/application/patients/registration-service";
 import { whatsAppConfig } from "@/server/integrations/whatsapp/config";
 import { extractCode, parseInboundTexts, verifySignature } from "@/server/integrations/whatsapp/webhook";
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * Inbound messages. Receiving is free, and we never reply (replies are billed).
- * A 4-digit code from a number with a pending registration verifies that account.
+ * A 4-digit code from a number with a pending password reset or registration verifies it.
  */
 export async function POST(request: NextRequest) {
   const { appSecret } = whatsAppConfig();
@@ -52,7 +53,9 @@ export async function POST(request: NextRequest) {
     if (!code) continue;
     const phone = normalizePhone(message.from) ?? message.from;
     try {
-      const result = await verifyInboundWhatsAppCode(phone, code);
+      const result = (await verifyInboundResetCode(phone, code).catch(() => false))
+        ? "reset_verified"
+        : await verifyInboundWhatsAppCode(phone, code);
       logger.info("whatsapp.inbound_code", { result, phone: phone.replace(/\d(?=\d{3})/g, "•") });
     } catch (error) {
       // Still answer 200 so Meta doesn't retry a message we can't use.

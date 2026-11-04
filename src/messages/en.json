@@ -118,7 +118,8 @@
    "signIn": "Sign in",
    "signingIn": "Signing in…",
    "newPatient": "New here?",
-   "createAccount": "Create an account"
+   "createAccount": "Create an account",
+   "forgot": "Forgot password?"
   },
   "register": {
    "title": "Create your account",
@@ -155,6 +156,26 @@
    "verify": "Verify and continue",
    "verifying": "Verifying…",
    "resend": "Get a new code"
+  },
+  "forgot": {
+   "title": "Forgot your password?",
+   "subtitle": "Enter your registered mobile number. We'll send a 4-digit code to your WhatsApp.",
+   "send": "Send code",
+   "sending": "Sending…",
+   "back": "Back to sign in",
+   "resetTitle": "Set a new password",
+   "resetSubtitle": "Enter the 4-digit code for <phone>{number}</phone> and choose a new password. The code is valid for 5 minutes.",
+   "resetSubtitleSent": "We sent a 4-digit code to <phone>{number}</phone> on WhatsApp. It is valid for 5 minutes. Don't share it with anyone.",
+   "resetSubtitleInbound": "Send this code to the clinic on WhatsApp from <phone>{number}</phone>, then choose a new password. Valid for 5 minutes.",
+   "prefill": "My password reset code for Dr. Rodaina Medhat Clinic: {code}",
+   "code": "Verification code",
+   "newPassword": "New password",
+   "passwordHint": "At least 8 characters.",
+   "confirmPassword": "Confirm new password",
+   "save": "Save and sign in",
+   "saving": "Saving…",
+   "resend": "Resend code",
+   "resendIn": "Resend code in {seconds} s"
   }
  },
  "dashboard": {

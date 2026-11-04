@@ -18,6 +18,7 @@ import { otpMode, type OtpMode } from "@/server/integrations/whatsapp/config";
 type Locale = "ar" | "en";
 
 const PURPOSE = "patient_registration" as const;
+export type OtpPurpose = "patient_registration" | "password_reset";
 
 export interface IssuedOtp {
   phone: string;
@@ -111,26 +112,42 @@ export async function startPatientRegistration(input: {
   return { userId, authEmail, otp };
 }
 
-/** Issues a fresh OTP, invalidating any previous one. */
+/** Issues a fresh registration OTP, invalidating any previous one. */
 export async function issueRegistrationOtp(
   authUserId: string,
   phone: string,
   { ignoreCooldown = false, locale = "ar" as Locale }: { ignoreCooldown?: boolean; locale?: Locale } = {},
 ): Promise<IssuedOtp> {
+  const { id: _id, ...issued } = await issueOtp(authUserId, phone, { purpose: PURPOSE, ignoreCooldown, locale });
+  return issued;
+}
+
+/** Issues a fresh OTP for `purpose`, invalidating any previous live one for that phone and purpose. */
+export async function issueOtp(
+  authUserId: string,
+  phone: string,
+  {
+    purpose,
+    ignoreCooldown = false,
+    locale = "ar" as Locale,
+    ttlMinutes = OTP_TTL_MINUTES,
+    cooldownSeconds = OTP_RESEND_COOLDOWN_SECONDS,
+  }: { purpose: OtpPurpose; ignoreCooldown?: boolean; locale?: Locale; ttlMinutes?: number; cooldownSeconds?: number },
+): Promise<IssuedOtp & { id: string }> {
   const admin = createSupabaseAdminClient();
 
   const { data: active } = await admin
     .from("otp_verifications")
     .select("id, created_at")
     .eq("normalized_phone", phone)
-    .eq("purpose", PURPOSE)
+    .eq("purpose", purpose)
     .is("consumed_at", null)
     .maybeSingle();
 
   if (active && !ignoreCooldown) {
     const age = (Date.now() - new Date(active.created_at as string).getTime()) / 1000;
-    if (age < OTP_RESEND_COOLDOWN_SECONDS) {
-      throw new AppError("CONFLICT", `Please wait ${Math.ceil(OTP_RESEND_COOLDOWN_SECONDS - age)} seconds before requesting a new code.`);
+    if (age < cooldownSeconds) {
+      throw new AppError("CONFLICT", `Please wait ${Math.ceil(cooldownSeconds - age)} seconds before requesting a new code.`);
     }
   }
   if (active) {
@@ -138,21 +155,78 @@ export async function issueRegistrationOtp(
   }
 
   const code = generateOtp();
-  const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60_000);
-  const { error } = await admin.from("otp_verifications").insert({
-    normalized_phone: phone,
-    purpose: PURPOSE,
-    code_hash: hashOtp(code, phone, PURPOSE, serverEnv("OTP_PEPPER")),
-    auth_user_id: authUserId,
-    expires_at: expiresAt.toISOString(),
-  });
+  const expiresAt = new Date(Date.now() + ttlMinutes * 60_000);
+  const { data: row, error } = await admin
+    .from("otp_verifications")
+    .insert({
+      normalized_phone: phone,
+      purpose,
+      code_hash: hashOtp(code, phone, purpose, serverEnv("OTP_PEPPER")),
+      auth_user_id: authUserId,
+      expires_at: expiresAt.toISOString(),
+    })
+    .select("id")
+    .single();
   if (error) throw fromPostgrestError(error, "Could not create a verification code");
 
-  const delivery = await getOtpProvider().deliver({ phone, code, expiresAt, purpose: PURPOSE, locale });
-  const base = { phone, expiresAt: expiresAt.toISOString() };
+  const delivery = await getOtpProvider().deliver({ phone, code, expiresAt, purpose, locale });
+  const base = { id: row.id as string, phone, expiresAt: expiresAt.toISOString() };
   if (delivery.delivered) return { ...base, mode: "cloud_api" };
   if (delivery.channel === "inbound") return { ...base, mode: "inbound", displayCode: delivery.displayCode };
   return { ...base, mode: "demo", displayCode: isDemoOtpDisplayEnabled() ? delivery.demoCode : undefined };
+}
+
+/**
+ * Checks `code` against the live OTP for phone + purpose (+ user), counting
+ * failed attempts, and consumes it exactly once. Returns the consumed row id.
+ */
+export async function consumeOtp({
+  phone,
+  purpose,
+  authUserId,
+  code,
+}: {
+  phone: string;
+  purpose: OtpPurpose;
+  authUserId: string;
+  code: string;
+}): Promise<string> {
+  const admin = createSupabaseAdminClient();
+  const { data: otp, error } = await admin
+    .from("otp_verifications")
+    .select("id, code_hash, attempts, max_attempts, expires_at")
+    .eq("normalized_phone", phone)
+    .eq("purpose", purpose)
+    .eq("auth_user_id", authUserId)
+    .is("consumed_at", null)
+    .maybeSingle();
+  if (error) throw fromPostgrestError(error);
+  if (!otp) throw new AppError("NOT_FOUND", "No active code. Request a new one.");
+  if (new Date(otp.expires_at as string).getTime() < Date.now()) {
+    throw new AppError("VALIDATION", "This code has expired. Request a new one.", { fieldErrors: { code: ["Code expired"] } });
+  }
+  if ((otp.attempts as number) >= (otp.max_attempts as number)) {
+    throw new AppError("VALIDATION", "Too many attempts. Request a new code.", { fieldErrors: { code: ["Too many attempts"] } });
+  }
+
+  if (!otpMatches(code, otp.code_hash as string, phone, purpose, serverEnv("OTP_PEPPER"))) {
+    await admin.from("otp_verifications").update({ attempts: (otp.attempts as number) + 1 }).eq("id", otp.id).eq("attempts", otp.attempts);
+    const left = (otp.max_attempts as number) - (otp.attempts as number) - 1;
+    throw new AppError("VALIDATION", left > 0 ? `Incorrect code. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many attempts. Request a new code.", {
+      fieldErrors: { code: ["Incorrect code"] },
+    });
+  }
+
+  // Consume first (conditional) so a code can only ever be used once.
+  const consumed = await admin
+    .from("otp_verifications")
+    .update({ consumed_at: new Date().toISOString() })
+    .eq("id", otp.id)
+    .is("consumed_at", null)
+    .select("id")
+    .maybeSingle();
+  if (!consumed.data) throw new AppError("CONFLICT", "This code was already used.");
+  return otp.id as string;
 }
 
 /** True once the signed-in registration has been verified (used by the verify page poll). */
@@ -219,40 +293,7 @@ export async function completePatientVerification(
   const phone = meta.phone;
   if (!phone) throw new AppError("INTERNAL", "Registration is missing a phone number");
 
-  const { data: otp, error } = await admin
-    .from("otp_verifications")
-    .select("id, code_hash, attempts, max_attempts, expires_at")
-    .eq("normalized_phone", phone)
-    .eq("purpose", PURPOSE)
-    .eq("auth_user_id", authUserId)
-    .is("consumed_at", null)
-    .maybeSingle();
-  if (error) throw fromPostgrestError(error);
-  if (!otp) throw new AppError("NOT_FOUND", "No active code. Request a new one.");
-  if (new Date(otp.expires_at as string).getTime() < Date.now()) {
-    throw new AppError("VALIDATION", "This code has expired. Request a new one.", { fieldErrors: { code: ["Code expired"] } });
-  }
-  if ((otp.attempts as number) >= (otp.max_attempts as number)) {
-    throw new AppError("VALIDATION", "Too many attempts. Request a new code.", { fieldErrors: { code: ["Too many attempts"] } });
-  }
-
-  if (!otpMatches(code, otp.code_hash as string, phone, PURPOSE, serverEnv("OTP_PEPPER"))) {
-    await admin.from("otp_verifications").update({ attempts: (otp.attempts as number) + 1 }).eq("id", otp.id).eq("attempts", otp.attempts);
-    const left = (otp.max_attempts as number) - (otp.attempts as number) - 1;
-    throw new AppError("VALIDATION", left > 0 ? `Incorrect code. ${left} attempt${left === 1 ? "" : "s"} left.` : "Too many attempts. Request a new code.", {
-      fieldErrors: { code: ["Incorrect code"] },
-    });
-  }
-
-  // Consume first (conditional) so a code can only ever be used once.
-  const consumed = await admin
-    .from("otp_verifications")
-    .update({ consumed_at: new Date().toISOString() })
-    .eq("id", otp.id)
-    .is("consumed_at", null)
-    .select("id")
-    .maybeSingle();
-  if (!consumed.data) throw new AppError("CONFLICT", "This code was already used.");
+  await consumeOtp({ phone, purpose: PURPOSE, authUserId, code });
 
   const now = new Date().toISOString();
   const { data: existing } = await admin

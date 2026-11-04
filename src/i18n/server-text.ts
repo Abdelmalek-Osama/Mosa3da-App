@@ -161,6 +161,14 @@ const EXACT: Record<string, string> = {
   "Enter the full triple name: first, father's and family name": "أدخل الاسم الثلاثي: الاسم الأول واسم الأب واسم العائلة",
   "Write the English name in English letters only": "اكتب الاسم الإنجليزي بحروف إنجليزية فقط",
 
+  // Password reset (P1-09)
+  "No account is registered with this number.": "لا يوجد حساب مسجّل بهذا الرقم.",
+  "No account with this number": "لا يوجد حساب بهذا الرقم",
+  "This reset request expired. Start again.": "انتهت صلاحية طلب الاستعادة. ابدئي من جديد.",
+  "We couldn't send a code. Please try again.": "تعذّر إرسال الرمز. يرجى المحاولة مرة أخرى.",
+  "We couldn't reset your password. Please try again.": "تعذّرت استعادة كلمة المرور. يرجى المحاولة مرة أخرى.",
+  "Password changed. Please sign in with your new password.": "تم تغيير كلمة المرور. سجّلي الدخول بكلمة المرور الجديدة.",
+
   // Reception portal activation
   "Enter the visitor's full name": "أدخل الاسم الكامل للزائرة",
   "Registration not found. Send a new code.": "لم يتم العثور على التسجيل. أرسل رمزًا جديدًا.",

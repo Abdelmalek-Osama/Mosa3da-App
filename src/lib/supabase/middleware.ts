@@ -28,7 +28,8 @@ export async function updateSession(request: NextRequest) {
     pathname.startsWith("/admin") ||
     (pathname.startsWith("/patient") &&
       !pathname.startsWith("/patient/login") &&
-      !pathname.startsWith("/patient/register"));
+      !pathname.startsWith("/patient/register") &&
+      !pathname.startsWith("/patient/forgot"));
 
   if (needsAuth && !user) {
     const url = request.nextUrl.clone();
