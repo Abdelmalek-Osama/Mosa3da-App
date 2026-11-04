@@ -429,8 +429,7 @@
    "started": "Started",
    "planned": "Planned",
    "elapsed": "Elapsed",
-   "none": "No consultation in progress.",
-   "startWith": "Start with {name} (#{number})"
+   "none": "No consultation in progress."
   },
   "next": {
    "title": "Next pregnant woman",

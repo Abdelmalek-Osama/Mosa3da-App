@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { parseInput, runAction, type ActionResult } from "@/lib/action-result";
+import { isAppError } from "@/lib/errors/app-error";
 import { requirePatient, requireStaff } from "@/server/authorization/actor";
 import { QueueService } from "@/server/application/queue/queue-service";
 import {
@@ -63,12 +64,19 @@ export async function transitionQueueEntryAction(input: TransitionInput) {
   return runAction("queue.transition", async () => {
     const actor = await requireStaff();
     const data = parseInput(transitionSchema, input);
-    const result = await new QueueService(actor.supabase).transition(
-      data.entryId,
-      data.action,
-      data.expectedVersion,
-      data.reason,
-    );
+    const service = new QueueService(actor.supabase);
+    let result;
+    try {
+      result = await service.transition(data.entryId, data.action, data.expectedVersion, data.reason);
+    } catch (error) {
+      // A newer version alone is not a conflict: if the entry is still in the
+      // status the screen showed, nobody acted on it, so retry once with the
+      // current version. queue_transition still validates the action itself.
+      if (!(isAppError(error) && error.code === "STALE" && data.expectedStatus)) throw error;
+      const latest = await service.getEntryState(data.entryId);
+      if (!latest || latest.status !== data.expectedStatus) throw error;
+      result = await service.transition(data.entryId, data.action, latest.version, data.reason);
+    }
     await afterMutation();
     return result;
   });

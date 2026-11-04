@@ -1,6 +1,6 @@
 "use client";
 
-import { Play, Square, Stethoscope } from "lucide-react";
+import { Square, Stethoscope } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,8 @@ import { ElapsedTimer } from "./elapsed-timer";
 import { useQueueController } from "./queue-controller";
 import { QueueNumber } from "./status-badge";
 
-export function CurrentPanel({ current, ready }: { current: QueueEntryView | null; ready: QueueEntryView | null }) {
+/** The running consultation. Starting the next one happens only from the Next card. */
+export function CurrentPanel({ current }: { current: QueueEntryView | null }) {
   const { request, pending, timezone } = useQueueController();
   const t = useTranslations("queue");
   const tReason = useTranslations("visitReason");
@@ -53,14 +54,7 @@ export function CurrentPanel({ current, ready }: { current: QueueEntryView | nul
           </Button>
         </div>
       ) : (
-        <div className="space-y-4 px-5 pb-5">
-          <p className="py-4 text-sm text-muted-foreground">{t("current.none")}</p>
-          {ready ? (
-            <Button className="w-full" size="lg" variant="secondary" onClick={() => request(ready, "start_consultation")} disabled={pending}>
-              <Play /> {t("current.startWith", { name: ready.patientName.split(" ")[0] ?? "", number: ready.queueNumber ?? "" })}
-            </Button>
-          ) : null}
-        </div>
+        <p className="px-5 pb-6 pt-4 text-sm text-muted-foreground">{t("current.none")}</p>
       )}
     </Card>
   );

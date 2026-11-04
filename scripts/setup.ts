@@ -35,6 +35,8 @@ const SENTINELS: Record<string, string> = {
   "20261031000400_whatsapp_channel.sql":
     "select exists (select 1 from pg_enum e join pg_type t on t.oid = e.enumtypid where t.typname = 'notification_channel' and e.enumlabel = 'whatsapp_link') as applied",
   "20261031000500_whatsapp.sql": "select to_regprocedure('public.mark_notification_opened(uuid)') is not null as applied",
+  "20261104000600_queue_version_meaningful.sql":
+    "select position('missed_turn_baseline' in pg_get_functiondef('public.queue_entries_bump_version()'::regprocedure)) > 0 as applied",
 };
 
 async function main() {

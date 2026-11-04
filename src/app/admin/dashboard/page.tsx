@@ -104,7 +104,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0">
-        <CurrentPanel current={board.current} ready={board.ready} />
+        <CurrentPanel current={board.current} />
         <NextPanel ready={board.ready} />
       </section>
 

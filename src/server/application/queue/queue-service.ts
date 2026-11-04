@@ -143,6 +143,13 @@ export class QueueService {
     );
   }
 
+  /** Current status and lock version of one entry (staff RLS). */
+  async getEntryState(entryId: string): Promise<{ status: (typeof QUEUE_STATUSES)[number]; version: number } | null> {
+    const { data, error } = await this.db.from("queue_entries").select("status, version").eq("id", entryId).maybeSingle();
+    if (error) throw fromPostgrestError(error);
+    return data ? z.object({ status: z.enum(QUEUE_STATUSES), version: z.number().int() }).parse(data) : null;
+  }
+
   reorder(entryId: string, newIndex: number, expectedVersion?: number) {
     return this.rpc(
       "reorder_queue_entry",

@@ -51,7 +51,7 @@ export function QueueController({
     (entry: QueueEntryView, action: QueueAction, reason?: string) => {
       const first = entry.patientName.split(" ")[0] ?? entry.patientName;
       run(
-        () => transitionQueueEntryAction({ entryId: entry.id, action, expectedVersion: entry.version, reason }),
+        () => transitionQueueEntryAction({ entryId: entry.id, action, expectedVersion: entry.version, expectedStatus: entry.status, reason }),
         (data) =>
           data.late_transitions > 0
             ? `${t(action, { name: first })} · ${t("movedLate", { count: data.late_transitions })}`

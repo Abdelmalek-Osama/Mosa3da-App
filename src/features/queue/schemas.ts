@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { QUEUE_ACTIONS, VISIT_REASONS } from "@/server/domain/queue/constants";
+import { QUEUE_ACTIONS, QUEUE_STATUSES, VISIT_REASONS } from "@/server/domain/queue/constants";
 
 const uuid = z.string().uuid();
 const version = z.coerce.number().int().positive().optional();
@@ -50,6 +50,8 @@ export const transitionSchema = z.object({
   entryId: uuid,
   action: z.enum(QUEUE_ACTIONS),
   expectedVersion: version,
+  /** Status the screen showed; lets the server retry a stale version safely. */
+  expectedStatus: z.enum(QUEUE_STATUSES).optional(),
   reason: optionalText(500),
 });
 export type TransitionInput = z.input<typeof transitionSchema>;
