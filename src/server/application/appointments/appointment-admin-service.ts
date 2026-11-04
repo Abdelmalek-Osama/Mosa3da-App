@@ -91,6 +91,38 @@ export class AppointmentAdminService {
     return z.object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string() }).parse(data);
   }
 
+  /** Who occupies time on a date: booked appointments and walk-ins in the queue (staff RLS). */
+  async occupants(date: string): Promise<{ start: number; end: number; name: string }[]> {
+    const [appts, queue] = await Promise.all([
+      this.db
+        .from("appointments")
+        .select("scheduled_start, scheduled_end, patient:patients!inner(full_name)")
+        .eq("clinic_date", date)
+        .in("status", ["scheduled", "checked_in"])
+        .not("scheduled_start", "is", null),
+      this.db
+        .from("queue_entries")
+        .select("expected_start_at, started_at, estimated_duration_minutes, appointment:appointments(scheduled_start), patient:patients!inner(full_name)")
+        .eq("clinic_date", date)
+        .in("status", ["arrived", "ready", "current", "late"]),
+    ]);
+    if (appts.error) throw fromPostgrestError(appts.error);
+    if (queue.error) throw fromPostgrestError(queue.error);
+    const name = (p: unknown) => (Array.isArray(p) ? p[0] : p) as { full_name: string } | null;
+    const out: { start: number; end: number; name: string }[] = [];
+    for (const a of appts.data ?? []) {
+      out.push({ start: Date.parse(a.scheduled_start as string), end: Date.parse(a.scheduled_end as string), name: name(a.patient)?.full_name ?? "" });
+    }
+    for (const q of queue.data ?? []) {
+      const booked = (Array.isArray(q.appointment) ? q.appointment[0] : q.appointment) as { scheduled_start: string | null } | null;
+      const at = (q.started_at ?? q.expected_start_at) as string | null;
+      if (booked?.scheduled_start || !at) continue; // booked visits are covered above
+      const start = Date.parse(at);
+      out.push({ start, end: start + (q.estimated_duration_minutes as number) * 60_000, name: name(q.patient)?.full_name ?? "" });
+    }
+    return out;
+  }
+
   async reschedule(appointmentId: string, slotStart: string) {
     const { data, error } = await this.db.rpc("staff_reschedule_appointment", { p_appointment_id: appointmentId, p_slot_start: slotStart });
     if (error) throw fromPostgrestError(error);

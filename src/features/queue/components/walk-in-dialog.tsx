@@ -18,8 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
-import { useVisitReasons } from "@/features/settings/use-visit-reasons";
-import type { VisitReason } from "@/server/domain/queue/constants";
+import { reasonOptionLabel, useVisitReasons } from "@/features/settings/use-visit-reasons";
 
 interface FoundPatient {
   id: string;
@@ -62,8 +61,10 @@ export function WalkInDialog({
   const [results, setResults] = useState<FoundPatient[]>([]);
   const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<FoundPatient | null>(null);
-  const [visitReason, setVisitReason] = useState<VisitReason | "">("");
+  // Selected option key: a built-in reason, or "custom:<id>" for a doctor-added one.
+  const [visitReason, setVisitReason] = useState("");
   const [details, setDetails] = useState("");
+  const selectedReason = reasons.find((o) => o.key === visitReason);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
 
@@ -98,7 +99,7 @@ export function WalkInDialog({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!visitReason) {
+    if (!selectedReason) {
       setErrors({ visitReason: [t("selectReason")] });
       return;
     }
@@ -109,8 +110,8 @@ export function WalkInDialog({
         fullName: mode === "new" ? fullName : undefined,
         fullNameEn: mode === "new" ? fullNameEn || undefined : undefined,
         phone: mode === "new" ? phone : undefined,
-        visitReason,
-        visitReasonDetails: details || undefined,
+        visitReason: selectedReason!.reason,
+        visitReasonDetails: selectedReason!.details ?? (details || undefined),
         notes: notes || undefined,
       });
       if (!res.ok) {
@@ -237,21 +238,21 @@ export function WalkInDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label>{t("reason")}</Label>
-              <Select value={visitReason} onValueChange={(v) => setVisitReason(v as VisitReason)}>
+              <Select value={visitReason} onValueChange={setVisitReason}>
                 <SelectTrigger aria-invalid={!!errors.visitReason}>
                   <SelectValue placeholder={t("selectReasonPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {reasons.map(({ reason: r }) => (
-                    <SelectItem key={r} value={r}>
-                      {tReason(r)}
+                  {reasons.map((o) => (
+                    <SelectItem key={o.key} value={o.key}>
+                      {reasonOptionLabel(o, locale, tReason)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <FieldError errors={errors} name="visitReason" />
             </div>
-            {visitReason === "other" ? (
+            {selectedReason?.reason === "other" && !selectedReason.details ? (
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="wi-details">{t("describe")}</Label>
                 <Input id="wi-details" value={details} onChange={(e) => setDetails(e.target.value)} maxLength={200} aria-invalid={!!errors.visitReasonDetails} />
@@ -260,7 +261,7 @@ export function WalkInDialog({
             ) : null}
             {visitReason ? (
               <p className="text-sm text-muted-foreground sm:col-span-2">
-                {t("autoDuration", { minutes: reasons.find((r) => r.reason === visitReason)?.durationMinutes ?? defaultDuration })}
+                {t("autoDuration", { minutes: selectedReason?.durationMinutes ?? defaultDuration })}
               </p>
             ) : null}
             <div className="space-y-2 sm:col-span-2">

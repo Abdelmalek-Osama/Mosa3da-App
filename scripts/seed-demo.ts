@@ -23,7 +23,7 @@ const url = env("NEXT_PUBLIC_SUPABASE_URL");
 const serviceKey = env("SUPABASE_SERVICE_ROLE_KEY");
 const db: SupabaseClient = createClient(url, serviceKey, { auth: { persistSession: false } });
 
-const DOCTOR = { email: env("DEMO_DOCTOR_EMAIL", "doctor@mosa3da.app"), password: env("DEMO_DOCTOR_PASSWORD"), name: "Dr. Nadia El-Sayed" };
+const DOCTOR = { email: env("DEMO_DOCTOR_EMAIL", "doctor@mosa3da.app"), password: env("DEMO_DOCTOR_PASSWORD"), name: "د. رودينا مدحت" };
 const SECRETARY = { email: env("DEMO_SECRETARY_EMAIL", "secretary@mosa3da.app"), password: env("DEMO_SECRETARY_PASSWORD"), name: "Heba Mostafa" };
 const INACTIVE_SECRETARY = { email: "former.secretary@mosa3da.app", password: env("DEMO_SECRETARY_PASSWORD"), name: "Rania Adel" };
 const PATIENT_PASSWORD = env("DEMO_PATIENT_PASSWORD");

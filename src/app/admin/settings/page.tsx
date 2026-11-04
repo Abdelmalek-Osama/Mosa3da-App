@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ClinicSettingsForm } from "@/features/settings/components/clinic-settings-form";
 import { VisitReasonsEditor } from "@/features/settings/components/visit-reasons-editor";
 import { WorkingHoursEditor } from "@/features/settings/components/working-hours-editor";
-import { listVisitReasons } from "@/server/application/settings/visit-reasons";
+import { listCustomVisitReasons, listVisitReasons } from "@/server/application/settings/visit-reasons";
 import { SettingsAdminService } from "@/server/application/settings/settings-admin-service";
 import { requireStaff } from "@/server/authorization/actor";
 
@@ -21,10 +21,11 @@ export default async function SettingsPage() {
   const actor = await requireStaff().catch(() => null);
   if (!actor) redirect("/login");
 
-  const [{ settings, periods }, reasons] = await Promise.all([
+  const [{ settings, periods }, reasons, customReasons] = await Promise.all([
     new SettingsAdminService(actor.supabase).get(),
     // Empty until the visit-reason migration is applied; the card is hidden then.
     listVisitReasons(actor.supabase).catch(() => []),
+    listCustomVisitReasons(actor.supabase),
   ]);
   const readOnly = actor.role !== "doctor";
   const t = await getTranslations("settings");
@@ -68,7 +69,7 @@ export default async function SettingsPage() {
               <CardDescription>{t("reasons.body")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <VisitReasonsEditor initial={reasons} readOnly={readOnly} />
+              <VisitReasonsEditor initial={reasons} custom={customReasons} readOnly={readOnly} />
             </CardContent>
           </Card>
         ) : null}

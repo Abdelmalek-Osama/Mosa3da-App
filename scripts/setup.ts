@@ -50,6 +50,9 @@ const SENTINELS: Record<string, string> = {
   "20261104001300_whatsapp_copy_and_soon.sql":
     "select to_regprocedure('public.enqueue_pre_appointment_alerts(public.notification_channel)') is not null as applied",
   "20261104001400_visit_reason_settings.sql": "select to_regclass('public.visit_reason_settings') is not null as applied",
+  "20261104001500_delete_patient.sql": "select to_regprocedure('public.delete_patient(uuid)') is not null as applied",
+  "20261104001600_lock_booked_slots.sql": "select to_regprocedure('public.appointments_prevent_overlap()') is not null as applied",
+  "20261104001700_custom_visit_reasons.sql": "select to_regclass('public.custom_visit_reasons') is not null as applied",
 };
 
 async function main() {

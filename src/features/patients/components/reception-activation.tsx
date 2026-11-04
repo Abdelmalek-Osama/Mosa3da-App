@@ -16,7 +16,7 @@ import { formatPhone } from "@/lib/format";
 type Step =
   | { kind: "idle" }
   | { kind: "sent"; userId: string; mode: "demo" | "inbound" | "cloud_api"; displayCode: string | null }
-  | { kind: "done"; password: string; fullName: string; phone: string };
+  | { kind: "done"; password: string; fullName: string; phone: string; patientId: string | null };
 
 /**
  * Reception portal activation: send a 4-digit code to the visitor's WhatsApp
@@ -24,7 +24,19 @@ type Step =
  * with a one-tap WhatsApp welcome message. Nothing is claimed as "sent" unless
  * WhatsApp actually sent it.
  */
-export function ReceptionActivation({ fullName, phone }: { fullName: string; phone: string }) {
+export function ReceptionActivation({
+  fullName,
+  phone,
+  onVerified,
+  verifyLabel = false,
+}: {
+  fullName: string;
+  phone: string;
+  /** Called once the number is verified (her record now exists and is linked). */
+  onVerified?: (result: { patientId: string | null; phone: string }) => void;
+  /** Visitors page: present it as phone verification ("Verify via WhatsApp"). */
+  verifyLabel?: boolean;
+}) {
   const t = useTranslations("reception");
   const [step, setStep] = useState<Step>({ kind: "idle" });
   const [code, setCode] = useState("");
@@ -64,7 +76,8 @@ export function ReceptionActivation({ fullName, phone }: { fullName: string; pho
         return;
       }
       setStep({ kind: "done", ...res.data });
-      toast.success(t("activated"));
+      toast.success(verifyLabel ? t("verifiedToast") : t("activated"));
+      onVerified?.({ patientId: res.data.patientId, phone: res.data.phone });
     });
   }
 
@@ -78,8 +91,8 @@ export function ReceptionActivation({ fullName, phone }: { fullName: string; pho
     const href = `https://wa.me/${step.phone.replace(/\D/g, "")}?text=${encodeURIComponent(message)}`;
     return (
       <div className="space-y-3 rounded-lg border border-teal-200 bg-accent/50 p-3">
-        <p className="flex items-center gap-2 text-sm font-medium text-teal-800">
-          <ShieldCheck className="h-4 w-4" /> {t("activated")}
+        <p className="flex items-center gap-2 text-sm font-semibold text-emerald-700">
+          <ShieldCheck className="h-4 w-4" /> {verifyLabel ? t("verified") : t("activated")}
         </p>
         <div className="flex items-center justify-between gap-2 rounded-md bg-card px-3 py-2">
           <span className="text-xs text-muted-foreground">{t("password")}</span>
@@ -111,14 +124,14 @@ export function ReceptionActivation({ fullName, phone }: { fullName: string; pho
     <div className="space-y-2 rounded-lg border border-dashed p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-sm font-medium">
-          <KeyRound className="h-4 w-4 text-teal-700" /> {t("title")}
+          <KeyRound className="h-4 w-4 text-teal-700" /> {verifyLabel ? t("verifyTitle") : t("title")}
         </span>
         <Button type="button" size="sm" variant="outline" onClick={send} disabled={pending || !phone || fullName.trim().length < 3}>
           {pending && step.kind === "idle" ? <Loader2 className="animate-spin" /> : null}
-          {step.kind === "sent" ? t("resend") : t("send")}
+          {step.kind === "sent" ? t("resend") : verifyLabel ? t("verifySend") : t("send")}
         </Button>
       </div>
-      {step.kind === "idle" ? <p className="text-xs text-muted-foreground">{t("hint")}</p> : null}
+      {step.kind === "idle" ? <p className="text-xs text-muted-foreground">{verifyLabel ? t("verifyHint") : t("hint")}</p> : null}
 
       {step.kind === "sent" ? (
         <div className="space-y-2">

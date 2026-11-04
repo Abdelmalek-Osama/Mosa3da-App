@@ -20,8 +20,7 @@ import { createPatientAction } from "@/features/patients/staff-actions";
 import { formatClinicDate, formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
-import { useVisitReasons } from "@/features/settings/use-visit-reasons";
-import type { VisitReason } from "@/server/domain/queue/constants";
+import { reasonOptionLabel, useVisitReasons } from "@/features/settings/use-visit-reasons";
 import type { Slot } from "@/server/application/appointments/booking-service";
 
 interface PatientRef {
@@ -63,8 +62,10 @@ export function BookAppointmentDialog({
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slotError, setSlotError] = useState<string | null>(null);
   const [slotStart, setSlotStart] = useState<string | null>(null);
-  const [reason, setReason] = useState<VisitReason | "">("");
+  // Selected option key: a built-in reason, or "custom:<id>" for a doctor-added one.
+  const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
+  const option = reasons.find((o) => o.key === reason);
   const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [pending, start] = useTransition();
@@ -127,7 +128,7 @@ export function BookAppointmentDialog({
     const local: Errors = {};
     if (!patient && !newVisitor) local.patientId = [t("errPatient")];
     if (!slotStart) local.slotStart = [t("errTime")];
-    if (!reason && !reschedule) local.visitReason = [t("errReason")];
+    if (!option && !reschedule) local.visitReason = [t("errReason")];
     if (Object.keys(local).length) {
       setErrors(local);
       return;
@@ -176,8 +177,8 @@ export function BookAppointmentDialog({
       const res = await staffBookAppointmentAction({
         patientId: target.id,
         slotStart: slotStart!,
-        visitReason: reason as VisitReason,
-        visitReasonDetails: reason === "other" ? details : undefined,
+        visitReason: option!.reason,
+        visitReasonDetails: option!.details ?? (option!.reason === "other" ? details : undefined),
         notes,
       });
       if (!res.ok) {
@@ -321,23 +322,39 @@ export function BookAppointmentDialog({
             ) : free.length === 0 ? (
               <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">{t("noFree")}</p>
             ) : (
-              <div className="grid max-h-48 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
-                {slots.map((s) => (
-                  <button
-                    key={s.start}
-                    type="button"
-                    disabled={!s.available}
-                    onClick={() => setSlotStart(s.start)}
-                    aria-pressed={s.start === slotStart}
-                    className={cn(
-                      "tabular h-10 rounded-lg border text-sm font-medium transition-colors",
-                      s.start === slotStart ? "border-teal-600 bg-teal-600 text-white" : "bg-card hover:border-teal-400 hover:bg-teal-50",
-                      !s.available && "cursor-not-allowed border-dashed bg-muted/40 text-muted-foreground line-through hover:border-border hover:bg-muted/40",
-                    )}
-                  >
-                    {formatTime(s.start, timezone, locale)}
-                  </button>
-                ))}
+              <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
+                {slots.map((s) =>
+                  !s.available && s.bookedBy ? (
+                    // Booked: locked, shows who holds it, and explains instead of selecting.
+                    <button
+                      key={s.start}
+                      type="button"
+                      onClick={() => toast.error(t("slotTaken", { name: s.bookedBy! }))}
+                      aria-disabled
+                      title={t("slotTaken", { name: s.bookedBy })}
+                      className="flex min-h-10 cursor-not-allowed flex-col items-center justify-center rounded-lg border border-dashed bg-muted/60 px-1 py-1 text-muted-foreground"
+                    >
+                      <span className="tabular text-xs font-medium line-through">{formatTime(s.start, timezone, locale)}</span>
+                      <span className="text-[10px] font-semibold uppercase">{t("booked")}</span>
+                      <span dir="auto" className="w-full truncate text-[10px]">{s.bookedBy}</span>
+                    </button>
+                  ) : (
+                    <button
+                      key={s.start}
+                      type="button"
+                      disabled={!s.available}
+                      onClick={() => setSlotStart(s.start)}
+                      aria-pressed={s.start === slotStart}
+                      className={cn(
+                        "tabular h-10 rounded-lg border text-sm font-medium transition-colors",
+                        s.start === slotStart ? "border-teal-600 bg-teal-600 text-white" : "bg-card hover:border-teal-400 hover:bg-teal-50",
+                        !s.available && "cursor-not-allowed border-dashed bg-muted/40 text-muted-foreground line-through hover:border-border hover:bg-muted/40",
+                      )}
+                    >
+                      {formatTime(s.start, timezone, locale)}
+                    </button>
+                  ),
+                )}
               </div>
             )}
             {errors.slotStart ? <p className="text-sm text-destructive">{errors.slotStart[0]}</p> : null}
@@ -347,21 +364,21 @@ export function BookAppointmentDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <Label>{t("reason")}</Label>
-              <Select value={reason} onValueChange={(v) => setReason(v as VisitReason)}>
+              <Select value={reason} onValueChange={setReason}>
                 <SelectTrigger aria-invalid={!!errors.visitReason}>
                   <SelectValue placeholder={t("selectReason")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {reasons.map(({ reason: r }) => (
-                    <SelectItem key={r} value={r}>
-                      {tReason(r)}
+                  {reasons.map((o) => (
+                    <SelectItem key={o.key} value={o.key}>
+                      {reasonOptionLabel(o, locale, tReason)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {errors.visitReason ? <p className="text-sm text-destructive">{errors.visitReason[0]}</p> : null}
             </div>
-            {reason === "other" ? (
+            {option?.reason === "other" && !option.details ? (
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="ba-details">{t("describe")}</Label>
                 <Input id="ba-details" value={details} onChange={(e) => setDetails(e.target.value)} maxLength={200} aria-invalid={!!errors.visitReasonDetails} />

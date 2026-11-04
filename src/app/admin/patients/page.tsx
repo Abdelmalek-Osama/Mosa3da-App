@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PatientFormDialog } from "@/features/patients/components/admin/patient-form-dialog";
+import { DeletePatientButton } from "@/features/patients/components/admin/delete-patient-button";
 import { AccountBadge } from "@/features/patients/components/admin/account-badge";
 import { formatClinicDate, formatPhone, initials } from "@/lib/format";
 import { PatientAdminService } from "@/server/application/patients/patient-admin-service";
@@ -64,8 +65,8 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
           {/* Mobile: cards */}
           <ul className="grid grid-cols-1 gap-2 md:hidden [&>*]:min-w-0">
             {patients.map((p) => (
-              <li key={p.id}>
-                <Link href={`/admin/patients/${p.id}`} className="flex items-center gap-3 rounded-xl border bg-card p-3 shadow-soft active:bg-muted">
+              <li key={p.id} className="flex items-center gap-1 rounded-xl border bg-card shadow-soft">
+                <Link href={`/admin/patients/${p.id}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-3 active:bg-muted">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-navy-50 text-sm font-semibold text-navy-700">{initials(p.fullName)}</span>
                   <span className="min-w-0 flex-1">
                     <span dir="auto" className="block truncate text-start font-medium text-navy-900">{p.fullName}</span>
@@ -74,6 +75,9 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
                   <AccountBadge hasAccount={p.hasAccount} verified={p.phoneVerified} compact />
                   <ChevronRightIcon className="h-4 w-4 shrink-0 text-muted-foreground rtl:-scale-x-100" aria-hidden />
                 </Link>
+                <span className="pe-2">
+                  <DeletePatientButton patientId={p.id} name={p.fullName} />
+                </span>
               </li>
             ))}
           </ul>
@@ -88,7 +92,7 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
                   <TableHead>{t("col.email")}</TableHead>
                   <TableHead>{t("col.portal")}</TableHead>
                   <TableHead>{t("col.registered")}</TableHead>
-                  <TableHead className="w-10" />
+                  <TableHead className="w-20" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -109,9 +113,12 @@ export default async function PatientsPage({ searchParams }: { searchParams: { q
                       {formatClinicDate(p.createdAt.slice(0, 10), { weekday: undefined, month: "short" }, locale)}
                     </TableCell>
                     <TableCell>
-                      <Link href={`/admin/patients/${p.id}`} aria-label={t("open", { name: p.fullName })} className="text-muted-foreground group-hover:text-navy-900">
-                        <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-                      </Link>
+                      <span className="flex items-center justify-end gap-1">
+                        <DeletePatientButton patientId={p.id} name={p.fullName} />
+                        <Link href={`/admin/patients/${p.id}`} aria-label={t("open", { name: p.fullName })} className="text-muted-foreground group-hover:text-navy-900">
+                          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
+                        </Link>
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -54,7 +54,8 @@ export async function registerWalkInAction(input: WalkInInput) {
       phone: data.mode === "new" ? data.phone : undefined,
       visitReason: data.visitReason,
       visitReasonDetails: data.visitReasonDetails,
-      durationMinutes: data.durationMinutes ?? (await reasonDuration(actor.supabase, data.visitReason).catch(() => undefined)),
+      durationMinutes:
+        data.durationMinutes ?? (await reasonDuration(actor.supabase, data.visitReason, data.visitReasonDetails).catch(() => undefined)),
       notes: data.notes,
     });
     if (data.mode === "new" && data.fullNameEn && result.patient_created) {

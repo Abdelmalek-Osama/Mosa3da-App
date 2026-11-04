@@ -24,6 +24,8 @@ export interface QueueEntryView {
   queueNumber: number | null;
   position: number | null;
   visitReason: VisitReason;
+  /** For "other" (and doctor-added reasons): the text shown instead of "Other". */
+  visitReasonDetails: string | null;
   estimatedDurationMinutes: number;
   expectedStartAt: string | null;
   status: QueueStatus;

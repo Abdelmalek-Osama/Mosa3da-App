@@ -90,7 +90,13 @@ export async function finishReceptionActivationAction(input: z.input<typeof fini
     const { error: pwError } = await admin.auth.admin.updateUserById(data.userId, { password });
     if (pwError) throw new AppError("INTERNAL", "Could not set the password", { cause: pwError });
 
-    return { password, fullName: profile.full_name as string, phone: (profile.phone as string | null) ?? "" };
+    const { data: patient } = await admin.from("patients").select("id").eq("auth_user_id", data.userId).maybeSingle();
+    return {
+      password,
+      fullName: profile.full_name as string,
+      phone: (profile.phone as string | null) ?? "",
+      patientId: (patient?.id as string | undefined) ?? null,
+    };
   });
 }
 

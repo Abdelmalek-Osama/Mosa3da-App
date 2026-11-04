@@ -58,7 +58,7 @@
    "errPatient": "Select a visitor",
    "errTime": "Choose a time",
    "errReason": "Choose a visit reason",
-   "booked": "Appointment booked",
+   "booked": "Booked",
    "bookedBody": "{name} · {date} at {time}",
    "rescheduleTitle": "Reschedule appointment",
    "rescheduleBody": "Currently {current}. Pick a new free time; the old time becomes available right away.",
@@ -69,7 +69,8 @@
    "newName": "Full name in Arabic (triple name)",
    "newNamePlaceholder": "e.g. سارة أحمد حسن",
    "newNameEn": "Name in English (optional)",
-   "newPhone": "Mobile number"
+   "newPhone": "Mobile number",
+   "slotTaken": "This slot is already reserved for {name}. Please choose another time."
   },
   "confirmWa": {
    "button": "Confirm via WhatsApp",
@@ -282,7 +283,8 @@
    "languageHint": "Reminders are written in this language.",
    "fullNameHint": "First, father's and family name, in Arabic letters.",
    "fullNamePlaceholder": "e.g. سارة أحمد حسن",
-   "fullNameEn": "Name in English (optional)"
+   "fullNameEn": "Name in English (optional)",
+   "verifyFirst": "Verify the mobile number on WhatsApp first; then Save is enabled."
   },
   "detail": {
    "metaTitle": "Visitor",
@@ -301,6 +303,14 @@
     "staff": "Booked by clinic",
     "walk_in": "Walk-in"
    }
+  },
+  "delete": {
+   "label": "Delete {name}",
+   "title": "Delete visitor profile",
+   "body": "Are you sure you want to permanently delete {name}? This action cannot be undone. Her appointments, queue history, reminders and portal login are deleted too.",
+   "cancel": "Keep",
+   "confirm": "Delete permanently",
+   "done": "Visitor profile deleted successfully"
   }
  },
  "visitReason": {
@@ -692,10 +702,25 @@
    "min": "min",
    "up": "Move up",
    "down": "Move down",
-   "hint": "Unticked reasons are hidden from reception and online booking.",
+   "hint": "Untick a reason to hide it. Added reasons can be deleted.",
    "unsaved": "Unsaved changes",
    "save": "Save reasons",
-   "saved": "Reasons for visit saved"
+   "saved": "Reasons for visit saved",
+   "added": "Added",
+   "add": "Add visit reason",
+   "addTitle": "New visit reason",
+   "addBody": "It appears right away in reception's booking and walk-in lists and in online booking.",
+   "nameAr": "Name in Arabic",
+   "nameEn": "Name in English (optional)",
+   "defaultDuration": "Default duration",
+   "addSubmit": "Add reason",
+   "addedToast": "Visit reason added",
+   "delete": "Delete {reason}",
+   "deleteTitle": "Delete visit reason?",
+   "deleteBody": "{reason} will no longer be offered. Past and booked visits keep showing it.",
+   "deleteConfirm": "Delete",
+   "deleted": "Visit reason deleted",
+   "cancel": "Cancel"
   }
  },
  "meta": {
@@ -826,7 +851,12 @@
   "passwordOnce": "Shown only once. Give it to her now or send the welcome message.",
   "sendWelcome": "Send welcome message on WhatsApp",
   "welcomeNote": "Opens WhatsApp with the message ready. Press Send there.",
-  "welcome": "Welcome {name} to Dr. Rodaina Medhat Clinic!\nYour account is now active.\n\nSign in: {url}\nUsername: {phone}\nPassword: {password}"
+  "welcome": "Welcome {name} to Dr. Rodaina Medhat Clinic!\nYour account is now active.\n\nSign in: {url}\nUsername: {phone}\nPassword: {password}",
+  "verifyTitle": "Verify via WhatsApp",
+  "verifySend": "Verify via WhatsApp",
+  "verifyHint": "Sends a 4-digit code to this number. Enter the code she reads out to verify it.",
+  "verified": "Verified · portal account active",
+  "verifiedToast": "Phone number verified"
  },
  "displayMode": {
   "arabic": "TV: Arabic only",

@@ -18,7 +18,19 @@ function revalidateAll() {
 export async function staffGetSlotsAction(date: string) {
   return runAction("appointments.staff_slots", async () => {
     const actor = await requireStaff();
-    return new BookingService(actor.supabase).getSlots(parseInput(dateSchema, date));
+    const day = parseInput(dateSchema, date);
+    const [slots, occupants] = await Promise.all([
+      new BookingService(actor.supabase).getSlots(day),
+      new AppointmentAdminService(actor.supabase).occupants(day),
+    ]);
+    // Booked slots show who holds them, so reception sees why they are locked.
+    return slots.map((s) => {
+      if (s.available) return s;
+      const from = Date.parse(s.start);
+      const to = Date.parse(s.end);
+      const holder = occupants.find((o) => o.start < to && o.end > from);
+      return { ...s, bookedBy: holder?.name ?? null };
+    });
   });
 }
 

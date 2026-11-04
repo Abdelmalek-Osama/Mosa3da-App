@@ -165,7 +165,11 @@ const EXACT: Record<string, string> = {
     "يمكن تعديل المواعيد المجدولة فقط. تتم إدارة الزائرات الحاضرات من قائمة الانتظار.",
 
   "This visit reason is not available": "سبب الزيارة هذا غير متاح",
+  "Enter the reason name in Arabic": "أدخل اسم السبب بالعربية",
   "Keep at least one reason available": "أبقِ سببًا واحدًا على الأقل متاحًا",
+
+  "She is in today's queue. Finish or cancel her visit first.": "الزائرة موجودة في قائمة انتظار اليوم. أنهِ زيارتها أو ألغِها أولًا.",
+  "The visitor was deleted, but her portal login could not be removed.": "تم حذف الزائرة، لكن تعذّر حذف حساب دخولها إلى البوابة.",
 
   // Password reset (P1-09)
   "No account is registered with this number.": "لا يوجد حساب مسجّل بهذا الرقم.",

@@ -22,6 +22,8 @@ export interface Slot {
   start: string;
   end: string;
   available: boolean;
+  /** Staff only: who holds this time (booking or walk-in). Never sent to visitors. */
+  bookedBy?: string | null;
 }
 
 const appointmentSchema = z.object({

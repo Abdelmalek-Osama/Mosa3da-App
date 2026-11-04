@@ -7,6 +7,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatPhone, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { visitReasonText } from "@/server/domain/queue/constants";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { EntryActionsMenu } from "./entry-actions-menu";
 import { useQueueController } from "./queue-controller";
@@ -58,7 +59,7 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                       <div dir="auto" className="text-start font-medium text-navy-900">{entry.patientName}</div>
                       <div className="tabular text-xs text-muted-foreground">{formatPhone(entry.patientPhone)}</div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{tReason(entry.visitReason)}</TableCell>
+                    <TableCell className="text-muted-foreground">{visitReasonText(entry.visitReason, entry.visitReasonDetails, tReason)}</TableCell>
                     <TableCell className="tabular text-end">{t("min", { count: entry.estimatedDurationMinutes })}</TableCell>
                     <TableCell className="tabular text-end font-semibold">{time(entry.expectedStartAt)}</TableCell>
                     <TableCell><StatusBadge status={entry.status} /></TableCell>
@@ -81,7 +82,7 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span className="tabular font-semibold text-foreground">{time(entry.expectedStartAt)}</span>
                     <span>· {t("min", { count: entry.estimatedDurationMinutes })}</span>
-                    <span className="truncate">· {tReason(entry.visitReason)}</span>
+                    <span className="truncate">· {visitReasonText(entry.visitReason, entry.visitReasonDetails, tReason)}</span>
                   </div>
                   <div className="mt-1.5"><StatusBadge status={entry.status} /></div>
                 </div>

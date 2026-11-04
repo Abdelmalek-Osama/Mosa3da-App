@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatTime } from "@/lib/format";
+import { visitReasonText } from "@/server/domain/queue/constants";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { ElapsedTimer } from "./elapsed-timer";
 import { useQueueController } from "./queue-controller";
@@ -30,7 +31,7 @@ export function CurrentPanel({ current }: { current: QueueEntryView | null }) {
             <QueueNumber value={current.queueNumber} className="h-12 min-w-12 bg-teal-50 text-lg text-teal-800 ring-teal-200" />
             <div className="min-w-0">
               <div dir="auto" className="truncate text-start text-lg font-semibold text-navy-900">{current.patientName}</div>
-              <div className="text-sm text-muted-foreground">{tReason(current.visitReason)}</div>
+              <div className="text-sm text-muted-foreground">{visitReasonText(current.visitReason, current.visitReasonDetails, tReason)}</div>
             </div>
           </div>
           <dl className="grid grid-cols-3 gap-2 rounded-lg bg-muted/60 p-3 text-center">

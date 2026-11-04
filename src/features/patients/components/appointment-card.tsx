@@ -3,6 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { formatClinicDate, formatTime } from "@/lib/format";
+import { visitReasonText } from "@/server/domain/queue/constants";
 import type { PatientAppointment } from "@/server/application/appointments/booking-service";
 
 const STATUS_CLASS: Record<PatientAppointment["status"], string> = {
@@ -60,7 +61,7 @@ export function AppointmentCard({
         <AppointmentStatusPill status={appointment.status} />
       </div>
       <div className="mt-3 rounded-xl bg-muted/60 px-3 py-2 text-sm">
-        <span className="font-medium text-foreground">{tReason(appointment.visitReason)}</span>
+        <span className="font-medium text-foreground">{visitReasonText(appointment.visitReason, appointment.visitReasonDetails, tReason)}</span>
         {appointment.visitReasonDetails ? <p className="mt-0.5 text-xs text-muted-foreground">{appointment.visitReasonDetails}</p> : null}
       </div>
       {children ? <div className="mt-3">{children}</div> : null}

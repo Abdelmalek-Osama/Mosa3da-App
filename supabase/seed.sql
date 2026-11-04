@@ -10,7 +10,7 @@ begin;
 update public.doctor_settings
 set clinic_name                  = 'Dr. Rodaina Medhat Clinic',
     clinic_name_ar               = 'عيادة د. رودينا مدحت',
-    doctor_display_name          = 'Dr. Nadia El-Sayed',
+    doctor_display_name          = 'د. رودينا مدحت',
     timezone                     = 'Africa/Cairo',
     default_consultation_minutes = 20,
     whatsapp_threshold_minutes   = 30,

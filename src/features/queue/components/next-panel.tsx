@@ -6,6 +6,7 @@ import type { Locale } from "@/i18n/config";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatPhone, formatTime } from "@/lib/format";
+import { visitReasonText } from "@/server/domain/queue/constants";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { useQueueController } from "./queue-controller";
 import { QueueNumber, StatusBadge } from "./status-badge";
@@ -29,7 +30,7 @@ export function NextPanel({ ready }: { ready: QueueEntryView | null }) {
             <div className="min-w-0 flex-1">
               <div dir="auto" className="truncate text-start text-lg font-semibold text-navy-900">{ready.patientName}</div>
               <div className="text-sm text-muted-foreground">
-                {tReason(ready.visitReason)} · {formatPhone(ready.patientPhone)}
+                {visitReasonText(ready.visitReason, ready.visitReasonDetails, tReason)} · {formatPhone(ready.patientPhone)}
               </div>
             </div>
             <StatusBadge status={ready.status} />

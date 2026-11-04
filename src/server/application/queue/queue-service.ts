@@ -41,6 +41,7 @@ const entryRowSchema = z.object({
   staff_notes: z.string().nullable(),
   created_at: z.string(),
   patient: z.object({ full_name: z.string(), normalized_phone: z.string() }),
+  appointment: z.object({ visit_reason_details: z.string().nullable() }).nullable().optional(),
 });
 
 const sessionRowSchema = z.object({
@@ -56,7 +57,8 @@ const ENTRY_SELECT = `
   id, version, session_id, clinic_date, patient_id, appointment_id, queue_number, position,
   visit_reason, estimated_duration_minutes, expected_start_at, status, missed_turn_at, missed_turn_baseline,
   arrived_at, started_at, finished_at, staff_notes, created_at,
-  patient:patients!inner(full_name, normalized_phone)
+  patient:patients!inner(full_name, normalized_phone),
+  appointment:appointments(visit_reason_details)
 `;
 
 function toView(row: z.infer<typeof entryRowSchema>): QueueEntryView {
@@ -72,6 +74,7 @@ function toView(row: z.infer<typeof entryRowSchema>): QueueEntryView {
     queueNumber: row.queue_number,
     position: row.position,
     visitReason: row.visit_reason,
+    visitReasonDetails: row.appointment?.visit_reason_details ?? null,
     estimatedDurationMinutes: row.estimated_duration_minutes,
     expectedStartAt: row.expected_start_at,
     status: row.status,

@@ -11,6 +11,7 @@ import { PhoneInput } from "@/components/shared/phone-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createPatientAction, updatePatientAction } from "@/features/patients/staff-actions";
+import { ReceptionActivation } from "@/features/patients/components/reception-activation";
 
 export interface PatientFormValues {
   fullName: string;
@@ -50,13 +51,17 @@ export function PatientFormDialog({
   const [errors, setErrors] = useState<Errors>({});
   const [pending, start] = useTransition();
   const [formKey, setFormKey] = useState(0);
+  // New visitors must verify their number on WhatsApp before saving. Verifying
+  // creates (or links) her record and portal account; Save then completes it.
+  const [verified, setVerified] = useState<{ patientId: string | null } | null>(null);
 
   const set = (k: keyof PatientFormValues) => (e: React.ChangeEvent<HTMLInputElement>) => setValues((v) => ({ ...v, [k]: e.target.value }));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     start(async () => {
-      const res = editing ? await updatePatientAction(patientId!, values) : await createPatientAction(values);
+      const targetId = editing ? patientId! : verified?.patientId;
+      const res = targetId ? await updatePatientAction(targetId, values) : await createPatientAction(values);
       if (!res.ok) {
         setErrors(res.error.fieldErrors ?? {});
         toast.error(res.error.message);
@@ -64,7 +69,8 @@ export function PatientFormDialog({
       }
       toast.success(editing ? t("updated") : t("registered"));
       setOpen(false);
-      if (!editing && "id" in res.data) router.push(`/admin/patients/${res.data.id}`);
+      const newId = !editing ? (targetId ?? ("id" in res.data ? res.data.id : null)) : null;
+      if (newId) router.push(`/admin/patients/${newId}`);
       else router.refresh();
     });
   };
@@ -77,6 +83,7 @@ export function PatientFormDialog({
         if (o) {
           setValues(empty);
           setErrors({});
+          setVerified(null);
           setFormKey((k) => k + 1);
         }
       }}
@@ -107,10 +114,20 @@ export function PatientFormDialog({
               id="pf-phone"
               defaultValue={values.phone}
               onChange={(phone) => setValues((v) => ({ ...v, phone }))}
-              disabled={phoneLocked}
+              disabled={phoneLocked || !!verified}
               invalid={!!errors.phone}
             />
           </Field>
+          {editing ? null : (
+            <ReceptionActivation
+              key={formKey}
+              fullName={values.fullName}
+              phone={values.phone}
+              verifyLabel
+              onVerified={(r) => setVerified({ patientId: r.patientId })}
+            />
+          )}
+          {!editing && !verified ? <p className="text-xs text-amber-700">{t("verifyFirst")}</p> : null}
           <div className="grid gap-4 sm:grid-cols-2">
             <Field id="pf-email" label={t("email")} error={errors.email?.[0]}>
               <Input id="pf-email" type="email" dir="ltr" className="text-start" value={values.email} onChange={set("email")} aria-invalid={!!errors.email} />
@@ -135,7 +152,7 @@ export function PatientFormDialog({
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || (!editing && !verified)} title={!editing && !verified ? t("verifyFirst") : undefined}>
               {pending ? <Loader2 className="animate-spin" /> : null}
               {editing ? t("save") : t("submit")}
             </Button>

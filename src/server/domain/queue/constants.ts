@@ -70,3 +70,8 @@ export const QUEUE_STATUS_PATIENT_LABELS: Record<QueueStatus, string> = {
 
 export const DEFAULT_CONSULTATION_MINUTES = 20;
 export const DEFAULT_LATE_POLICY_CONSULTATIONS = 2;
+
+/** "Other" (and doctor-added reasons, booked as other) show their own text. */
+export function visitReasonText(reason: VisitReason, details: string | null | undefined, tReason: (r: VisitReason) => string): string {
+  return reason === "other" && details?.trim() ? details.trim() : tReason(reason);
+}

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { formatClinicDate, formatTime } from "@/lib/format";
-import { useVisitReasons } from "@/features/settings/use-visit-reasons";
+import { reasonOptionLabel, useVisitReasons } from "@/features/settings/use-visit-reasons";
 import type { VisitReason } from "@/server/domain/queue/constants";
 import type { BookingCalendar, Slot } from "@/server/application/appointments/booking-service";
 import { bookAppointmentAction, getSlotsAction } from "@/features/appointments/actions";
@@ -25,6 +25,8 @@ export interface Booked {
   slotStart: string;
   clinicDate: string;
   reason: VisitReason;
+  /** Display name (doctor-added reasons have their own). */
+  reasonLabel?: string;
 }
 
 export function BookingFlow({
@@ -46,8 +48,11 @@ export function BookingFlow({
   const [slots, setSlots] = useState<Slot[] | null>(initialSlots?.date === firstFree ? initialSlots.slots : null);
   const [slotError, setSlotError] = useState<string | null>(null);
   const [slotStart, setSlotStart] = useState<string | null>(null);
-  const [reason, setReason] = useState<VisitReason | null>(null);
+  // Selected option key: a built-in reason, or "custom:<id>" for a doctor-added one.
+  const [reason, setReason] = useState<string | null>(null);
   const reasons = useVisitReasons();
+  const option = reasons.find((o) => o.key === reason);
+  const needsDetails = option?.reason === "other" && !option.details;
   const [details, setDetails] = useState("");
   const [notes, setNotes] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -80,17 +85,22 @@ export function BookingFlow({
   const freeCount = slots?.filter((s) => s.available).length ?? 0;
 
   const submit = () => {
-    if (!slotStart || !reason) return;
+    if (!slotStart || !option) return;
     setSubmitError(null);
     startSubmit(async () => {
       const res = await bookAppointmentAction({
         slotStart,
-        visitReason: reason,
-        visitReasonDetails: reason === "other" ? details : undefined,
+        visitReason: option.reason,
+        visitReasonDetails: option.details ?? (needsDetails ? details : undefined),
         notes,
       });
       if (res.ok) {
-        setBooked({ slotStart: res.data.scheduled_start, clinicDate: res.data.clinic_date, reason });
+        setBooked({
+          slotStart: res.data.scheduled_start,
+          clinicDate: res.data.clinic_date,
+          reason: option.reason,
+          reasonLabel: option.details ? reasonOptionLabel(option, locale, tReason) : undefined,
+        });
         setStep("done");
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
@@ -262,7 +272,8 @@ export function BookingFlow({
           <div>
             <h2 className="mb-2 text-sm font-semibold text-navy-900">{t("whatFor")}</h2>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" role="radiogroup" aria-label={t("reasonLabel")}>
-              {reasons.map(({ reason: r }) => {
+              {reasons.map((o) => {
+                const r = o.key;
                 const selected = reason === r;
                 return (
                   <button
@@ -277,7 +288,7 @@ export function BookingFlow({
                     )}
                   >
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-navy-900">{tReason(r)}</span>
+                      <span className="block text-sm font-medium text-navy-900">{reasonOptionLabel(o, locale, tReason)}</span>
                     </span>
                     <span
                       className={cn(
@@ -294,7 +305,7 @@ export function BookingFlow({
             </div>
           </div>
 
-          {reason === "other" ? (
+          {needsDetails ? (
             <div className="space-y-1.5">
               <Label htmlFor="details">{t("describe")}</Label>
               <Input id="details" value={details} maxLength={200} onChange={(e) => setDetails(e.target.value)} placeholder={t("describePlaceholder")} />
@@ -320,7 +331,7 @@ export function BookingFlow({
             <Button
               size="lg"
               className="h-12 w-full rounded-xl"
-              disabled={!reason || (reason === "other" && !details.trim())}
+              disabled={!option || (needsDetails && !details.trim())}
               onClick={() => setStep("review")}
             >
               {t("review")}
@@ -329,7 +340,7 @@ export function BookingFlow({
         </section>
       ) : null}
 
-      {step === "review" && slotStart && reason ? (
+      {step === "review" && slotStart && option ? (
         <section className="space-y-5">
           <div className="rounded-2xl border bg-card p-5 shadow-soft">
             <dl className="space-y-4 text-sm">
@@ -341,7 +352,7 @@ export function BookingFlow({
               />
               <ReviewRow
                 label={t("reason")}
-                value={reason === "other" ? `${tReason("other")}: ${details}` : tReason(reason)}
+                value={needsDetails ? `${tReason("other")}: ${details}` : reasonOptionLabel(option, locale, tReason)}
                 onEdit={() => setStep("reason")}
               />
               {notes.trim() ? <ReviewRow label={t("notesShort")} value={notes.trim()} onEdit={() => setStep("reason")} /> : null}
@@ -390,7 +401,7 @@ export function BookingConfirmation({ booked, timeZone }: { booked: Booked; time
           <Clock className="h-6 w-6 text-teal-600" aria-hidden />
           {formatTime(booked.slotStart, timeZone, locale)}
         </p>
-        <p className="mt-2 text-sm">{tReason(booked.reason)}</p>
+        <p className="mt-2 text-sm">{booked.reasonLabel ?? tReason(booked.reason)}</p>
       </div>
       <p className="mx-auto max-w-sm text-sm text-muted-foreground">
         {t("bookedBody")}
