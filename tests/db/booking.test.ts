@@ -21,7 +21,11 @@ describe.skipIf(!enabled)("patient booking (PostgreSQL)", () => {
       await c.query("begin");
       if (who === "anon") await c.query("set local role anon");
       else if (who === "service") await c.query(`select set_config('request.jwt.claims', '{"role":"service_role"}', true)`);
-      else {
+      else if (who.startsWith("owner:")) {
+        // book_appointment is no longer granted to visitors (day-only booking,
+        // migration 0019); its slot rules are still tested as the owner role.
+        await c.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: who.slice(6), role: "authenticated" })]);
+      } else {
         await c.query("set local role authenticated");
         await c.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: who, role: "authenticated" })]);
       }
@@ -44,7 +48,7 @@ describe.skipIf(!enabled)("patient booking (PostgreSQL)", () => {
       [day],
     );
   const book = (who: string, start: Date | string, reason = "ultrasound") =>
-    as(who, "select public.book_appointment($1::timestamptz, $2::public.visit_reason) as r", [start, reason]).then((r) => r[0].r);
+    as(`owner:${who}`, "select public.book_appointment($1::timestamptz, $2::public.visit_reason) as r", [start, reason]).then((r) => r[0].r);
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: url, max: 4 });

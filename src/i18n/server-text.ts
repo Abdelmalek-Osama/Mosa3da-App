@@ -95,6 +95,15 @@ const EXACT: Record<string, string> = {
   "This time slot is no longer available.": "هذا الموعد لم يعد متاحًا.",
   "This time is no longer available. Please choose another.": "هذا الوقت لم يعد متاحًا. يرجى اختيار وقت آخر.",
   "This time is outside the clinic's working hours": "هذا الوقت خارج ساعات عمل العيادة",
+  "This day is outside the booking window": "هذا اليوم خارج فترة الحجز المتاحة",
+  "The clinic is closed on this day": "العيادة مغلقة في هذا اليوم",
+  "No appointments are left on this day. Please choose another day.":
+    "لم تعد هناك مواعيد متاحة في هذا اليوم. يرجى اختيار يوم آخر.",
+  "Choose a day": "اختاري اليوم",
+  "Enter the service name in Arabic": "أدخل اسم الخدمة بالعربية",
+  "Enter a valid price": "أدخل سعرًا صالحًا",
+  "A service with this name already exists.": "توجد خدمة بهذا الاسم بالفعل.",
+  "Service not found": "لم يُعثر على الخدمة",
   "This patient already has an appointment on this day.": "لدى هذه الزائرة موعد في هذا اليوم.",
   "This patient already has an appointment on this day": "لدى هذه الزائرة موعد في هذا اليوم",
   "You already have an appointment on this day. Cancel it first to choose another time.":

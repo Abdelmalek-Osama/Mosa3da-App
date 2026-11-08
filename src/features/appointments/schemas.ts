@@ -5,7 +5,8 @@ export const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date"
 
 export const bookAppointmentSchema = z
   .object({
-    slotStart: z.string().datetime({ offset: true, message: "Choose a time" }),
+    /** Visitors pick a day only; the clinic assigns the earliest free time (FIFO). */
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a day"),
     visitReason: z.enum(VISIT_REASONS, { errorMap: () => ({ message: "Choose a reason for your visit" }) }),
     visitReasonDetails: z.string().trim().max(200).optional().transform((v) => v || undefined),
     notes: z.string().trim().max(1000).optional().transform((v) => v || undefined),

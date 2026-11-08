@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, LayoutDashboard, ListOrdered, MonitorPlay, Settings, UserCog, Users, type LucideIcon } from "lucide-react";
+import { CalendarDays, LayoutDashboard, ListOrdered, MonitorPlay, ScrollText, Settings, UserCog, Users, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ export const ADMIN_NAV: NavItem[] = [
   { href: "/admin/appointments", label: "appointments", icon: CalendarDays },
   { href: "/admin/patients", label: "patients", icon: Users },
   { href: "/admin/settings", label: "settings", icon: Settings },
+  { href: "/admin/logs", label: "logs", icon: ScrollText, doctorOnly: true },
   { href: "/admin/secretaries", label: "secretaries", icon: UserCog, doctorOnly: true },
   { href: "/display", label: "display", icon: MonitorPlay, external: true },
 ];

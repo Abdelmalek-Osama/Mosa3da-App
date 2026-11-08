@@ -29,6 +29,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   patients_normalized_phone_key: "A patient with this phone number already exists.",
   appointments_no_slot_overlap: "This time slot is no longer available.",
   appointments_one_active_per_patient_day: "This patient already has an appointment on this day.",
+  clinic_services_name_ar_key: "A service with this name already exists.",
 };
 
 /** Converts a Supabase/PostgREST error into a typed AppError with a safe message. */

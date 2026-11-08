@@ -1,53 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { ArrowLeft, CalendarCheck2, CalendarX2, CheckCircle2, Clock, Loader2, RefreshCw } from "lucide-react";
+import { useState, useTransition } from "react";
+import { ArrowLeft, CalendarCheck2, CalendarX2, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import type { Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
 import { formatClinicDate, formatTime } from "@/lib/format";
 import { reasonOptionLabel, useVisitReasons } from "@/features/settings/use-visit-reasons";
-import type { VisitReason } from "@/server/domain/queue/constants";
-import type { BookingCalendar, Slot } from "@/server/application/appointments/booking-service";
-import { bookAppointmentAction, getSlotsAction } from "@/features/appointments/actions";
+import type { BookingCalendar } from "@/server/application/appointments/booking-service";
+import { bookAppointmentAction } from "@/features/appointments/actions";
+import { FeesDialog, type FeesInfo } from "./fees-dialog";
 
-type Step = "time" | "reason" | "review" | "done";
-const STEPS = ["time", "reason", "review"] as const satisfies readonly Exclude<Step, "done">[];
+type Step = "day" | "reason" | "review" | "done";
+const STEPS = ["day", "reason", "review"] as const satisfies readonly Exclude<Step, "done">[];
 
 export interface Booked {
+  /** Assigned arrival time. */
   slotStart: string;
   clinicDate: string;
-  reason: VisitReason;
-  /** Display name (doctor-added reasons have their own). */
-  reasonLabel?: string;
 }
 
-export function BookingFlow({
-  calendar,
-  initialSlots,
-}: {
-  calendar: BookingCalendar;
-  /** Slots for the first bookable day, prefetched on the server. */
-  initialSlots?: { date: string; slots: Slot[] } | null;
-}) {
+/**
+ * Day-only online booking. The visitor picks a day and a reason; the clinic
+ * assigns the earliest free time of that day (first come, first served), so
+ * the day fills from the opening time instead of everyone picking late slots.
+ */
+export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
   const t = useTranslations("portal.booking");
   const tReason = useTranslations("visitReason");
   const locale = useLocale() as Locale;
   const tz = calendar.timezone;
-  const firstFree = initialSlots?.date ?? calendar.dates.find((d) => d.free > 0)?.date ?? null;
 
-  const [step, setStep] = useState<Step>("time");
+  // Days found full while booking (another visitor took the last time).
+  const [fullDays, setFullDays] = useState<string[]>([]);
+  const isFull = (d: { date: string; free: number }) => d.free === 0 || fullDays.includes(d.date);
+  const firstFree = calendar.dates.find((d) => d.free > 0)?.date ?? null;
+
+  const [step, setStep] = useState<Step>("day");
   const [date, setDate] = useState<string | null>(firstFree);
-  const [slots, setSlots] = useState<Slot[] | null>(initialSlots?.date === firstFree ? initialSlots.slots : null);
-  const [slotError, setSlotError] = useState<string | null>(null);
-  const [slotStart, setSlotStart] = useState<string | null>(null);
   // Selected option key: a built-in reason, or "custom:<id>" for a doctor-added one.
   const [reason, setReason] = useState<string | null>(null);
   const reasons = useVisitReasons();
@@ -57,59 +53,36 @@ export function BookingFlow({
   const [notes, setNotes] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [booked, setBooked] = useState<Booked | null>(null);
-  const [loadingSlots, startSlots] = useTransition();
+  const [fees, setFees] = useState<FeesInfo | null>(null);
   const [submitting, startSubmit] = useTransition();
 
-  const loadSlots = (d: string) => {
-    setSlotError(null);
-    setSlots(null);
-    startSlots(async () => {
-      const res = await getSlotsAction(d);
-      if (res.ok) setSlots(res.data);
-      else setSlotError(res.error.message);
-    });
-  };
-
-  // Tracks which day the slot list belongs to (StrictMode-safe: effects may run twice).
-  const loadedDate = useRef<string | null>(slots ? firstFree : null);
-  useEffect(() => {
-    if (!date || date === loadedDate.current) return;
-    loadedDate.current = date;
-    loadSlots(date);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date]);
-
-  const grouped = useMemo(() => groupByPeriod(slots ?? [], tz), [slots, tz]);
-  const time = (iso: string) => formatTime(iso, tz, locale);
   const day = (d: string, o: Intl.DateTimeFormatOptions = {}) => formatClinicDate(d, o, locale);
-  const freeCount = slots?.filter((s) => s.available).length ?? 0;
+  const selectedDay = calendar.dates.find((d) => d.date === date) ?? null;
+  const selectedOpen = !!selectedDay && !isFull(selectedDay);
+  const anyOpen = calendar.dates.some((d) => !isFull(d));
 
   const submit = () => {
-    if (!slotStart || !option) return;
+    if (!date || !option) return;
     setSubmitError(null);
     startSubmit(async () => {
       const res = await bookAppointmentAction({
-        slotStart,
+        date,
         visitReason: option.reason,
         visitReasonDetails: option.details ?? (needsDetails ? details : undefined),
         notes,
       });
       if (res.ok) {
-        setBooked({
-          slotStart: res.data.scheduled_start,
-          clinicDate: res.data.clinic_date,
-          reason: option.reason,
-          reasonLabel: option.details ? reasonOptionLabel(option, locale, tReason) : undefined,
-        });
+        setBooked({ slotStart: res.data.scheduledStart, clinicDate: res.data.clinicDate });
+        setFees(res.data.fees);
         setStep("done");
         window.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
       if (res.error.code === "CONFLICT") {
-        toast.error(t("takenTitle"), { description: t("takenBody") });
-        setSlotStart(null);
-        setStep("time");
-        if (date) loadSlots(date);
+        toast.error(t("dayFullTitle"), { description: t("dayFullBody") });
+        setFullDays((f) => [...f, date]);
+        setDate(null);
+        setStep("day");
         return;
       }
       setSubmitError(res.error.message);
@@ -117,7 +90,12 @@ export function BookingFlow({
   };
 
   if (step === "done" && booked) {
-    return <BookingConfirmation booked={booked} timeZone={tz} />;
+    return (
+      <>
+        <BookingConfirmation booked={booked} timeZone={tz} />
+        {fees ? <FeesDialog fees={fees} open onContinue={() => setFees(null)} /> : null}
+      </>
+    );
   }
 
   const stepIndex = STEPS.findIndex((s) => s === step);
@@ -146,13 +124,10 @@ export function BookingFlow({
         ))}
       </ol>
 
-      {step === "time" ? (
+      {step === "day" ? (
         <section className="space-y-5">
-          {calendar.dates.length === 0 || !firstFree ? (
-            <EmptyState
-              title={t("noTimesTitle")}
-              body={t("noTimesBody")}
-            />
+          {calendar.dates.length === 0 || !anyOpen ? (
+            <EmptyState title={t("noTimesTitle")} body={t("noTimesBody")} />
           ) : (
             <>
               <div>
@@ -160,16 +135,13 @@ export function BookingFlow({
                 <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
                   {calendar.dates.map((d) => {
                     const selected = d.date === date;
-                    const full = d.free === 0;
+                    const full = isFull(d);
                     return (
                       <button
                         key={d.date}
                         type="button"
                         disabled={full}
-                        onClick={() => {
-                          setDate(d.date);
-                          setSlotStart(null);
-                        }}
+                        onClick={() => setDate(d.date)}
                         aria-pressed={selected}
                         className={cn(
                           "flex w-[4.5rem] shrink-0 snap-start flex-col items-center rounded-2xl border px-2 py-2.5 transition-colors",
@@ -192,7 +164,7 @@ export function BookingFlow({
                             full ? "bg-muted text-muted-foreground" : selected ? "bg-teal-400 text-navy-950" : "bg-teal-50 text-teal-800",
                           )}
                         >
-                          {full ? t("full") : t("free", { count: d.free })}
+                          {full ? t("full") : t("open")}
                         </span>
                       </button>
                     );
@@ -200,68 +172,28 @@ export function BookingFlow({
                 </div>
               </div>
 
-              <div>
-                <div className="mb-2 flex items-baseline justify-between gap-2">
-                  <h2 className="text-sm font-semibold text-navy-900">
-                    {date ? day(date, { year: undefined }) : t("chooseTime")}
-                  </h2>
-                  {slots ? <span className="text-xs text-muted-foreground">{t("available", { count: freeCount })}</span> : null}
-                </div>
-
-                {loadingSlots || (!slots && !slotError) ? (
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <Skeleton key={i} className="h-12 rounded-xl" />
-                    ))}
+              {date && selectedDay ? (
+                selectedOpen ? (
+                  <div className="flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4" role="status">
+                    <CalendarCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" aria-hidden />
+                    <div>
+                      <p className="font-semibold text-teal-900">{t("dayAvailable")}</p>
+                      <p className="mt-0.5 text-sm text-teal-800">{day(date, { year: undefined })}</p>
+                      <p className="mt-2 text-xs text-teal-800/90">{t("autoTimeNote")}</p>
+                    </div>
                   </div>
-                ) : slotError ? (
-                  <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                    {slotError}
-                    <Button variant="outline" size="sm" className="ms-3" onClick={() => date && loadSlots(date)}>
-                      <RefreshCw /> {t("retry")}
-                    </Button>
-                  </div>
-                ) : freeCount === 0 ? (
-                  <EmptyState title={t("dayFullTitle")} body={t("dayFullBody")} />
                 ) : (
-                  <div className="space-y-4">
-                    {grouped.map((g) => (
-                      <div key={g.label}>
-                        <p className="mb-1.5 text-xs font-medium text-muted-foreground">{t(`period.${g.label}`)}</p>
-                        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                          {g.slots.map((s) => {
-                            const selected = s.start === slotStart;
-                            return (
-                              <button
-                                key={s.start}
-                                type="button"
-                                disabled={!s.available}
-                                onClick={() => setSlotStart(s.start)}
-                                aria-pressed={selected}
-                                className={cn(
-                                  "tabular h-12 rounded-xl border text-sm font-semibold transition-colors",
-                                  selected
-                                    ? "border-teal-600 bg-teal-600 text-white shadow-soft"
-                                    : "bg-card text-navy-900 hover:border-teal-400 hover:bg-teal-50",
-                                  !s.available && "cursor-not-allowed border-dashed bg-muted/40 text-muted-foreground line-through hover:border-border hover:bg-muted/40",
-                                )}
-                              >
-                                {time(s.start)}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  <EmptyState title={t("dayFullTitle")} body={t("dayFullBody")} />
+                )
+              ) : (
+                <p className="rounded-2xl border border-dashed bg-card p-4 text-center text-sm text-muted-foreground">{t("chooseDayHint")}</p>
+              )}
             </>
           )}
 
           <StickyFooter>
-            <Button size="lg" className="h-12 w-full rounded-xl" disabled={!slotStart} onClick={() => setStep("reason")}>
-              {slotStart ? t("continueAt", { time: time(slotStart) }) : t("chooseTime")}
+            <Button size="lg" className="h-12 w-full rounded-xl" disabled={!date || !selectedOpen} onClick={() => setStep("reason")}>
+              {date && selectedOpen ? t("continueOn", { day: day(date, { year: undefined, month: undefined }) }) : t("chooseDay")}
             </Button>
           </StickyFooter>
         </section>
@@ -340,16 +272,11 @@ export function BookingFlow({
         </section>
       ) : null}
 
-      {step === "review" && slotStart && option ? (
+      {step === "review" && date && option ? (
         <section className="space-y-5">
           <div className="rounded-2xl border bg-card p-5 shadow-soft">
             <dl className="space-y-4 text-sm">
-              <ReviewRow label={t("day")} value={day(date ?? "")} onEdit={() => setStep("time")} />
-              <ReviewRow
-                label={t("time")}
-                value={t("timeValue", { time: time(slotStart), minutes: calendar.durationMinutes })}
-                onEdit={() => setStep("time")}
-              />
+              <ReviewRow label={t("day")} value={day(date)} onEdit={() => setStep("day")} />
               <ReviewRow
                 label={t("reason")}
                 value={needsDetails ? `${tReason("other")}: ${details}` : reasonOptionLabel(option, locale, tReason)}
@@ -360,8 +287,8 @@ export function BookingFlow({
           </div>
 
           <ul className="space-y-1.5 rounded-xl bg-muted/60 p-4 text-xs text-muted-foreground">
+            <li>• {t("tipAutoTime")}</li>
             <li>• {t("tip1")}</li>
-            <li>• {t("tip2")}</li>
             <li>• {t("tip3", { cutoff: formatCutoff(calendar.cancellationCutoffMinutes, t) })}</li>
           </ul>
 
@@ -383,10 +310,11 @@ export function BookingFlow({
   );
 }
 
+/** Only the arrival time: no queue position, nothing to choose. */
 export function BookingConfirmation({ booked, timeZone }: { booked: Booked; timeZone: string }) {
   const t = useTranslations("portal.booking");
-  const tReason = useTranslations("visitReason");
   const locale = useLocale() as Locale;
+  const time = formatTime(booked.slotStart, timeZone, locale);
   return (
     <div className="space-y-6 pt-4 text-center">
       <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-teal-50 ring-8 ring-teal-50/50">
@@ -395,17 +323,15 @@ export function BookingConfirmation({ booked, timeZone }: { booked: Booked; time
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-navy-900">{t("bookedTitle")}</h1>
       </div>
-      <div className="mx-auto max-w-sm rounded-2xl border bg-card p-5 text-start shadow-soft">
+      <div className="mx-auto max-w-sm rounded-2xl border bg-card p-5 text-start shadow-soft" data-testid="arrival-card">
         <p className="text-sm text-muted-foreground">{formatClinicDate(booked.clinicDate, {}, locale)}</p>
+        <p className="mt-2 text-sm font-medium text-navy-900">{t("arriveAtLabel")}</p>
         <p className="tabular mt-1 flex items-center gap-2 text-3xl font-bold text-navy-900">
           <Clock className="h-6 w-6 text-teal-600" aria-hidden />
-          {formatTime(booked.slotStart, timeZone, locale)}
+          {time}
         </p>
-        <p className="mt-2 text-sm">{booked.reasonLabel ?? tReason(booked.reason)}</p>
       </div>
-      <p className="mx-auto max-w-sm text-sm text-muted-foreground">
-        {t("bookedBody")}
-      </p>
+      <p className="mx-auto max-w-sm text-sm text-navy-900">{t("bookedBody", { time })}</p>
       <div className="mx-auto grid max-w-sm gap-2">
         <Button asChild size="lg" className="h-12 rounded-xl">
           <Link href="/patient/dashboard">{t("goDashboard")}</Link>
@@ -449,21 +375,6 @@ function StickyFooter({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
-}
-
-function groupByPeriod(slots: Slot[], timeZone: string) {
-  const hourOf = (iso: string) =>
-    Number(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", hourCycle: "h23", timeZone }).format(new Date(iso)));
-  const groups = [
-    { label: "morning", slots: [] as Slot[] },
-    { label: "afternoon", slots: [] as Slot[] },
-    { label: "evening", slots: [] as Slot[] },
-  ];
-  for (const s of slots) {
-    const h = hourOf(s.start);
-    groups[h < 12 ? 0 : h < 17 ? 1 : 2]!.slots.push(s);
-  }
-  return groups.filter((g) => g.slots.length > 0);
 }
 
 function formatCutoff(minutes: number, t: (key: string, values?: Record<string, number>) => string) {

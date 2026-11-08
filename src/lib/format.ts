@@ -16,6 +16,19 @@ export function formatTime(iso: string | null | undefined, timeZone = DEFAULT_TI
   }).format(new Date(iso));
 }
 
+/** Clinic fees are quoted in Egyptian pounds. */
+export const CLINIC_CURRENCY = "EGP";
+
+/** 400 → "EGP 400" / "400 ج.م." (Latin digits in both languages). */
+export function formatMoney(amount: number, locale: Locale = "en", currency = CLINIC_CURRENCY): string {
+  return new Intl.NumberFormat(intlLocale(locale), {
+    style: "currency",
+    currency,
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 /** `YYYY-MM-DD` clinic date → "Sunday, 1 November 2026" / "الأحد، 1 نوفمبر 2026" */
 export function formatClinicDate(
   isoDate: string,

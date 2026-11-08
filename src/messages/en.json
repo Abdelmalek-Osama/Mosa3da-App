@@ -75,7 +75,7 @@
   "confirmWa": {
    "button": "Confirm via WhatsApp",
    "today": "today",
-   "message": "Hello {name}, your appointment at {clinic} is confirmed {day} at {time}. Please arrive 10 minutes early and check in at reception.",
+   "message": "Hello {name}, your appointment at {clinic} {day} is confirmed. Please arrive at the clinic at {time}.",
    "address": "Address: {address}",
    "map": "Location: {url}",
    "onDay": "on {date}"
@@ -410,28 +410,17 @@
    "back": "Back",
    "steps": "Booking steps",
    "step": {
-    "time": "Date & time",
+    "day": "Day",
     "reason": "Reason",
     "review": "Confirm"
    },
-   "takenTitle": "That time was just taken",
-   "takenBody": "Please choose another time.",
-   "noTimesTitle": "No times available right now",
-   "noTimesBody": "All appointments in the booking window are taken. Please check again later or call the clinic.",
+   "noTimesTitle": "No days available right now",
+   "noTimesBody": "All days in the booking window are fully booked. Please check again later or call the clinic.",
    "chooseDay": "Choose a day",
    "full": "Full",
-   "free": "{count} free",
-   "chooseTime": "Choose a time",
-   "available": "{count, plural, one {# time available} other {# times available}}",
    "retry": "Retry",
    "dayFullTitle": "This day is fully booked",
    "dayFullBody": "Please choose another day.",
-   "period": {
-    "morning": "Morning",
-    "afternoon": "Afternoon",
-    "evening": "Evening"
-   },
-   "continueAt": "Continue · {time}",
    "whatFor": "What is the visit for?",
    "reasonLabel": "Reason for visit",
    "describe": "Please describe the reason",
@@ -442,22 +431,26 @@
    "notesPrivate": "Only the clinic team can read this.",
    "review": "Review booking",
    "day": "Day",
-   "time": "Time",
-   "timeValue": "{time} · about {minutes} min",
    "reason": "Reason",
    "notesShort": "Notes",
    "tip1": "Please arrive 10 minutes early and check in at reception.",
-   "tip2": "Your place in the queue starts when you check in, and waiting times are estimates.",
    "tip3": "You can cancel online up to {cutoff} before your appointment.",
    "hours": "{count, plural, one {# hour} other {# hours}}",
    "minutesCount": "{count} minutes",
    "booking": "Booking…",
    "confirm": "Confirm booking",
-   "bookedTitle": "You're booked",
-   "bookedBody": "Check in at reception when you arrive. You can follow your place in the queue from your dashboard.",
+   "bookedTitle": "Your appointment is confirmed",
+   "bookedBody": "Your appointment is confirmed. Please arrive at the clinic at {time}.",
    "goDashboard": "Go to my dashboard",
    "viewAppointments": "View my appointments",
-   "edit": "Edit"
+   "edit": "Edit",
+   "open": "Open",
+   "chooseDayHint": "Choose the day you'd like to visit.",
+   "dayAvailable": "Appointments available for this date.",
+   "autoTimeNote": "You don't need to pick a time. After you confirm, the clinic gives you the earliest free time on this day, in booking order.",
+   "continueOn": "Continue · {day}",
+   "tipAutoTime": "Your arrival time is assigned automatically in booking order (first come, first served).",
+   "arriveAtLabel": "Please arrive at the clinic at"
   },
   "countdown": {
    "left": "Time left until your appointment: {time}",
@@ -465,6 +458,14 @@
    "hours": "{count, plural, one {# hour} other {# hours}}",
    "minutes": "{count, plural, one {# minute} other {# minutes}}",
    "and": " and "
+  },
+  "fees": {
+   "title": "Booking Confirmed & Service Fees",
+   "welcome": "Welcome to {clinic}!",
+   "booked": "Your appointment has been booked successfully.",
+   "ratesTitle": "Clinic Service Rates",
+   "settle": "Fees are settled at the reception desk upon your arrival. We look forward to seeing you!",
+   "continue": "Understood / Continue"
   }
  },
  "queue": {
@@ -721,6 +722,38 @@
    "deleteConfirm": "Delete",
    "deleted": "Visit reason deleted",
    "cancel": "Cancel"
+  },
+  "services": {
+   "title": "Services & fees",
+   "body": "Prices shown to a first-time visitor right after her first online booking. Only services marked Shown appear.",
+   "empty": "No services yet. Add the consultation fee to get started.",
+   "shown": "Shown",
+   "hidden": "Hidden",
+   "show": "Show {name} to visitors",
+   "hide": "Hide {name} from visitors",
+   "shownToast": "Service shown to visitors",
+   "hiddenToast": "Service hidden from visitors",
+   "hint": "Hidden services stay saved but are not shown to visitors.",
+   "add": "Add service",
+   "addTitle": "New service",
+   "editTitle": "Edit service",
+   "editLabel": "Edit service",
+   "dialogBody": "Name and price as visitors will see them in the fees pop-up.",
+   "nameAr": "Name in Arabic",
+   "nameArPlaceholder": "الكشف",
+   "nameEn": "Name in English (optional)",
+   "price": "Price",
+   "showToVisitors": "Show to visitors",
+   "addSubmit": "Add service",
+   "save": "Save",
+   "addedToast": "Service added",
+   "savedToast": "Service saved",
+   "delete": "Delete {name}",
+   "deleteTitle": "Delete service?",
+   "deleteBody": "{name} will be removed from the fees list. To keep it for later, hide it instead.",
+   "deleteConfirm": "Delete",
+   "deleted": "Service deleted",
+   "cancel": "Cancel"
   }
  },
  "meta": {
@@ -754,7 +787,8 @@
   "patients": "Visitors",
   "settings": "Clinic settings",
   "secretaries": "Secretaries",
-  "display": "Waiting-room display"
+  "display": "Waiting-room display",
+  "logs": "Consultation logs"
  },
  "live": {
   "live": "Live",
@@ -864,5 +898,66 @@
   "hint": "Switch the waiting-room TV between Arabic only and two columns (Arabic and English).",
   "nowArabic": "Waiting-room TV switched to Arabic only",
   "nowBilingual": "Waiting-room TV switched to Arabic + English"
+ },
+ "logs": {
+  "title": "Consultation logs",
+  "subtitle": "How long each consultation actually took, compared with the expected time for its reason.",
+  "export": "Export to CSV",
+  "search": "Search by visitor name or visit reason",
+  "range": {
+   "label": "Date range",
+   "today": "Today",
+   "week": "This week",
+   "month": "This month",
+   "custom": "Custom range",
+   "from": "From",
+   "to": "To"
+  },
+  "stats": {
+   "count": "Consultations",
+   "avgActual": "Average actual",
+   "avgExpected": "Average expected",
+   "over": "Over expected time"
+  },
+  "col": {
+   "dateTime": "Date & time",
+   "patient": "Visitor name",
+   "reason": "Visit reason",
+   "expected": "Expected",
+   "actual": "Actual",
+   "variance": "Difference"
+  },
+  "minutes": "{count} min",
+  "minShort": "min",
+  "onTime": "On time",
+  "walkIn": "Walk-in",
+  "inRoom": "in room {start}–{end}",
+  "empty": "No finished consultations in this period",
+  "emptySearch": "No consultations match your search",
+  "emptyBody": "A consultation is logged when reception presses Start consultation and then End consultation.",
+  "pagination": "Pages",
+  "showing": "{from}–{to} of {total}",
+  "total": "{count, plural, one {# consultation} other {# consultations}}",
+  "prev": "Previous",
+  "next": "Next",
+  "csv": {
+   "date": "Date",
+   "scheduled": "Scheduled time",
+   "started": "Consultation started",
+   "ended": "Consultation ended",
+   "patient": "Visitor name",
+   "patientEn": "Visitor name (English)",
+   "reason": "Visit reason",
+   "type": "Visit type",
+   "expected": "Expected (min)",
+   "actual": "Actual (min)",
+   "variance": "Difference (min)",
+   "result": "Result",
+   "walkIn": "Walk-in",
+   "booked": "Booked",
+   "over": "Over",
+   "under": "Under",
+   "onTime": "On time"
+  }
  }
 }

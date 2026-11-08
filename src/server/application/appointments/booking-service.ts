@@ -51,6 +51,16 @@ export interface PatientAppointment {
   source: z.infer<typeof appointmentSchema>["source"];
 }
 
+export interface BookedAppointment {
+  appointmentId: string;
+  clinicDate: string;
+  /** Assigned arrival time. */
+  scheduledStart: string;
+  scheduledEnd: string;
+  /** True when this is the visitor's first appointment ever (shows the fees pop-up). */
+  isFirstBooking: boolean;
+}
+
 export class BookingService {
   constructor(private readonly db: SupabaseClient) {}
 
@@ -75,17 +85,31 @@ export class BookingService {
       .map((s) => ({ start: s.slot_start, end: s.slot_end, available: s.available }));
   }
 
-  async book(input: { slotStart: string; visitReason: VisitReason; visitReasonDetails?: string; notes?: string }) {
-    const { data, error } = await this.db.rpc("book_appointment", {
-      p_slot_start: input.slotStart,
+  /** Day-only booking: the database assigns the earliest free time of that day. */
+  async book(input: { date: string; visitReason: VisitReason; visitReasonDetails?: string; notes?: string }): Promise<BookedAppointment> {
+    const { data, error } = await this.db.rpc("book_appointment_on_date", {
+      p_date: input.date,
       p_visit_reason: input.visitReason,
       p_visit_reason_details: input.visitReasonDetails ?? null,
       p_notes: input.notes ?? null,
     });
     if (error) throw fromPostgrestError(error);
-    return z
-      .object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string(), scheduled_end: z.string() })
+    const r = z
+      .object({
+        appointment_id: z.string().uuid(),
+        clinic_date: z.string(),
+        scheduled_start: z.string(),
+        scheduled_end: z.string(),
+        is_first_booking: z.boolean(),
+      })
       .parse(data);
+    return {
+      appointmentId: r.appointment_id,
+      clinicDate: r.clinic_date,
+      scheduledStart: r.scheduled_start,
+      scheduledEnd: r.scheduled_end,
+      isFirstBooking: r.is_first_booking,
+    };
   }
 
   async cancelMine(appointmentId: string, reason?: string) {

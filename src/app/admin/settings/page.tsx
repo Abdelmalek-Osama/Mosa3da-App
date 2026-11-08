@@ -5,8 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClinicSettingsForm } from "@/features/settings/components/clinic-settings-form";
+import { ServicesEditor } from "@/features/settings/components/services-editor";
 import { VisitReasonsEditor } from "@/features/settings/components/visit-reasons-editor";
 import { WorkingHoursEditor } from "@/features/settings/components/working-hours-editor";
+import { listClinicServices } from "@/server/application/settings/clinic-services";
 import { listCustomVisitReasons, listVisitReasons } from "@/server/application/settings/visit-reasons";
 import { SettingsAdminService } from "@/server/application/settings/settings-admin-service";
 import { requireStaff } from "@/server/authorization/actor";
@@ -21,11 +23,12 @@ export default async function SettingsPage() {
   const actor = await requireStaff().catch(() => null);
   if (!actor) redirect("/login");
 
-  const [{ settings, periods }, reasons, customReasons] = await Promise.all([
+  const [{ settings, periods }, reasons, customReasons, services] = await Promise.all([
     new SettingsAdminService(actor.supabase).get(),
     // Empty until the visit-reason migration is applied; the card is hidden then.
     listVisitReasons(actor.supabase).catch(() => []),
     listCustomVisitReasons(actor.supabase),
+    listClinicServices(actor.supabase),
   ]);
   const readOnly = actor.role !== "doctor";
   const t = await getTranslations("settings");
@@ -73,6 +76,15 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
         ) : null}
+        <Card id="services" className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle>{t("services.title")}</CardTitle>
+            <CardDescription>{t("services.body")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ServicesEditor initial={services} readOnly={readOnly} />
+          </CardContent>
+        </Card>
       </div>
     </>
   );

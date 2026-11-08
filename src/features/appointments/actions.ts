@@ -3,26 +3,33 @@
 import { revalidatePath } from "next/cache";
 import { parseInput, runAction } from "@/lib/action-result";
 import { BookingService } from "@/server/application/appointments/booking-service";
+import { getClinicSettings } from "@/server/application/settings/clinic-settings";
+import { listClinicServices } from "@/server/application/settings/clinic-services";
 import { requirePatient } from "@/server/authorization/actor";
-import { bookAppointmentSchema, cancelAppointmentSchema, dateSchema, type BookAppointmentInput } from "./schemas";
-
-export async function getSlotsAction(date: string) {
-  return runAction("appointments.slots", async () => {
-    const actor = await requirePatient();
-    return new BookingService(actor.supabase).getSlots(parseInput(dateSchema, date));
-  });
-}
+import { bookAppointmentSchema, cancelAppointmentSchema, type BookAppointmentInput } from "./schemas";
 
 export async function bookAppointmentAction(input: BookAppointmentInput) {
   return runAction("appointments.book", async () => {
     const actor = await requirePatient();
     const data = parseInput(bookAppointmentSchema, input);
-    const result = await new BookingService(actor.supabase).book(data);
+    const booked = await new BookingService(actor.supabase).book(data);
+    // First-ever booking: send the doctor's shown fees for the welcome pop-up.
+    const fees = booked.isFirstBooking
+      ? await Promise.all([listClinicServices(actor.supabase, { activeOnly: true }), getClinicSettings(actor.supabase)]).then(
+          ([services, settings]) => ({
+            clinicName: settings.clinicName,
+            clinicNameAr: settings.clinicNameAr,
+            services: services.map((s) => ({ id: s.id, nameAr: s.nameAr, nameEn: s.nameEn, price: s.price })),
+          }),
+        )
+          // The booking is already made; never fail it over the pop-up's data.
+          .catch(() => null)
+      : null;
     revalidatePath("/patient/dashboard");
     revalidatePath("/patient/my-appointments");
     revalidatePath("/admin/dashboard");
     revalidatePath("/admin/queue");
-    return result;
+    return { ...booked, fees };
   });
 }
 
