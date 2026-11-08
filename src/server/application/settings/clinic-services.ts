@@ -107,3 +107,21 @@ export async function deleteClinicService(db: SupabaseClient, id: string): Promi
   if (error) throw fromPostgrestError(error);
   return (data?.length ?? 0) > 0;
 }
+
+/** "Show to all visitors": fees pop-up after every booking. False if the column isn't there yet. */
+export async function getShowFeesToAll(db: SupabaseClient): Promise<boolean> {
+  const { data, error } = await db.from("doctor_settings").select("show_fees_to_all").eq("id", 1).maybeSingle();
+  if (error || !data) return false;
+  return data.show_fees_to_all === true;
+}
+
+/** RLS lets only the doctor's update match. Returns false when nothing was updated. */
+export async function setShowFeesToAll(db: SupabaseClient, on: boolean, actorId: string): Promise<boolean> {
+  const { data, error } = await db
+    .from("doctor_settings")
+    .update({ show_fees_to_all: on, updated_by: actorId })
+    .eq("id", 1)
+    .select("id");
+  if (error) throw fromPostgrestError(error);
+  return (data?.length ?? 0) > 0;
+}

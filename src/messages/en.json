@@ -39,14 +39,12 @@
   "book": {
    "trigger": "New appointment",
    "title": "Book an appointment",
-   "body": "Only times inside the doctor's working hours that are still free can be chosen.",
+   "body": "Pick the visitor, the day and the reason. The system gives her the earliest free time on that day.",
    "patient": "Visitor",
    "change": "Change",
    "search": "Search by name or phone",
    "noMatch": "No match. Use the New visitor tab to register her.",
    "date": "Date",
-   "time": "Time",
-   "free": "{count} free",
    "closed": "The clinic is closed on this day.",
    "noFree": "No free times left on this day.",
    "reason": "Visit reason",
@@ -56,12 +54,11 @@
    "cancel": "Cancel",
    "submit": "Book appointment",
    "errPatient": "Select a visitor",
-   "errTime": "Choose a time",
    "errReason": "Choose a visit reason",
    "booked": "Booked",
    "bookedBody": "{name} · {date} at {time}",
    "rescheduleTitle": "Reschedule appointment",
-   "rescheduleBody": "Currently {current}. Pick a new free time; the old time becomes available right away.",
+   "rescheduleBody": "Currently {current}. Pick a new day: the earliest free time there is assigned and the old time is freed right away.",
    "rescheduleSubmit": "Move appointment",
    "rescheduled": "Appointment moved",
    "existingVisitor": "Registered visitor",
@@ -70,7 +67,19 @@
    "newNamePlaceholder": "e.g. سارة أحمد حسن",
    "newNameEn": "Name in English (optional)",
    "newPhone": "Mobile number",
-   "slotTaken": "This slot is already reserved for {name}. Please choose another time."
+   "schedule": "Schedule Appointment",
+   "dayOpen": "Appointments are available on this day.",
+   "autoTime": "The time is assigned automatically: the next consecutive slot after the last booking.",
+   "errDay": "Choose a day",
+   "confirmedTitle": "Appointment confirmed",
+   "confirmedLabel": "Arrival time",
+   "confirmedWhen": "{day} at",
+   "today": "Today",
+   "nextSlot": "Next consecutive slot",
+   "sendWhatsApp": "Send WhatsApp confirmation",
+   "whatsAppHint": "Opens WhatsApp with the arrival time ready to send.",
+   "another": "Book another",
+   "done": "Done"
   },
   "confirmWa": {
    "button": "Confirm via WhatsApp",
@@ -196,7 +205,7 @@
    "afternoon": "Good afternoon, {name}",
    "evening": "Good evening, {name}"
   },
-  "addWalkIn": "Add walk-in",
+  "addWalkIn": "Direct Walk-in",
   "openQueue": "Open queue",
   "stats": {
    "appointments": "Today's appointments",
@@ -326,13 +335,16 @@
  "queueStatus": {
   "scheduled": "Scheduled",
   "arrived": "Arrived",
-  "ready": "Ready",
+  "ready": "Next up",
   "current": "Consulting",
   "late": "Late",
   "finished": "Finished",
   "cancelled": "Cancelled",
   "absent": "Absent",
-  "missedTurn": "Missed turn"
+  "missedTurn": "Missed turn",
+  "shifted": "Shifted - grace {count}/{limit}",
+  "delayed": "Late / Delayed",
+  "booked": "Booked"
  },
  "patientStatus": {
   "scheduled": "Booked — please check in at reception when you arrive",
@@ -450,7 +462,11 @@
    "autoTimeNote": "You don't need to pick a time. After you confirm, the clinic gives you the earliest free time on this day, in booking order.",
    "continueOn": "Continue · {day}",
    "tipAutoTime": "Your arrival time is assigned automatically in booking order (first come, first served).",
-   "arriveAtLabel": "Please arrive at the clinic at"
+   "arriveAtLabel": "Please arrive at the clinic at",
+   "alreadyBooked": "Already booked",
+   "alreadyBookedTitle": "You already have an appointment on this day",
+   "alreadyBookedBody": "You already have an appointment booked for this day ({date}). If you wish to change your appointment, please reschedule or cancel your existing booking from your account.",
+   "viewExisting": "View My Existing Appointment"
   },
   "countdown": {
    "left": "Time left until your appointment: {time}",
@@ -466,6 +482,25 @@
    "ratesTitle": "Clinic Service Rates",
    "settle": "Fees are settled at the reception desk upon your arrival. We look forward to seeing you!",
    "continue": "Understood / Continue"
+  },
+  "feedback": {
+   "title": "How was your visit?",
+   "body": "Your visit on {date} is complete. Rate your experience; it takes a few seconds.",
+   "ratingLabel": "Rating from 1 to 5 stars",
+   "tapToRate": "Tap a star to rate",
+   "labels": {
+    "excellent": "Excellent",
+    "veryGood": "Very Good",
+    "good": "Good",
+    "fair": "Fair",
+    "poor": "Poor"
+   },
+   "commentLabel": "Share your thoughts or suggestions with {doctor} (Optional)",
+   "commentPlaceholder": "What went well, or what could be better?",
+   "submit": "Submit Feedback",
+   "later": "Later / Close",
+   "thanks": "Thank you for your feedback!",
+   "errRating": "Choose a rating from 1 to 5 stars"
   }
  },
  "queue": {
@@ -725,7 +760,7 @@
   },
   "services": {
    "title": "Services & fees",
-   "body": "Prices shown to a first-time visitor right after her first online booking. Only services marked Shown appear.",
+   "body": "Prices visitors see in the fees pop-up after they book online. Only services marked Shown appear.",
    "empty": "No services yet. Add the consultation fee to get started.",
    "shown": "Shown",
    "hidden": "Hidden",
@@ -743,7 +778,6 @@
    "nameArPlaceholder": "الكشف",
    "nameEn": "Name in English (optional)",
    "price": "Price",
-   "showToVisitors": "Show to visitors",
    "addSubmit": "Add service",
    "save": "Save",
    "addedToast": "Service added",
@@ -753,7 +787,13 @@
    "deleteBody": "{name} will be removed from the fees list. To keep it for later, hide it instead.",
    "deleteConfirm": "Delete",
    "deleted": "Service deleted",
-   "cancel": "Cancel"
+   "cancel": "Cancel",
+   "showAll": "Show to All Visitors",
+   "showAllHelp": "When enabled, the service fee breakdown pop-up will appear after confirmation for every booking, not just first-time visitors.",
+   "showAllOnToast": "Fees pop-up will show after every booking",
+   "showAllOffToast": "Fees pop-up will show after a first booking only",
+   "showInList": "Show in the fees list",
+   "currency": "EGP"
   }
  },
  "meta": {
@@ -788,7 +828,8 @@
   "settings": "Clinic settings",
   "secretaries": "Secretaries",
   "display": "Waiting-room display",
-  "logs": "Consultation logs"
+  "logs": "Consultation logs",
+  "reviews": "Reviews & Feedback"
  },
  "live": {
   "live": "Live",
@@ -805,7 +846,7 @@
   "placeholder": "Mobile number"
  },
  "walkIn": {
-  "trigger": "Add walk-in",
+  "trigger": "Direct Walk-in",
   "title": "Walk-in registration",
   "body": "Adds her to today's queue as Arrived and calculates her expected time.",
   "type": "Record",
@@ -959,5 +1000,23 @@
    "under": "Under",
    "onTime": "On time"
   }
+ },
+ "reviews": {
+  "title": "Reviews & Feedback",
+  "body": "Ratings visitors leave after a finished consultation. Only the doctor can see them.",
+  "average": "Average rating",
+  "count": "{count, plural, =0 {No reviews yet} one {# review} other {# reviews}}",
+  "listTitle": "Latest reviews",
+  "filtered": "{stars} stars",
+  "search": "Search by name or comment",
+  "empty": "No reviews yet",
+  "noMatch": "No reviews match",
+  "emptyBody": "Visitors are asked to rate their visit the next time they open their account after a consultation.",
+  "visit": "Visit on {date}",
+  "noComment": "No comment",
+  "pagination": "Pages",
+  "prev": "Previous",
+  "next": "Next",
+  "page": "Page {page} of {pages}"
  }
 }

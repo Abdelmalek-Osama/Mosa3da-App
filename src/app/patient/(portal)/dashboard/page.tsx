@@ -6,6 +6,8 @@ import { BookingService, isUpcoming } from "@/server/application/appointments/bo
 import { getClinicSettings } from "@/server/application/settings/clinic-settings";
 import { clinicDateOf } from "@/lib/format";
 import { PatientDashboardView } from "@/features/patients/components/dashboard-view";
+import { FeedbackPrompt } from "@/features/feedback/components/feedback-prompt";
+import { getPendingFeedback } from "@/server/application/feedback/visit-feedback";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("portal.dashboard");
@@ -15,10 +17,12 @@ export const dynamic = "force-dynamic";
 
 export default async function PatientDashboardPage({ searchParams }: { searchParams: { welcome?: string } }) {
   const actor = await requirePatient();
-  const [status, appointments, settings] = await Promise.all([
+  const [status, appointments, settings, feedback] = await Promise.all([
     new QueueService(actor.supabase).getMyStatus(),
     new BookingService(actor.supabase).listMine(),
     getClinicSettings(actor.supabase),
+    // Her latest finished visit she hasn't rated or dismissed yet.
+    getPendingFeedback(actor.supabase),
   ]);
 
   const today = clinicDateOf(Date.now(), settings.timezone);
@@ -27,12 +31,23 @@ export default async function PatientDashboardPage({ searchParams }: { searchPar
     .sort((a, b) => (a.scheduledStart ?? a.clinicDate).localeCompare(b.scheduledStart ?? b.clinicDate));
 
   return (
-    <PatientDashboardView
-      fullName={actor.fullName}
-      status={status}
-      upcoming={upcoming}
-      settings={settings}
-      welcome={!!searchParams.welcome}
-    />
+    <>
+      <PatientDashboardView
+        fullName={actor.fullName}
+        status={status}
+        upcoming={upcoming}
+        settings={settings}
+        welcome={!!searchParams.welcome}
+      />
+      {/* Not while she is waiting or inside: her live queue status comes first. */}
+      {feedback && !(status.in_queue && ["arrived", "ready", "current", "late"].includes(status.status)) ? (
+        <FeedbackPrompt
+          key={feedback.appointmentId}
+          appointmentId={feedback.appointmentId}
+          clinicDate={feedback.clinicDate}
+          doctorName={feedback.doctorName || settings.doctorName}
+        />
+      ) : null}
+    </>
   );
 }

@@ -6,6 +6,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { LiveIndicator } from "@/components/shared/live-indicator";
 import { QueueBoardView } from "@/features/queue/components/queue-board-view";
 import { WalkInDialog } from "@/features/queue/components/walk-in-dialog";
+import { BookAppointmentDialog } from "@/features/appointments/components/admin/book-appointment-dialog";
+import { Button } from "@/components/ui/button";
+import { CalendarPlus } from "lucide-react";
 import { DisplayModeToggle } from "@/features/display/components/display-mode-toggle";
 import { formatClinicDate, formatTime } from "@/lib/format";
 import { QueueService } from "@/server/application/queue/queue-service";
@@ -28,6 +31,7 @@ export default async function QueuePage() {
   ]);
 
   const t = await getTranslations("nav");
+  const tBook = await getTranslations("appointments.book");
   const locale = (await getLocale()) as Locale;
 
   return (
@@ -47,6 +51,15 @@ export default async function QueuePage() {
           <div className="flex flex-wrap gap-2">
             <DisplayModeToggle initial={settings.displayBilingual} />
             <WalkInDialog defaultDuration={settings.defaultConsultationMinutes} timezone={settings.timezone} />
+            <BookAppointmentDialog
+              timezone={settings.timezone}
+              today={board.session.clinicDate}
+              trigger={
+                <Button variant="outline">
+                  <CalendarPlus /> {tBook("schedule")}
+                </Button>
+              }
+            />
           </div>
         }
       />

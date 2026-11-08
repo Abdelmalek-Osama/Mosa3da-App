@@ -126,7 +126,7 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
 
 type Row =
   | { kind: "lobby"; key: string; number: number | null; name: string; at: string | null; late: boolean }
-  | { kind: "booked"; key: string; name: string; at: string; end: string | null };
+  | { kind: "booked"; key: string; name: string; at: string; end: string | null; shifts: number; delayed: boolean };
 
 /** One complete board in a single language (the whole screen, or one half). */
 function LobbyColumn({
@@ -166,6 +166,8 @@ function LobbyColumn({
       name: name(b),
       at: b.slot_start,
       end: b.slot_end,
+      shifts: b.grace_shifts,
+      delayed: b.is_delayed,
     })),
   ].sort((a, b) => (a.at ?? "9999").localeCompare(b.at ?? "9999"));
   const shown = rows.slice(0, maxRows);
@@ -245,6 +247,11 @@ function LobbyColumn({
                         {t.notArrived}
                       </span>
                     )}
+                    {r.kind === "booked" && r.delayed ? (
+                      <span className="rounded-full bg-red-500/20 px-[0.7em] py-[0.1em] font-semibold text-red-200 ring-1 ring-inset ring-red-400/40">{t.delayed}</span>
+                    ) : r.kind === "booked" && r.shifts > 0 ? (
+                      <span className="rounded-full bg-amber-500/20 px-[0.7em] py-[0.1em] font-semibold text-amber-200 ring-1 ring-inset ring-amber-400/40">{t.shifted}</span>
+                    ) : null}
                     {r.kind === "lobby" && r.late ? (
                       <span className="rounded-full bg-red-500/20 px-[0.7em] py-[0.1em] font-semibold text-red-200 ring-1 ring-inset ring-red-400/40">{t.late}</span>
                     ) : null}
@@ -305,12 +312,14 @@ const TEXT = {
     now: "في الكشف الآن",
     comeIn: "تفضلي بالدخول الآن",
     idle: "لا يوجد كشف في الوقت الحالي",
-    next: "التالية · يرجى الاستعداد",
+    next: "الدور القادم · يرجى الاستعداد",
     waiting: "قائمة اليوم",
     nobody: "لا يوجد أحد في الانتظار",
     inLobby: "في صالة الانتظار",
     notArrived: "حجز مؤكد - في انتظار الحضور",
     late: "متأخرة",
+    shifted: "مؤجل - مهلة سماح",
+    delayed: "تأخير",
     slot: "موعد الحجز:",
     left: "متبقي:",
     anyMinute: "خلال لحظات",
@@ -326,12 +335,14 @@ const TEXT = {
     now: "Now consulting",
     comeIn: "Please come in now",
     idle: "No consultation at the moment",
-    next: "Next · please be ready",
+    next: "Next up · please be ready",
     waiting: "Today's list",
     nobody: "No one is waiting",
     inLobby: "In the waiting room",
     notArrived: "Confirmed booking · not arrived",
     late: "Late",
+    shifted: "Shifted - grace period",
+    delayed: "Late / Delayed",
     slot: "Booking:",
     left: "",
     anyMinute: "Any moment now",

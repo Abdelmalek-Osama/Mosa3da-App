@@ -34,6 +34,13 @@ export interface AdminAppointment {
   patient: { id: string; fullName: string; phone: string };
 }
 
+const bookedRow = z.object({
+  appointment_id: z.string().uuid(),
+  clinic_date: z.string(),
+  scheduled_start: z.string(),
+  scheduled_end: z.string(),
+});
+
 export class AppointmentAdminService {
   constructor(private readonly db: SupabaseClient) {}
 
@@ -79,16 +86,17 @@ export class AppointmentAdminService {
     return counts;
   }
 
-  async book(input: { patientId: string; slotStart: string; visitReason: VisitReason; visitReasonDetails?: string; notes?: string }) {
-    const { data, error } = await this.db.rpc("staff_book_appointment", {
+  /** Day-only staff booking: the database assigns the earliest free time (FIFO). */
+  async book(input: { patientId: string; date: string; visitReason: VisitReason; visitReasonDetails?: string; notes?: string }) {
+    const { data, error } = await this.db.rpc("staff_book_appointment_on_date", {
       p_patient_id: input.patientId,
-      p_slot_start: input.slotStart,
+      p_date: input.date,
       p_visit_reason: input.visitReason,
       p_visit_reason_details: input.visitReasonDetails ?? null,
       p_notes: input.notes ?? null,
     });
     if (error) throw fromPostgrestError(error);
-    return z.object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string() }).parse(data);
+    return bookedRow.parse(data);
   }
 
   /** Who occupies time on a date: booked appointments and walk-ins in the queue (staff RLS). */
@@ -123,10 +131,22 @@ export class AppointmentAdminService {
     return out;
   }
 
-  async reschedule(appointmentId: string, slotStart: string) {
-    const { data, error } = await this.db.rpc("staff_reschedule_appointment", { p_appointment_id: appointmentId, p_slot_start: slotStart });
+  /** Moves a booking to a day; the earliest free time there is assigned. */
+  async reschedule(appointmentId: string, date: string) {
+    const { data, error } = await this.db.rpc("staff_reschedule_on_date", { p_appointment_id: appointmentId, p_date: date });
     if (error) throw fromPostgrestError(error);
-    return z.object({ appointment_id: z.string().uuid(), clinic_date: z.string(), scheduled_start: z.string() }).parse(data);
+    return bookedRow.parse(data);
+  }
+
+  /** Name and phone for the WhatsApp confirmation. */
+  async contact(patientId: string): Promise<{ fullName: string; phone: string } | null> {
+    const { data } = await this.db.from("patients").select("full_name, normalized_phone").eq("id", patientId).maybeSingle();
+    return data ? { fullName: data.full_name as string, phone: data.normalized_phone as string } : null;
+  }
+
+  async patientOf(appointmentId: string): Promise<string | null> {
+    const { data } = await this.db.from("appointments").select("patient_id").eq("id", appointmentId).maybeSingle();
+    return (data?.patient_id as string | undefined) ?? null;
   }
 
   async cancel(appointmentId: string, reason?: string) {

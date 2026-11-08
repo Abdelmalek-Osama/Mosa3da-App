@@ -11,7 +11,7 @@ import { visitReasonText } from "@/server/domain/queue/constants";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { EntryActionsMenu } from "./entry-actions-menu";
 import { useQueueController } from "./queue-controller";
-import { QueueNumber, StatusBadge } from "./status-badge";
+import { PriorityBadge, QueueNumber, StatusBadge } from "./status-badge";
 
 export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
   const { timezone } = useQueueController();
@@ -62,7 +62,12 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                     <TableCell className="text-muted-foreground">{visitReasonText(entry.visitReason, entry.visitReasonDetails, tReason)}</TableCell>
                     <TableCell className="tabular text-end">{t("min", { count: entry.estimatedDurationMinutes })}</TableCell>
                     <TableCell className="tabular text-end font-semibold">{time(entry.expectedStartAt)}</TableCell>
-                    <TableCell><StatusBadge status={entry.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge status={entry.status} />
+                        <PriorityBadge entry={entry} bookedTime={entry.bookedStart ? time(entry.bookedStart) : undefined} />
+                      </div>
+                    </TableCell>
                     <TableCell><EntryActionsMenu entry={entry} index={i + 1} total={total} /></TableCell>
                   </TableRow>
                 ))}
@@ -84,7 +89,10 @@ export function WaitingQueue({ entries }: { entries: QueueEntryView[] }) {
                     <span>· {t("min", { count: entry.estimatedDurationMinutes })}</span>
                     <span className="truncate">· {visitReasonText(entry.visitReason, entry.visitReasonDetails, tReason)}</span>
                   </div>
-                  <div className="mt-1.5"><StatusBadge status={entry.status} /></div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <StatusBadge status={entry.status} />
+                    <PriorityBadge entry={entry} bookedTime={entry.bookedStart ? time(entry.bookedStart) : undefined} />
+                  </div>
                 </div>
                 <EntryActionsMenu entry={entry} index={i + 1} total={total} />
               </li>

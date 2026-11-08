@@ -12,6 +12,9 @@ export const dynamic = "force-dynamic";
 
 export default async function BookAppointmentPage() {
   const actor = await requirePatient();
-  const calendar = await new BookingService(actor.supabase).getCalendar();
-  return <BookingFlow calendar={calendar} />;
+  const service = new BookingService(actor.supabase);
+  const [calendar, mine] = await Promise.all([service.getCalendar(), service.listMine().catch(() => [])]);
+  // Days she already holds an active booking on (one booking per day).
+  const bookedDays = mine.filter((a) => a.status === "scheduled" || a.status === "checked_in").map((a) => a.clinicDate);
+  return <BookingFlow calendar={calendar} bookedDays={bookedDays} />;
 }

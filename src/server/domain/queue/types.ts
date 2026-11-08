@@ -35,6 +35,12 @@ export interface QueueEntryView {
   startedAt: string | null;
   finishedAt: string | null;
   staffNotes: string | null;
+  /** Booked time of an online/staff booking; null for walk-ins. */
+  bookedStart: string | null;
+  /** Times a booked visitor was passed because she had not arrived (grace period = 2). */
+  graceShifts: number;
+  /** Passed more than the grace limit: no priority, joins the end as Late. */
+  isDelayed: boolean;
 }
 
 export interface QueueBoard {

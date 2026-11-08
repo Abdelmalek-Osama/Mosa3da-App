@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, CalendarPlus, Loader2, Search, X } from "lucide-react";
+import { CalendarCheck2, CalendarClock, CalendarPlus, CalendarX2, CheckCircle2, Loader2, MessageCircle, Search, Sparkles, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,9 +19,16 @@ import { staffBookAppointmentAction, staffGetSlotsAction, staffRescheduleAppoint
 import { createPatientAction } from "@/features/patients/staff-actions";
 import { formatClinicDate, formatPhone, formatTime } from "@/lib/format";
 import type { Locale } from "@/i18n/config";
-import { cn } from "@/lib/utils";
 import { reasonOptionLabel, useVisitReasons } from "@/features/settings/use-visit-reasons";
 import type { Slot } from "@/server/application/appointments/booking-service";
+
+interface Confirmed {
+  name: string;
+  clinicDate: string;
+  scheduledStart: string;
+  whatsappUrl: string | null;
+  rescheduled: boolean;
+}
 
 interface PatientRef {
   id: string;
@@ -44,7 +51,7 @@ export function BookAppointmentDialog({
   defaultDate?: string;
   patient?: PatientRef;
   trigger?: React.ReactNode;
-  /** Move this existing booking to a new free time instead of booking (P1-08). */
+  /** Move this existing booking to another day instead of booking (P1-08). */
   reschedule?: { appointmentId: string; clinicDate: string; currentStart: string };
 }) {
   const router = useRouter();
@@ -61,7 +68,7 @@ export function BookAppointmentDialog({
   const [date, setDate] = useState(initialDate && initialDate >= today ? initialDate : today);
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slotError, setSlotError] = useState<string | null>(null);
-  const [slotStart, setSlotStart] = useState<string | null>(null);
+  const [confirmed, setConfirmed] = useState<Confirmed | null>(null);
   // Selected option key: a built-in reason, or "custom:<id>" for a doctor-added one.
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
@@ -86,7 +93,7 @@ export function BookAppointmentDialog({
     setQuery("");
     setResults([]);
     setDate(initialDate && initialDate >= today ? initialDate : today);
-    setSlotStart(null);
+    setConfirmed(null);
     setReason("");
     setDetails("");
     setNotes("");
@@ -112,7 +119,6 @@ export function BookAppointmentDialog({
     let cancelled = false;
     setSlots(null);
     setSlotError(null);
-    setSlotStart(null);
     staffGetSlotsAction(date).then((res) => {
       if (cancelled) return;
       if (res.ok) setSlots(res.data);
@@ -127,7 +133,7 @@ export function BookAppointmentDialog({
     e.preventDefault();
     const local: Errors = {};
     if (!patient && !newVisitor) local.patientId = [t("errPatient")];
-    if (!slotStart) local.slotStart = [t("errTime")];
+    if (!date) local.date = [t("errDay")];
     if (!option && !reschedule) local.visitReason = [t("errReason")];
     if (Object.keys(local).length) {
       setErrors(local);
@@ -135,21 +141,19 @@ export function BookAppointmentDialog({
     }
     if (reschedule) {
       start(async () => {
-        const res = await staffRescheduleAppointmentAction({ appointmentId: reschedule.appointmentId, slotStart: slotStart! });
+        const res = await staffRescheduleAppointmentAction({ appointmentId: reschedule.appointmentId, date });
         if (!res.ok) {
           toast.error(res.error.message);
           if (res.error.code === "CONFLICT") staffGetSlotsAction(date).then((r) => r.ok && setSlots(r.data));
           return;
         }
-        toast.success(t("rescheduled"), {
-          description: t("bookedBody", {
-            name: patient!.fullName,
-            date: formatClinicDate(res.data.clinic_date, { year: undefined }, locale),
-            time: formatTime(res.data.scheduled_start, timezone, locale),
-          }),
+        setConfirmed({
+          name: patient?.fullName ?? "",
+          clinicDate: res.data.clinic_date,
+          scheduledStart: res.data.scheduled_start,
+          whatsappUrl: res.data.whatsappUrl,
+          rescheduled: true,
         });
-        setOpen(false);
-        reset();
         router.refresh();
       });
       return;
@@ -176,7 +180,7 @@ export function BookAppointmentDialog({
       }
       const res = await staffBookAppointmentAction({
         patientId: target.id,
-        slotStart: slotStart!,
+        date,
         visitReason: option!.reason,
         visitReasonDetails: option!.details ?? (option!.reason === "other" ? details : undefined),
         notes,
@@ -187,20 +191,16 @@ export function BookAppointmentDialog({
         if (res.error.code === "CONFLICT") staffGetSlotsAction(date).then((r) => r.ok && setSlots(r.data));
         return;
       }
-      toast.success(t("booked"), {
-        description: t("bookedBody", {
-          name: target.fullName,
-          date: formatClinicDate(res.data.clinic_date, { year: undefined }, locale),
-          time: formatTime(res.data.scheduled_start, timezone, locale),
-        }),
+      setConfirmed({
+        name: target.fullName,
+        clinicDate: res.data.clinic_date,
+        scheduledStart: res.data.scheduled_start,
+        whatsappUrl: res.data.whatsappUrl,
+        rescheduled: false,
       });
-      setOpen(false);
-      reset();
       router.refresh();
     });
   };
-
-  const free = slots?.filter((s) => s.available) ?? [];
 
   return (
     <Dialog
@@ -218,6 +218,19 @@ export function BookAppointmentDialog({
         )}
       </DialogTrigger>
       <DialogContent className="max-w-xl">
+        {confirmed ? (
+          <BookingConfirmed
+            confirmed={confirmed}
+            timezone={timezone}
+            today={today}
+            onDone={() => {
+              setOpen(false);
+              reset();
+            }}
+            onAnother={fixedPatient || reschedule ? undefined : () => reset()}
+          />
+        ) : (
+        <>
         <DialogHeader>
           <DialogTitle>{reschedule ? t("rescheduleTitle") : t("title")}</DialogTitle>
           <DialogDescription>
@@ -301,64 +314,11 @@ export function BookAppointmentDialog({
 
           <div className="space-y-2">
             <Label htmlFor="ba-date">{t("date")}</Label>
-            <Input id="ba-date" type="date" min={today} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-full sm:w-56" />
+            <Input id="ba-date" type="date" min={today} value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className="w-full sm:w-56" aria-describedby="ba-day-status" />
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-baseline justify-between">
-              <Label>{t("time")}</Label>
-              {slots ? <span className="text-xs text-muted-foreground">{t("free", { count: free.length })}</span> : null}
-            </div>
-            {slotError ? (
-              <p className="rounded-lg bg-destructive/5 p-3 text-sm text-destructive">{slotError}</p>
-            ) : !slots ? (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                {Array.from({ length: 10 }).map((_, i) => (
-                  <Skeleton key={i} className="h-10 rounded-lg" />
-                ))}
-              </div>
-            ) : slots.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">{t("closed")}</p>
-            ) : free.length === 0 ? (
-              <p className="rounded-lg border border-dashed p-3 text-center text-sm text-muted-foreground">{t("noFree")}</p>
-            ) : (
-              <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-5">
-                {slots.map((s) =>
-                  !s.available && s.bookedBy ? (
-                    // Booked: locked, shows who holds it, and explains instead of selecting.
-                    <button
-                      key={s.start}
-                      type="button"
-                      onClick={() => toast.error(t("slotTaken", { name: s.bookedBy! }))}
-                      aria-disabled
-                      title={t("slotTaken", { name: s.bookedBy })}
-                      className="flex min-h-10 cursor-not-allowed flex-col items-center justify-center rounded-lg border border-dashed bg-muted/60 px-1 py-1 text-muted-foreground"
-                    >
-                      <span className="tabular text-xs font-medium line-through">{formatTime(s.start, timezone, locale)}</span>
-                      <span className="text-[10px] font-semibold uppercase">{t("booked")}</span>
-                      <span dir="auto" className="w-full truncate text-[10px]">{s.bookedBy}</span>
-                    </button>
-                  ) : (
-                    <button
-                      key={s.start}
-                      type="button"
-                      disabled={!s.available}
-                      onClick={() => setSlotStart(s.start)}
-                      aria-pressed={s.start === slotStart}
-                      className={cn(
-                        "tabular h-10 rounded-lg border text-sm font-medium transition-colors",
-                        s.start === slotStart ? "border-teal-600 bg-teal-600 text-white" : "bg-card hover:border-teal-400 hover:bg-teal-50",
-                        !s.available && "cursor-not-allowed border-dashed bg-muted/40 text-muted-foreground line-through hover:border-border hover:bg-muted/40",
-                      )}
-                    >
-                      {formatTime(s.start, timezone, locale)}
-                    </button>
-                  ),
-                )}
-              </div>
-            )}
-            {errors.slotStart ? <p className="text-sm text-destructive">{errors.slotStart[0]}</p> : null}
-          </div>
+          <DayStatus slots={slots} error={slotError} />
+          {errors.date ? <p className="text-sm text-destructive">{errors.date[0]}</p> : null}
 
           {reschedule ? null : (
           <div className="grid gap-4 sm:grid-cols-2">
@@ -396,13 +356,106 @@ export function BookAppointmentDialog({
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={pending}>
+            <Button type="submit" disabled={pending || (!!slots && slots.every((x) => !x.available))}>
               {pending ? <Loader2 className="animate-spin" /> : reschedule ? <CalendarClock /> : <CalendarPlus />}
               {reschedule ? t("rescheduleSubmit") : t("submit")}
             </Button>
           </DialogFooter>
         </form>
+        </>
+        )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Open / full / closed for the chosen day. Times are assigned on save. */
+export function DayStatus({ slots, error }: { slots: Slot[] | null; error: string | null }) {
+  const t = useTranslations("appointments.book");
+  if (error) return <p id="ba-day-status" className="rounded-lg bg-destructive/5 p-3 text-sm text-destructive">{error}</p>;
+  if (!slots) return <Skeleton id="ba-day-status" className="h-14 rounded-lg" />;
+  if (slots.length === 0) {
+    return (
+      <p id="ba-day-status" className="flex items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+        <CalendarX2 className="h-4 w-4 shrink-0" /> {t("closed")}
+      </p>
+    );
+  }
+  if (slots.every((s) => !s.available)) {
+    return (
+      <p id="ba-day-status" className="flex items-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/60 p-3 text-sm text-amber-900">
+        <CalendarX2 className="h-4 w-4 shrink-0" /> {t("noFree")}
+      </p>
+    );
+  }
+  return (
+    <div id="ba-day-status" className="flex items-start gap-2.5 rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-sm">
+      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
+      <div>
+        <p className="font-medium text-teal-900">{t("dayOpen")}</p>
+        <p className="text-teal-800/80">{t("autoTime")}</p>
+      </div>
+    </div>
+  );
+}
+
+export function BookingConfirmed({
+  confirmed,
+  timezone,
+  today,
+  onDone,
+  onAnother,
+}: {
+  confirmed: Confirmed;
+  timezone: string;
+  today: string;
+  onDone: () => void;
+  onAnother?: () => void;
+}) {
+  const t = useTranslations("appointments.book");
+  const locale = useLocale() as Locale;
+  const day = confirmed.clinicDate === today ? t("today") : formatClinicDate(confirmed.clinicDate, { year: undefined }, locale);
+  const time = formatTime(confirmed.scheduledStart, timezone, locale);
+  return (
+    <div className="space-y-5 text-center" role="status">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-teal-50 text-teal-700 ring-8 ring-teal-50/50">
+        <CheckCircle2 className="h-7 w-7" />
+      </div>
+      <div className="space-y-1.5">
+        <DialogTitle className="text-xl">{confirmed.rescheduled ? t("rescheduled") : t("confirmedTitle")}</DialogTitle>
+        <DialogDescription dir="auto" className="text-base">
+          {confirmed.name}
+        </DialogDescription>
+      </div>
+      <div className="mx-auto max-w-sm rounded-xl border bg-muted/40 p-4">
+        <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <CalendarCheck2 className="h-4 w-4" /> {t("confirmedLabel")}
+        </p>
+        <p className="mt-1 text-lg font-semibold text-navy-900">
+          {t("confirmedWhen", { day })} <bdi className="tabular">{time}</bdi>
+        </p>
+        <p className="mt-1 text-xs font-medium text-teal-700">{t("nextSlot")}</p>
+      </div>
+      {confirmed.whatsappUrl ? (
+        <div className="space-y-1.5">
+          <Button asChild size="lg" className="w-full bg-[#1f9d55] text-white hover:bg-[#188046] sm:w-auto">
+            <a href={confirmed.whatsappUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle /> {t("sendWhatsApp")}
+            </a>
+          </Button>
+          <p className="text-xs text-muted-foreground">{t("whatsAppHint")}</p>
+        </div>
+      ) : null}
+      <DialogFooter className="gap-2 sm:justify-center">
+        {onAnother ? (
+          <Button type="button" variant="outline" onClick={onAnother}>
+            <CalendarPlus /> {t("another")}
+          </Button>
+        ) : null}
+        <Button type="button" variant="secondary" onClick={onDone}>
+          {t("done")}
+        </Button>
+      </DialogFooter>
+    </div>
   );
 }

@@ -52,6 +52,7 @@ export default async function DashboardPage() {
   const [data, settings] = await Promise.all([getDashboardData(actor.supabase), getClinicSettings(actor.supabase)]);
   const { board, totals } = data;
   const t = await getTranslations("dashboard");
+  const tBook = await getTranslations("appointments.book");
   const locale = (await getLocale()) as Locale;
   const clinicName = locale === "ar" ? settings.clinicNameAr || settings.clinicName : settings.clinicName;
   const waitingCount = board.waiting.filter((e) => e.status === "arrived").length + board.absent.length;
@@ -83,6 +84,15 @@ export default async function DashboardPage() {
               trigger={
                 <Button variant="secondary">
                   <UserPlus /> {t("addWalkIn")}
+                </Button>
+              }
+            />
+            <BookAppointmentDialog
+              timezone={settings.timezone}
+              today={board.session.clinicDate}
+              trigger={
+                <Button variant="outline" className="border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white">
+                  <CalendarPlus /> {tBook("schedule")}
                 </Button>
               }
             />

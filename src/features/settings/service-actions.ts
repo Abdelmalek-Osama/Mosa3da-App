@@ -9,6 +9,7 @@ import {
   addClinicService,
   deleteClinicService,
   setClinicServiceActive,
+  setShowFeesToAll,
   updateClinicService,
 } from "@/server/application/settings/clinic-services";
 
@@ -71,5 +72,15 @@ export async function deleteServiceAction(id: string) {
     if (!ok) throw new AppError("FORBIDDEN", FORBIDDEN);
     refresh();
     return { deleted: true };
+  });
+}
+
+export async function setShowFeesToAllAction(on: boolean) {
+  return runAction("services.show_all", async () => {
+    const actor = await requireDoctor();
+    const ok = await setShowFeesToAll(actor.supabase, parseInput(z.boolean(), on), actor.userId);
+    if (!ok) throw new AppError("FORBIDDEN", FORBIDDEN);
+    refresh();
+    return { on };
   });
 }

@@ -100,6 +100,8 @@ const EXACT: Record<string, string> = {
   "No appointments are left on this day. Please choose another day.":
     "لم تعد هناك مواعيد متاحة في هذا اليوم. يرجى اختيار يوم آخر.",
   "Choose a day": "اختاري اليوم",
+  "Choose a rating from 1 to 5 stars": "اختاري تقييمًا من 1 إلى 5 نجوم",
+  "Only visitors can rate a visit": "يمكن للزائرات فقط تقييم الزيارة",
   "Enter the service name in Arabic": "أدخل اسم الخدمة بالعربية",
   "Enter a valid price": "أدخل سعرًا صالحًا",
   "A service with this name already exists.": "توجد خدمة بهذا الاسم بالفعل.",

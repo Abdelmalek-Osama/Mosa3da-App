@@ -60,3 +60,43 @@ export function QueueNumber({ value, className }: { value: number | null; classN
     </span>
   );
 }
+
+/** Booked visitors pass this many times before they lose their priority. Mirrors public._booking_grace_limit(). */
+export const BOOKING_GRACE_LIMIT = 2;
+
+/**
+ * Booking priority chip: "Shifted - grace n/2" for a booked visitor passed
+ * while not in the clinic yet, "Late / Delayed" once she exceeded the grace
+ * period, and "Booked hh:mm" for a booked visitor who is waiting.
+ */
+export function PriorityBadge({
+  entry,
+  bookedTime,
+  className,
+}: {
+  entry: { status: QueueStatus; bookedStart: string | null; graceShifts: number; isDelayed: boolean };
+  bookedTime?: string;
+  className?: string;
+}) {
+  const t = useTranslations("queueStatus");
+  const base = "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset";
+  if (!entry.bookedStart) return null;
+  if (entry.isDelayed) {
+    return <span className={cn(base, "bg-red-50 text-red-700 ring-red-200", className)}>{t("delayed")}</span>;
+  }
+  if (entry.status === "scheduled" && entry.graceShifts > 0) {
+    return (
+      <span className={cn(base, "bg-amber-50 text-amber-800 ring-amber-200", className)}>
+        {t("shifted", { count: Math.min(entry.graceShifts, BOOKING_GRACE_LIMIT), limit: BOOKING_GRACE_LIMIT })}
+      </span>
+    );
+  }
+  if (bookedTime && (entry.status === "arrived" || entry.status === "ready")) {
+    return (
+      <span className={cn(base, "bg-navy-50 text-navy-700 ring-navy-100", className)}>
+        {t("booked")} <bdi className="tabular">{bookedTime}</bdi>
+      </span>
+    );
+  }
+  return null;
+}

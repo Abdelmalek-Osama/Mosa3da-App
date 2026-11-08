@@ -54,6 +54,7 @@ const SENTINELS: Record<string, string> = {
   "20261104001600_lock_booked_slots.sql": "select to_regprocedure('public.appointments_prevent_overlap()') is not null as applied",
   "20261104001700_custom_visit_reasons.sql": "select to_regclass('public.custom_visit_reasons') is not null as applied",
   "20261108001800_smart_clinic_features.sql": "select to_regclass('public.clinic_services') is not null as applied",
+  "20261108001900_smart_clinic_round2.sql": "select to_regclass('public.visit_feedback') is not null as applied",
 };
 
 async function main() {

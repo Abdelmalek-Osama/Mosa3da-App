@@ -135,7 +135,16 @@ export const displayBoardSchema = z.object({
   ),
   /** Today's online bookings that have not checked in yet (P2-15). */
   booked: z
-    .array(z.object({ name_ar: z.string(), name_en: z.string().nullable(), slot_start: z.string(), slot_end: z.string().nullable() }))
+    .array(
+      z.object({
+        name_ar: z.string(),
+        name_en: z.string().nullable(),
+        slot_start: z.string(),
+        slot_end: z.string().nullable(),
+        grace_shifts: z.number().int().default(0),
+        is_delayed: z.boolean().default(false),
+      }),
+    )
     .default([]),
   generated_at: z.string(),
 });

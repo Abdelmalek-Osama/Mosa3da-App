@@ -41,7 +41,15 @@ const entryRowSchema = z.object({
   staff_notes: z.string().nullable(),
   created_at: z.string(),
   patient: z.object({ full_name: z.string(), normalized_phone: z.string() }),
-  appointment: z.object({ visit_reason_details: z.string().nullable() }).nullable().optional(),
+  appointment: z
+    .object({
+      visit_reason_details: z.string().nullable(),
+      scheduled_start: z.string().nullable().optional(),
+      grace_shifts: z.number().int().optional(),
+      delayed_at: z.string().nullable().optional(),
+    })
+    .nullable()
+    .optional(),
 });
 
 const sessionRowSchema = z.object({
@@ -58,7 +66,7 @@ const ENTRY_SELECT = `
   visit_reason, estimated_duration_minutes, expected_start_at, status, missed_turn_at, missed_turn_baseline,
   arrived_at, started_at, finished_at, staff_notes, created_at,
   patient:patients!inner(full_name, normalized_phone),
-  appointment:appointments(visit_reason_details)
+  appointment:appointments(visit_reason_details, scheduled_start, grace_shifts, delayed_at)
 `;
 
 function toView(row: z.infer<typeof entryRowSchema>): QueueEntryView {
@@ -84,6 +92,9 @@ function toView(row: z.infer<typeof entryRowSchema>): QueueEntryView {
     startedAt: row.started_at,
     finishedAt: row.finished_at,
     staffNotes: row.staff_notes,
+    bookedStart: row.appointment?.scheduled_start ?? null,
+    graceShifts: row.appointment?.grace_shifts ?? 0,
+    isDelayed: !!row.appointment?.delayed_at,
   };
 }
 

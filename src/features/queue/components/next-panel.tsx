@@ -9,7 +9,7 @@ import { formatPhone, formatTime } from "@/lib/format";
 import { visitReasonText } from "@/server/domain/queue/constants";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { useQueueController } from "./queue-controller";
-import { QueueNumber, StatusBadge } from "./status-badge";
+import { PriorityBadge, QueueNumber, StatusBadge } from "./status-badge";
 
 export function NextPanel({ ready }: { ready: QueueEntryView | null }) {
   const { request, pending, hasCurrent, timezone } = useQueueController();
@@ -32,6 +32,7 @@ export function NextPanel({ ready }: { ready: QueueEntryView | null }) {
               <div className="text-sm text-muted-foreground">
                 {visitReasonText(ready.visitReason, ready.visitReasonDetails, tReason)} · {formatPhone(ready.patientPhone)}
               </div>
+              <PriorityBadge entry={ready} bookedTime={ready.bookedStart ? formatTime(ready.bookedStart, timezone, locale) : undefined} className="mt-1.5" />
             </div>
             <StatusBadge status={ready.status} />
           </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
-import { ArrowLeft, CalendarCheck2, CalendarX2, CheckCircle2, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, CalendarCheck2, CalendarClock, CalendarX2, CheckCircle2, Clock, Loader2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,12 @@ export interface Booked {
  * assigns the earliest free time of that day (first come, first served), so
  * the day fills from the opening time instead of everyone picking late slots.
  */
-export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
+/**
+ * bookedDays: days the visitor already has an active booking on. They stay
+ * visible but greyed with an "Already booked" badge; picking one explains how
+ * to change the existing booking instead.
+ */
+export function BookingFlow({ calendar, bookedDays = [] }: { calendar: BookingCalendar; bookedDays?: string[] }) {
   const t = useTranslations("portal.booking");
   const tReason = useTranslations("visitReason");
   const locale = useLocale() as Locale;
@@ -40,7 +45,8 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
   // Days found full while booking (another visitor took the last time).
   const [fullDays, setFullDays] = useState<string[]>([]);
   const isFull = (d: { date: string; free: number }) => d.free === 0 || fullDays.includes(d.date);
-  const firstFree = calendar.dates.find((d) => d.free > 0)?.date ?? null;
+  const isBooked = (d: { date: string }) => bookedDays.includes(d.date);
+  const firstFree = calendar.dates.find((d) => d.free > 0 && !isBooked(d))?.date ?? null;
 
   const [step, setStep] = useState<Step>("day");
   const [date, setDate] = useState<string | null>(firstFree);
@@ -58,8 +64,9 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
 
   const day = (d: string, o: Intl.DateTimeFormatOptions = {}) => formatClinicDate(d, o, locale);
   const selectedDay = calendar.dates.find((d) => d.date === date) ?? null;
-  const selectedOpen = !!selectedDay && !isFull(selectedDay);
-  const anyOpen = calendar.dates.some((d) => !isFull(d));
+  const selectedBooked = !!selectedDay && isBooked(selectedDay);
+  const selectedOpen = !!selectedDay && !isFull(selectedDay) && !selectedBooked;
+  const anyOpen = calendar.dates.some((d) => !isFull(d) || isBooked(d));
 
   const submit = () => {
     if (!date || !option) return;
@@ -135,12 +142,14 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
                 <div className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
                   {calendar.dates.map((d) => {
                     const selected = d.date === date;
-                    const full = isFull(d);
+                    const already = isBooked(d);
+                    const full = !already && isFull(d);
                     return (
                       <button
                         key={d.date}
                         type="button"
                         disabled={full}
+                        aria-describedby={already ? "booked-day-note" : undefined}
                         onClick={() => setDate(d.date)}
                         aria-pressed={selected}
                         className={cn(
@@ -149,6 +158,8 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
                             ? "border-navy-900 bg-navy-900 text-white shadow-soft"
                             : "bg-card hover:border-teal-300 hover:bg-teal-50/50",
                           full && "cursor-not-allowed opacity-45 hover:border-border hover:bg-card",
+                          already && !selected && "border-dashed bg-muted/70 text-muted-foreground hover:border-border hover:bg-muted/70",
+                          already && selected && "border-slate-500 bg-slate-500 text-white",
                         )}
                       >
                         <span className={cn("text-[11px] font-medium uppercase", selected ? "text-navy-200" : "text-muted-foreground")}>
@@ -161,10 +172,18 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
                         <span
                           className={cn(
                             "mt-1 rounded-full px-1.5 text-[10px] font-semibold",
-                            full ? "bg-muted text-muted-foreground" : selected ? "bg-teal-400 text-navy-950" : "bg-teal-50 text-teal-800",
+                            already
+                              ? selected
+                                ? "bg-white/90 text-slate-700"
+                                : "bg-slate-200 text-slate-700"
+                              : full
+                                ? "bg-muted text-muted-foreground"
+                                : selected
+                                  ? "bg-teal-400 text-navy-950"
+                                  : "bg-teal-50 text-teal-800",
                           )}
                         >
-                          {full ? t("full") : t("open")}
+                          {already ? t("alreadyBooked") : full ? t("full") : t("open")}
                         </span>
                       </button>
                     );
@@ -173,7 +192,22 @@ export function BookingFlow({ calendar }: { calendar: BookingCalendar }) {
               </div>
 
               {date && selectedDay ? (
-                selectedOpen ? (
+                selectedBooked ? (
+                  <div id="booked-day-note" className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4" role="alert">
+                    <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" aria-hidden />
+                    <div className="min-w-0 space-y-3">
+                      <div>
+                        <p className="font-semibold text-amber-950">{t("alreadyBookedTitle")}</p>
+                        <p className="mt-1 text-sm leading-relaxed text-amber-900">
+                          {t("alreadyBookedBody", { date: day(date, { year: undefined }) })}
+                        </p>
+                      </div>
+                      <Button asChild variant="outline" className="border-amber-300 bg-white text-amber-950 hover:bg-amber-100">
+                        <Link href="/patient/my-appointments">{t("viewExisting")}</Link>
+                      </Button>
+                    </div>
+                  </div>
+                ) : selectedOpen ? (
                   <div className="flex items-start gap-3 rounded-2xl border border-teal-200 bg-teal-50 p-4" role="status">
                     <CalendarCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-700" aria-hidden />
                     <div>

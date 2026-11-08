@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Pencil, Plus, Save, Trash2, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import type { Locale } from "@/i18n/config";
-import { CLINIC_CURRENCY, formatMoney } from "@/lib/format";
+import { formatMoney } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { addServiceAction, deleteServiceAction, setServiceActiveAction, updateServiceAction } from "@/features/settings/service-actions";
+import {
+  addServiceAction,
+  deleteServiceAction,
+  setServiceActiveAction,
+  setShowFeesToAllAction,
+  updateServiceAction,
+} from "@/features/settings/service-actions";
 
 export interface ServiceRow {
   id: string;
@@ -35,9 +41,10 @@ export interface ServiceRow {
 
 /**
  * Doctor's services & fees. Shown services and their prices appear in the
- * fees pop-up a first-time visitor sees after her first online booking.
+ * fees pop-up after a visitor's first online booking, or after every booking
+ * when "Show to all visitors" is on.
  */
-export function ServicesEditor({ initial, readOnly }: { initial: ServiceRow[]; readOnly: boolean }) {
+export function ServicesEditor({ initial, readOnly, showToAll }: { initial: ServiceRow[]; readOnly: boolean; showToAll: boolean }) {
   const router = useRouter();
   const t = useTranslations("settings.services");
   const locale = useLocale() as Locale;
@@ -84,6 +91,7 @@ export function ServicesEditor({ initial, readOnly }: { initial: ServiceRow[]; r
 
   return (
     <div className="space-y-4">
+      <ShowToAllToggle initial={showToAll} readOnly={readOnly} />
       {rows.length === 0 ? (
         <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
@@ -230,8 +238,14 @@ function ServiceDialog({ service, onSaved }: { service?: ServiceRow; onSaved: (s
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="svc-price">{t("price")}</Label>
-            <div className="relative w-40">
-              <Input
+            {/* Currency is a separate addon after the number (end side in both directions), never on top of it. */}
+            <div
+              className={cn(
+                "flex h-10 w-48 items-stretch overflow-hidden rounded-md border border-input bg-card shadow-sm focus-within:ring-2 focus-within:ring-ring",
+                errors.price && "border-destructive",
+              )}
+            >
+              <input
                 id="svc-price"
                 type="number"
                 inputMode="decimal"
@@ -240,16 +254,23 @@ function ServiceDialog({ service, onSaved }: { service?: ServiceRow; onSaved: (s
                 dir="ltr"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="pe-14 text-start"
+                className="tabular min-w-0 flex-1 bg-transparent px-3 text-start text-base outline-none placeholder:text-muted-foreground md:text-sm"
+                placeholder="0"
                 aria-invalid={!!errors.price}
+                aria-describedby="svc-price-currency"
               />
-              <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{CLINIC_CURRENCY}</span>
+              <span
+                id="svc-price-currency"
+                className="flex shrink-0 select-none items-center border-s border-input bg-muted px-3 text-xs font-semibold text-muted-foreground"
+              >
+                {t("currency")}
+              </span>
             </div>
             {errors.price ? <p className="text-sm text-destructive">{errors.price[0]}</p> : null}
           </div>
           <label className="flex items-center gap-3 text-sm">
             <input type="checkbox" className="h-4 w-4 accent-teal-600" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-            {t("showToVisitors")}
+            {t("showInList")}
           </label>
           <DialogFooter className="gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={pending}>
@@ -302,5 +323,62 @@ function ConfirmDelete({ name, pending, onConfirm }: { name: string; pending: bo
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** Global switch: fees pop-up after every booking instead of the first one only. */
+function ShowToAllToggle({ initial, readOnly }: { initial: boolean; readOnly: boolean }) {
+  const t = useTranslations("settings.services");
+  const router = useRouter();
+  const [on, setOn] = useState(initial);
+  const [pending, start] = useTransition();
+
+  const toggle = () => {
+    const next = !on;
+    setOn(next);
+    start(async () => {
+      const res = await setShowFeesToAllAction(next);
+      if (!res.ok) {
+        setOn(!next);
+        toast.error(res.error.message);
+        return;
+      }
+      toast.success(next ? t("showAllOnToast") : t("showAllOffToast"));
+      router.refresh();
+    });
+  };
+
+  return (
+    <div className={cn("flex items-start gap-3 rounded-xl border p-4", on ? "border-teal-200 bg-teal-50/50" : "bg-muted/30")}>
+      <Users className={cn("mt-0.5 h-5 w-5 shrink-0", on ? "text-teal-700" : "text-muted-foreground")} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <p id="fees-all-label" className="font-medium text-navy-900">
+          {t("showAll")}
+        </p>
+        <p id="fees-all-help" className="mt-0.5 text-sm text-muted-foreground">
+          {t("showAllHelp")}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="fees-all-label"
+        aria-describedby="fees-all-help"
+        disabled={readOnly || pending}
+        onClick={toggle}
+        className={cn(
+          "relative mt-0.5 inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+          on ? "bg-teal-600" : "bg-slate-300",
+        )}
+      >
+        <span
+          className={cn(
+            "inline-block h-5 w-5 rounded-full bg-white shadow transition-transform",
+            on ? "translate-x-[1.375rem] rtl:-translate-x-[1.375rem]" : "translate-x-0.5 rtl:-translate-x-0.5",
+          )}
+        />
+      </button>
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import { consultationsUntilLate } from "@/server/domain/queue/late-policy";
 import type { QueueEntryView } from "@/server/domain/queue/types";
 import { EntryActionsMenu } from "./entry-actions-menu";
 import { useQueueController } from "./queue-controller";
-import { QueueNumber, StatusBadge } from "./status-badge";
+import { PriorityBadge, QueueNumber, StatusBadge } from "./status-badge";
 
 function toState(e: QueueEntryView) {
   return {
@@ -75,7 +75,10 @@ export function ScheduledList({ entries }: { entries: QueueEntryView[] }) {
           {entries.map((e) => (
             <li key={e.id} className="flex items-center gap-3 rounded-lg border p-3">
               <div className="tabular w-20 shrink-0 text-sm font-semibold text-navy-800">{formatTime(e.expectedStartAt, timezone, locale)}</div>
-              <div dir="auto" className="min-w-0 flex-1 truncate text-start font-medium">{e.patientName}</div>
+              <div className="min-w-0 flex-1">
+                <div dir="auto" className="truncate text-start font-medium">{e.patientName}</div>
+                <PriorityBadge entry={e} className="mt-1" />
+              </div>
               <Button size="sm" variant="outline" onClick={() => request(e, "mark_arrived")} disabled={pending}>
                 <UserCheck /> {t("arrived")}
               </Button>

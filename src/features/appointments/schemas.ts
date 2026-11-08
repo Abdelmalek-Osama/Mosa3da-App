@@ -24,13 +24,13 @@ export const cancelAppointmentSchema = z.object({
 
 export const rescheduleSchema = z.object({
   appointmentId: z.string().uuid(),
-  slotStart: z.string().datetime({ offset: true, message: "Choose a time" }),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a day"),
 });
 
 export const staffBookSchema = z
   .object({
     patientId: z.string().uuid({ message: "Select a patient" }),
-    slotStart: z.string().datetime({ offset: true, message: "Choose a time" }),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a day"),
     visitReason: z.enum(VISIT_REASONS, { errorMap: () => ({ message: "Choose a visit reason" }) }),
     visitReasonDetails: z.string().trim().max(200).optional().transform((v) => v || undefined),
     notes: z.string().trim().max(1000).optional().transform((v) => v || undefined),
