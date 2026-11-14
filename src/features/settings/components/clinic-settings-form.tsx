@@ -17,6 +17,7 @@ type Values = { [K in keyof ClinicSettingsInput]: string };
 const NUMBER_FIELDS: { key: keyof Values; unit: "min" | "visits" | "days"; min: number; max: number }[] = [
   { key: "defaultConsultationMinutes", unit: "min", min: 5, max: 180 },
   { key: "slotIntervalMinutes", unit: "min", min: 5, max: 120 },
+  { key: "arrivalBufferMinutes", unit: "min", min: 0, max: 120 },
   { key: "whatsappThresholdMinutes", unit: "min", min: 5, max: 240 },
   { key: "latePolicyConsultations", unit: "visits", min: 1, max: 10 },
   { key: "bookingHorizonDays", unit: "days", min: 1, max: 365 },

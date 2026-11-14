@@ -14,6 +14,7 @@ const settingsRow = z.object({
   booking_horizon_days: z.number().int(),
   cancellation_cutoff_minutes: z.number().int(),
   slot_interval_minutes: z.number().int(),
+  arrival_buffer_minutes: z.number().int().catch(0),
   clinic_address: z.string().nullable(),
   clinic_map_url: z.string().nullable(),
   updated_at: z.string(),
@@ -44,6 +45,8 @@ export interface FullClinicSettings {
   bookingHorizonDays: number;
   cancellationCutoffMinutes: number;
   slotIntervalMinutes: number;
+  /** Patients are told to arrive this many minutes before their real slot. */
+  arrivalBufferMinutes: number;
   clinicAddress: string;
   clinicMapUrl: string;
   updatedAt: string;
@@ -63,7 +66,7 @@ export class SettingsAdminService {
       this.db
         .from("doctor_settings")
         .select(
-          "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations, booking_horizon_days, cancellation_cutoff_minutes, slot_interval_minutes, clinic_address, clinic_map_url, updated_at",
+          "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations, booking_horizon_days, cancellation_cutoff_minutes, slot_interval_minutes, arrival_buffer_minutes, clinic_address, clinic_map_url, updated_at",
         )
         .eq("id", 1)
         .single(),
@@ -84,6 +87,7 @@ export class SettingsAdminService {
         bookingHorizonDays: r.booking_horizon_days,
         cancellationCutoffMinutes: r.cancellation_cutoff_minutes,
         slotIntervalMinutes: r.slot_interval_minutes,
+        arrivalBufferMinutes: r.arrival_buffer_minutes,
         clinicAddress: r.clinic_address ?? "",
         clinicMapUrl: r.clinic_map_url ?? "",
         updatedAt: r.updated_at,
@@ -109,6 +113,7 @@ export class SettingsAdminService {
         booking_horizon_days: input.bookingHorizonDays,
         cancellation_cutoff_minutes: input.cancellationCutoffMinutes,
         slot_interval_minutes: input.slotIntervalMinutes,
+        arrival_buffer_minutes: input.arrivalBufferMinutes,
         clinic_address: input.clinicAddress || null,
         clinic_map_url: input.clinicMapUrl || null,
         updated_by: actorId,

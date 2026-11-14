@@ -57,7 +57,7 @@ export function PatientDashboardView({ fullName, status, upcoming, settings, wel
         </div>
         {next ? (
           <AppointmentCard appointment={next} timeZone={tz} emphasis>
-            {next.scheduledStart && next.status === "scheduled" ? <AppointmentCountdown at={next.scheduledStart} /> : null}
+            {next.arrivalAt && next.status === "scheduled" ? <AppointmentCountdown at={next.arrivalAt} /> : null}
             <Link
               href="/patient/my-appointments"
               className="flex items-center justify-between rounded-lg text-sm font-medium text-teal-700 hover:underline"

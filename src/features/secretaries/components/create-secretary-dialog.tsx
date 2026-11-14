@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
+import { AlertCircle, Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,18 +18,26 @@ export function CreateSecretaryDialog() {
   const [values, setValues] = useState({ fullName: "", email: "", password: "" });
   const [show, setShow] = useState(false);
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
+  const [formError, setFormError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) => setValues((v) => ({ ...v, [k]: e.target.value }));
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
     start(async () => {
-      const res = await createSecretaryAction(values);
-      if (!res.ok) {
-        setErrors(res.error.fieldErrors ?? {});
-        toast.error(res.error.message);
+      const res = await createSecretaryAction(values).catch(() => null);
+      // Stay open with an explicit reason; success is shown only once the account is saved.
+      if (!res) {
+        setFormError(t("networkError"));
         return;
       }
+      if (!res.ok) {
+        setErrors(res.error.fieldErrors ?? {});
+        setFormError(res.error.message);
+        return;
+      }
+      setErrors({});
       toast.success(t("done", { name: values.fullName }), { description: t("doneBody") });
       setOpen(false);
       router.refresh();
@@ -44,6 +52,7 @@ export function CreateSecretaryDialog() {
         if (o) {
           setValues({ fullName: "", email: "", password: "" });
           setErrors({});
+          setFormError(null);
         }
       }}
     >
@@ -58,6 +67,12 @@ export function CreateSecretaryDialog() {
           <DialogDescription>{t("body")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4" noValidate>
+          {formError ? (
+            <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <p>{formError}</p>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <Label htmlFor="sec-name">{t("fullName")}</Label>
             <Input id="sec-name" value={values.fullName} onChange={set("fullName")} autoFocus aria-invalid={!!errors.fullName} />

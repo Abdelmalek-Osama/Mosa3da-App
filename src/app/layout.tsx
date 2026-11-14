@@ -3,6 +3,7 @@ import { IBM_Plex_Sans_Arabic, Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ServiceWorkerRegister } from "@/components/shared/service-worker-register";
 import { Toaster } from "@/components/ui/sonner";
 import { localeDir, type Locale } from "@/i18n/config";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: t("title"), template: `%s · ${t("brand")}` },
     description: t("description"),
+    applicationName: t("brand"),
+    appleWebApp: { capable: true, title: "عيادة د. رودينا", statusBarStyle: "default" },
+    formatDetection: { telephone: false },
   };
 }
 
@@ -45,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ThemeProvider>
             {children}
             <Toaster dir={dir} />
+            <ServiceWorkerRegister />
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

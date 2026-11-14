@@ -79,7 +79,8 @@
    "sendWhatsApp": "Send WhatsApp confirmation",
    "whatsAppHint": "Opens WhatsApp with the arrival time ready to send.",
    "another": "Book another",
-   "done": "Done"
+   "done": "Done",
+   "arriveNote": "Visitor was told to arrive at {time}"
   },
   "confirmWa": {
    "button": "Confirm via WhatsApp",
@@ -88,7 +89,8 @@
    "address": "Address: {address}",
    "map": "Location: {url}",
    "onDay": "on {date}"
-  }
+  },
+  "arriveBy": "arrive {time}"
  },
  "landing": {
   "subtitle": "Obstetrics & gynecology clinic",
@@ -481,7 +483,8 @@
    "booked": "Your appointment has been booked successfully.",
    "ratesTitle": "Clinic Service Rates",
    "settle": "Fees are settled at the reception desk upon your arrival. We look forward to seeing you!",
-   "continue": "Understood / Continue"
+   "continue": "Understood / Continue",
+   "arriveAt": "Please arrive at the clinic at"
   },
   "feedback": {
    "title": "How was your visit?",
@@ -626,7 +629,7 @@
   "inactive": "Inactive",
   "added": "added {date}",
   "create": {
-   "done": "{name} can now sign in",
+   "done": "Secretary account created successfully. {name} can sign in now",
    "doneBody": "Share the email and password with them privately.",
    "trigger": "Add secretary",
    "title": "Add a secretary",
@@ -638,7 +641,8 @@
    "show": "Show password",
    "hint": "At least 8 characters.",
    "cancel": "Cancel",
-   "submit": "Create account"
+   "submit": "Create account",
+   "networkError": "Couldn't reach the server, so the account was not created. Check the connection and try again."
   },
   "actions": {
    "deactivated": "{name} can no longer sign in",
@@ -728,7 +732,11 @@
    "clinicAddress": "Clinic address (optional)",
    "clinicAddressHint": "Included in WhatsApp booking confirmations.",
    "clinicMapUrl": "Google Maps link (optional)",
-   "clinicMapUrlHint": "Paste the clinic's location link. It is added to booking confirmations."
+   "clinicMapUrlHint": "Paste the clinic's location link. It is added to booking confirmations.",
+   "arrivalBufferMinutes": {
+    "label": "Early arrival buffer",
+    "hint": "Visitors are told to arrive this many minutes before their real time (website, dashboard and WhatsApp). Staff still see the real time. 0 = off."
+   }
   },
   "reasons": {
    "title": "Reasons for visit",
@@ -942,7 +950,7 @@
  },
  "logs": {
   "title": "Consultation logs",
-  "subtitle": "How long each consultation actually took, compared with the expected time for its reason.",
+  "subtitle": "When each visitor was booked, when she actually entered the room, and how long the consultation took.",
   "export": "Export to CSV",
   "search": "Search by visitor name or visit reason",
   "range": {
@@ -958,15 +966,20 @@
    "count": "Consultations",
    "avgActual": "Average actual",
    "avgExpected": "Average expected",
-   "over": "Over expected time"
+   "over": "Over expected time",
+   "avgEntryShift": "Average entry shift"
   },
   "col": {
    "dateTime": "Date & time",
    "patient": "Visitor name",
    "reason": "Visit reason",
-   "expected": "Expected",
-   "actual": "Actual",
-   "variance": "Difference"
+   "expected": "Expected duration",
+   "actual": "Actual duration",
+   "variance": "Duration difference",
+   "date": "Visit date",
+   "scheduled": "Scheduled time",
+   "entered": "Actual entry",
+   "entryShift": "Entry shift"
   },
   "minutes": "{count} min",
   "minShort": "min",
@@ -998,7 +1011,12 @@
    "booked": "Booked",
    "over": "Over",
    "under": "Under",
-   "onTime": "On time"
+   "onTime": "On time",
+   "entered": "Actual entry time",
+   "entryShift": "Entry shift (min)",
+   "entryResult": "Entry",
+   "late": "Late",
+   "early": "Early"
   }
  },
  "reviews": {

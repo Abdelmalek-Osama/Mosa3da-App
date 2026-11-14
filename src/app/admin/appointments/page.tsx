@@ -12,7 +12,7 @@ import { BookAppointmentDialog } from "@/features/appointments/components/admin/
 import { AppointmentRowActions } from "@/features/appointments/components/admin/appointment-row-actions";
 import { DateJump } from "@/features/appointments/components/admin/date-jump";
 import { AppointmentStatusPill } from "@/features/patients/components/appointment-card";
-import { clinicDateOf, formatClinicDate, formatPhone, formatTime } from "@/lib/format";
+import { arrivalTimeOf, clinicDateOf, formatClinicDate, formatPhone, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { AppointmentAdminService } from "@/server/application/appointments/appointment-admin-service";
 import { getClinicSettings } from "@/server/application/settings/clinic-settings";
@@ -158,7 +158,8 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                           a.clinicDate === today
                             ? tConfirm("today")
                             : tConfirm("onDay", { date: formatClinicDate(a.clinicDate, { year: undefined }, locale) }),
-                        time: formatTime(a.scheduledStart, tz, locale),
+                        // The visitor is told the arrival time; the list keeps the real slot.
+                        time: formatTime(arrivalTimeOf(a.scheduledStart, settings.arrivalBufferMinutes), tz, locale),
                       }),
                       settings.clinicAddress ? tConfirm("address", { address: settings.clinicAddress }) : null,
                       settings.clinicMapUrl ? tConfirm("map", { url: settings.clinicMapUrl }) : null,
@@ -177,6 +178,11 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
               >
                 <div className="tabular flex flex-col">
                   <span className="text-base font-semibold text-navy-900">{a.scheduledStart ? formatTime(a.scheduledStart, tz, locale) : t("walkIn")}</span>
+                  {a.scheduledStart && settings.arrivalBufferMinutes > 0 ? (
+                    <span className="text-[11px] leading-tight text-teal-700">
+                      {t("arriveBy", { time: formatTime(arrivalTimeOf(a.scheduledStart, settings.arrivalBufferMinutes), tz, locale) })}
+                    </span>
+                  ) : null}
                   <span className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" /> {t("min", { count: a.durationMinutes })}
                   </span>

@@ -35,6 +35,11 @@ export interface ConsultationLog {
   actualMinutes: number;
   /** actual − expected: positive = over, negative = under. */
   varianceMinutes: number;
+  /**
+   * Actual entry (Start Consultation) minus the scheduled time, in whole minutes:
+   * positive = entered late, negative = early. Null for walk-ins (no booked time).
+   */
+  entryShiftMinutes: number | null;
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -109,10 +114,11 @@ export async function listConsultationLogs(db: SupabaseClient, from: string, to:
   return rows.map((r) => {
     const expected = r.appointment?.duration_minutes ?? r.estimated_duration_minutes;
     const actual = Math.max(0, Math.round((Date.parse(r.finished_at) - Date.parse(r.started_at)) / 60_000));
+    const scheduled = r.appointment?.scheduled_start ?? null;
     return {
       id: r.id,
       clinicDate: r.clinic_date,
-      scheduledStart: r.appointment?.scheduled_start ?? null,
+      scheduledStart: scheduled,
       arrivedAt: r.arrived_at,
       startedAt: r.started_at,
       finishedAt: r.finished_at,
@@ -124,6 +130,7 @@ export async function listConsultationLogs(db: SupabaseClient, from: string, to:
       expectedMinutes: expected,
       actualMinutes: actual,
       varianceMinutes: actual - expected,
+      entryShiftMinutes: scheduled ? Math.round((Date.parse(r.started_at) - Date.parse(scheduled)) / 60_000) : null,
     };
   });
 }
@@ -153,7 +160,7 @@ export function filterLogs(logs: ConsultationLog[], q: string, labelOf?: (l: Con
 }
 
 export function summarizeLogs(logs: ConsultationLog[]) {
-  if (!logs.length) return { count: 0, avgActual: 0, avgExpected: 0, overCount: 0, underCount: 0, onTimeCount: 0 };
+  if (!logs.length) return { count: 0, avgActual: 0, avgExpected: 0, overCount: 0, underCount: 0, onTimeCount: 0, avgEntryShift: null };
   const sum = (f: (l: ConsultationLog) => number) => logs.reduce((a, l) => a + f(l), 0);
   return {
     count: logs.length,
@@ -162,5 +169,11 @@ export function summarizeLogs(logs: ConsultationLog[]) {
     overCount: logs.filter((l) => l.varianceMinutes > 0).length,
     underCount: logs.filter((l) => l.varianceMinutes < 0).length,
     onTimeCount: logs.filter((l) => l.varianceMinutes === 0).length,
+    avgEntryShift: avgOrNull(logs.map((l) => l.entryShiftMinutes)),
   };
+}
+
+function avgOrNull(values: (number | null)[]): number | null {
+  const v = values.filter((x): x is number => x !== null);
+  return v.length ? Math.round(v.reduce((a, b) => a + b, 0) / v.length) : null;
 }

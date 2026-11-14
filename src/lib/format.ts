@@ -16,6 +16,18 @@ export function formatTime(iso: string | null | undefined, timeZone = DEFAULT_TI
   }).format(new Date(iso));
 }
 
+/**
+ * Patient-facing arrival time: the real slot minus the clinic's early-arrival
+ * buffer (doctor_settings.arrival_buffer_minutes). Staff keep the real slot.
+ */
+export function arrivalTimeOf(iso: string, bufferMinutes: number): string;
+export function arrivalTimeOf(iso: string | null, bufferMinutes: number): string | null;
+export function arrivalTimeOf(iso: string | null, bufferMinutes: number): string | null {
+  if (!iso) return null;
+  if (!bufferMinutes) return iso;
+  return new Date(Date.parse(iso) - bufferMinutes * 60_000).toISOString();
+}
+
 /** Clinic fees are quoted in Egyptian pounds. */
 export const CLINIC_CURRENCY = "EGP";
 

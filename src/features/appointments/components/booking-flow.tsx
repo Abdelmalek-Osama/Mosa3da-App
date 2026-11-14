@@ -21,7 +21,7 @@ type Step = "day" | "reason" | "review" | "done";
 const STEPS = ["day", "reason", "review"] as const satisfies readonly Exclude<Step, "done">[];
 
 export interface Booked {
-  /** Assigned arrival time. */
+  /** Time the patient is told to arrive (real slot minus the early-arrival buffer). */
   slotStart: string;
   clinicDate: string;
 }
@@ -79,7 +79,7 @@ export function BookingFlow({ calendar, bookedDays = [] }: { calendar: BookingCa
         notes,
       });
       if (res.ok) {
-        setBooked({ slotStart: res.data.scheduledStart, clinicDate: res.data.clinicDate });
+        setBooked({ slotStart: res.data.arrivalAt, clinicDate: res.data.clinicDate });
         setFees(res.data.fees);
         setStep("done");
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -100,7 +100,7 @@ export function BookingFlow({ calendar, bookedDays = [] }: { calendar: BookingCa
     return (
       <>
         <BookingConfirmation booked={booked} timeZone={tz} />
-        {fees ? <FeesDialog fees={fees} open onContinue={() => setFees(null)} /> : null}
+        {fees ? <FeesDialog fees={fees} arrivalAt={booked.slotStart} timeZone={tz} open onContinue={() => setFees(null)} /> : null}
       </>
     );
   }

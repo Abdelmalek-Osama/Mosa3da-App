@@ -157,6 +157,9 @@ const EXACT: Record<string, string> = {
   "Secretary not found.": "لم يتم العثور على السكرتيرة.",
   "An account with this email already exists.": "يوجد حساب بهذا البريد الإلكتروني.",
   "Could not create the account. Please try again.": "تعذّر إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+  "The account could not be saved, so it was not created. Please try again.": "تعذّر حفظ الحساب، لذلك لم يتم إنشاؤه. يرجى المحاولة مرة أخرى.",
+  "This password is too weak. Use at least 8 characters with letters and numbers.": "كلمة المرور ضعيفة. استخدمي 8 أحرف على الأقل تجمع بين حروف وأرقام.",
+  "Choose a stronger password": "اختاري كلمة مرور أقوى",
   "Could not reset the password. Please try again.": "تعذّر إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
   "Status saved, but sign-in access could not be updated. Please try again.":
     "تم حفظ الحالة، لكن تعذّر تحديث صلاحية الدخول. يرجى المحاولة مرة أخرى.",

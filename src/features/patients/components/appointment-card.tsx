@@ -53,7 +53,7 @@ export function AppointmentCard({
           </p>
           <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
             <Clock className="h-4 w-4 shrink-0" aria-hidden />
-            {appointment.scheduledStart ? formatTime(appointment.scheduledStart, timeZone, locale) : t("walkIn")}
+            {appointment.arrivalAt ? formatTime(appointment.arrivalAt, timeZone, locale) : t("walkIn")}
             <span aria-hidden>·</span>
             {t("minutes", { count: appointment.durationMinutes })}
           </p>

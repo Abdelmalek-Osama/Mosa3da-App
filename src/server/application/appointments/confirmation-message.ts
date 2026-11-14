@@ -1,7 +1,7 @@
 import "server-only";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/config";
-import { clinicDateOf, formatClinicDate, formatTime } from "@/lib/format";
+import { arrivalTimeOf, clinicDateOf, formatClinicDate, formatTime } from "@/lib/format";
 import type { ClinicSettings } from "@/server/application/settings/clinic-settings";
 import { waMeLink } from "@/server/integrations/whatsapp";
 
@@ -23,7 +23,8 @@ export async function bookingConfirmationLink(
       name: patient.fullName.split(" ")[0] ?? patient.fullName,
       clinic: locale === "ar" ? settings.clinicNameAr : settings.clinicName,
       day: booking.clinicDate === today ? t("today") : t("onDay", { date: formatClinicDate(booking.clinicDate, { year: undefined }, locale) }),
-      time: formatTime(booking.scheduledStart, settings.timezone, locale),
+      // Patients are told the arrival time (real slot minus the early-arrival buffer).
+      time: formatTime(arrivalTimeOf(booking.scheduledStart, settings.arrivalBufferMinutes), settings.timezone, locale),
     }),
     settings.clinicAddress ? t("address", { address: settings.clinicAddress }) : null,
     settings.clinicMapUrl ? t("map", { url: settings.clinicMapUrl }) : null,

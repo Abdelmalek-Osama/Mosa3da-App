@@ -19,6 +19,8 @@ interface Summary {
   avgActual: number;
   avgExpected: number;
   overCount: number;
+  /** Average minutes between booked time and actual entry (booked visits only). */
+  avgEntryShift: number | null;
 }
 
 /** Consultation logs screen: filters, export, summary tiles, paginated table. */
@@ -87,8 +89,19 @@ export async function LogsView({
         <p className="text-sm text-muted-foreground">{period}</p>
       </Card>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat label={t("stats.count")} value={String(summary.count)} />
+        <Stat
+          label={t("stats.avgEntryShift")}
+          value={
+            summary.avgEntryShift === null
+              ? "—"
+              : summary.avgEntryShift === 0
+                ? t("onTime")
+                : `${summary.avgEntryShift > 0 ? "+" : "−"}${t("minutes", { count: Math.abs(summary.avgEntryShift) })}`
+          }
+          tone={summary.avgEntryShift !== null && summary.avgEntryShift > 10 ? "bad" : undefined}
+        />
         <Stat label={t("stats.avgActual")} value={t("minutes", { count: summary.avgActual })} />
         <Stat label={t("stats.avgExpected")} value={t("minutes", { count: summary.avgExpected })} />
         <Stat
@@ -109,9 +122,12 @@ export async function LogsView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">{t("col.dateTime")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.date")}</TableHead>
                 <TableHead>{t("col.patient")}</TableHead>
                 <TableHead>{t("col.reason")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.scheduled")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.entered")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.entryShift")}</TableHead>
                 <TableHead className="whitespace-nowrap text-end">{t("col.expected")}</TableHead>
                 <TableHead className="whitespace-nowrap text-end">{t("col.actual")}</TableHead>
                 <TableHead className="whitespace-nowrap text-end">{t("col.variance")}</TableHead>
@@ -122,11 +138,6 @@ export async function LogsView({
                 <TableRow key={l.id}>
                   <TableCell className="whitespace-nowrap align-top">
                     <p className="font-medium text-navy-900">{formatClinicDate(l.clinicDate, { weekday: "short", year: undefined }, locale)}</p>
-                    <p className="tabular text-xs text-muted-foreground">
-                      {l.scheduledStart ? formatTime(l.scheduledStart, tz, locale) : t("walkIn")}
-                      <span aria-hidden> · </span>
-                      {t("inRoom", { start: formatTime(l.startedAt, tz, locale), end: formatTime(l.finishedAt, tz, locale) })}
-                    </p>
                   </TableCell>
                   <TableCell className="min-w-[10rem] align-top">
                     <p dir="auto" className="font-medium text-navy-900">
@@ -135,6 +146,17 @@ export async function LogsView({
                   </TableCell>
                   <TableCell className="min-w-[9rem] align-top" dir="auto">
                     {reasonLabel(l)}
+                  </TableCell>
+                  <TableCell className="tabular whitespace-nowrap align-top">
+                    {l.scheduledStart ? formatTime(l.scheduledStart, tz, locale) : <span className="text-muted-foreground">{t("walkIn")}</span>}
+                  </TableCell>
+                  <TableCell className="tabular whitespace-nowrap align-top font-medium text-navy-900">{formatTime(l.startedAt, tz, locale)}</TableCell>
+                  <TableCell className="whitespace-nowrap align-top">
+                    {l.entryShiftMinutes === null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <VariancePill minutes={l.entryShiftMinutes} onTime={t("onTime")} unit={t("minShort")} />
+                    )}
                   </TableCell>
                   <TableCell className="tabular whitespace-nowrap text-end align-top">{t("minutes", { count: l.expectedMinutes })}</TableCell>
                   <TableCell className="tabular whitespace-nowrap text-end align-top font-semibold text-navy-900">

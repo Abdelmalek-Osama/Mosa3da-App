@@ -26,6 +26,8 @@ interface Confirmed {
   name: string;
   clinicDate: string;
   scheduledStart: string;
+  /** What the visitor was told (real slot minus the early-arrival buffer); null when no buffer. */
+  arrivalAt: string | null;
   whatsappUrl: string | null;
   rescheduled: boolean;
 }
@@ -151,6 +153,7 @@ export function BookAppointmentDialog({
           name: patient?.fullName ?? "",
           clinicDate: res.data.clinic_date,
           scheduledStart: res.data.scheduled_start,
+          arrivalAt: res.data.arrivalAt,
           whatsappUrl: res.data.whatsappUrl,
           rescheduled: true,
         });
@@ -195,6 +198,7 @@ export function BookAppointmentDialog({
         name: target.fullName,
         clinicDate: res.data.clinic_date,
         scheduledStart: res.data.scheduled_start,
+        arrivalAt: res.data.arrivalAt,
         whatsappUrl: res.data.whatsappUrl,
         rescheduled: false,
       });
@@ -435,6 +439,11 @@ export function BookingConfirmed({
           {t("confirmedWhen", { day })} <bdi className="tabular">{time}</bdi>
         </p>
         <p className="mt-1 text-xs font-medium text-teal-700">{t("nextSlot")}</p>
+        {confirmed.arrivalAt ? (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {t("arriveNote", { time: formatTime(confirmed.arrivalAt, timezone, locale) })}
+          </p>
+        ) : null}
       </div>
       {confirmed.whatsappUrl ? (
         <div className="space-y-1.5">

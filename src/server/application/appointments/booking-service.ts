@@ -2,6 +2,7 @@ import "server-only";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { fromPostgrestError } from "@/lib/errors/postgres";
+import { arrivalTimeOf } from "@/lib/format";
 import { VISIT_REASONS, type VisitReason } from "@/server/domain/queue/constants";
 
 const calendarSchema = z.object({
@@ -42,7 +43,10 @@ const appointmentSchema = z.object({
 export interface PatientAppointment {
   id: string;
   clinicDate: string;
+  /** Real slot (internal). Patient screens show arrivalAt instead. */
   scheduledStart: string | null;
+  /** Time the patient is told to arrive: scheduledStart minus the early-arrival buffer. */
+  arrivalAt: string | null;
   durationMinutes: number;
   visitReason: VisitReason;
   visitReasonDetails: string | null;
@@ -54,15 +58,25 @@ export interface PatientAppointment {
 export interface BookedAppointment {
   appointmentId: string;
   clinicDate: string;
-  /** Assigned arrival time. */
+  /** Real slot (internal). */
   scheduledStart: string;
   scheduledEnd: string;
+  /** Time the patient is told to arrive: scheduledStart minus the early-arrival buffer. */
+  arrivalAt: string;
   /** True when this is the visitor's first appointment ever (shows the fees pop-up). */
   isFirstBooking: boolean;
 }
 
 export class BookingService {
   constructor(private readonly db: SupabaseClient) {}
+
+  /** Minutes patients are asked to arrive early. 0 when unset or unreadable. */
+  async getArrivalBufferMinutes(): Promise<number> {
+    const { data, error } = await this.db.from("doctor_settings").select("arrival_buffer_minutes").eq("id", 1).maybeSingle();
+    if (error || !data) return 0;
+    const n = Number((data as { arrival_buffer_minutes?: unknown }).arrival_buffer_minutes);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
 
   async getCalendar(): Promise<BookingCalendar> {
     const { data, error } = await this.db.rpc("get_booking_calendar");
@@ -94,6 +108,7 @@ export class BookingService {
       p_notes: input.notes ?? null,
     });
     if (error) throw fromPostgrestError(error);
+    const buffer = await this.getArrivalBufferMinutes();
     const r = z
       .object({
         appointment_id: z.string().uuid(),
@@ -108,6 +123,7 @@ export class BookingService {
       clinicDate: r.clinic_date,
       scheduledStart: r.scheduled_start,
       scheduledEnd: r.scheduled_end,
+      arrivalAt: arrivalTimeOf(r.scheduled_start, buffer),
       isFirstBooking: r.is_first_booking,
     };
   }
@@ -119,6 +135,7 @@ export class BookingService {
 
   /** RLS restricts this to the caller's own appointments. */
   async listMine(): Promise<PatientAppointment[]> {
+    const bufferPromise = this.getArrivalBufferMinutes();
     const { data, error } = await this.db
       .from("appointments")
       .select("id, clinic_date, scheduled_start, duration_minutes, visit_reason, visit_reason_details, patient_notes, status, source, created_at")
@@ -126,6 +143,7 @@ export class BookingService {
       .order("scheduled_start", { ascending: false, nullsFirst: false })
       .limit(50);
     if (error) throw fromPostgrestError(error);
+    const buffer = await bufferPromise;
     return z
       .array(appointmentSchema)
       .parse(data)
@@ -133,6 +151,7 @@ export class BookingService {
         id: a.id,
         clinicDate: a.clinic_date,
         scheduledStart: a.scheduled_start,
+        arrivalAt: arrivalTimeOf(a.scheduled_start, buffer),
         durationMinutes: a.duration_minutes,
         visitReason: a.visit_reason,
         visitReasonDetails: a.visit_reason_details,

@@ -14,6 +14,7 @@ const settingsSchema = z.object({
   clinic_address: z.string().nullable(),
   clinic_map_url: z.string().nullable(),
   display_bilingual: z.boolean().default(false),
+  arrival_buffer_minutes: z.number().int().catch(0),
 });
 
 export interface ClinicSettings {
@@ -28,13 +29,15 @@ export interface ClinicSettings {
   clinicMapUrl: string | null;
   /** Lobby TV layout: false = Arabic only (default), true = Arabic + English columns. */
   displayBilingual: boolean;
+  /** Early-arrival buffer: patient-facing times are this many minutes before the real slot. */
+  arrivalBufferMinutes: number;
 }
 
 export async function getClinicSettings(db: SupabaseClient): Promise<ClinicSettings> {
   const { data, error } = await db
     .from("doctor_settings")
     .select(
-      "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations, clinic_address, clinic_map_url, display_bilingual",
+      "clinic_name, clinic_name_ar, doctor_display_name, timezone, default_consultation_minutes, whatsapp_threshold_minutes, late_policy_consultations, clinic_address, clinic_map_url, display_bilingual, arrival_buffer_minutes",
     )
     .eq("id", 1)
     .single();
@@ -51,5 +54,6 @@ export async function getClinicSettings(db: SupabaseClient): Promise<ClinicSetti
     clinicAddress: s.clinic_address,
     clinicMapUrl: s.clinic_map_url,
     displayBilingual: s.display_bilingual,
+    arrivalBufferMinutes: s.arrival_buffer_minutes,
   };
 }

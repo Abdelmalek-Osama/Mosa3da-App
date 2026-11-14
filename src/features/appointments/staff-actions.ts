@@ -6,23 +6,29 @@ import { parseInput, runAction } from "@/lib/action-result";
 import { AppointmentAdminService } from "@/server/application/appointments/appointment-admin-service";
 import { BookingService } from "@/server/application/appointments/booking-service";
 import { bookingConfirmationLink } from "@/server/application/appointments/confirmation-message";
+import { arrivalTimeOf } from "@/lib/format";
 import { getClinicSettings } from "@/server/application/settings/clinic-settings";
 import { requireStaff } from "@/server/authorization/actor";
 import { cancelAppointmentSchema, dateSchema, rescheduleSchema, staffBookSchema, type StaffBookInput } from "./schemas";
 
-/** wa.me confirmation link with the assigned arrival time; null if it can't be built. */
+/**
+ * wa.me confirmation link with the patient-facing arrival time (null if it
+ * can't be built), plus that arrival time so reception sees what she was told.
+ */
 async function confirmationFor(
   db: Parameters<typeof getClinicSettings>[0],
   service: AppointmentAdminService,
   patientId: string,
   booked: { clinic_date: string; scheduled_start: string },
-): Promise<string | null> {
+): Promise<{ whatsappUrl: string | null; arrivalAt: string | null }> {
   try {
     const [settings, patient] = await Promise.all([getClinicSettings(db), service.contact(patientId)]);
-    if (!patient) return null;
-    return await bookingConfirmationLink({ clinicDate: booked.clinic_date, scheduledStart: booked.scheduled_start }, patient, settings);
+    const arrivalAt = settings.arrivalBufferMinutes > 0 ? arrivalTimeOf(booked.scheduled_start, settings.arrivalBufferMinutes) : null;
+    if (!patient) return { whatsappUrl: null, arrivalAt };
+    const whatsappUrl = await bookingConfirmationLink({ clinicDate: booked.clinic_date, scheduledStart: booked.scheduled_start }, patient, settings);
+    return { whatsappUrl, arrivalAt };
   } catch {
-    return null;
+    return { whatsappUrl: null, arrivalAt: null };
   }
 }
 
@@ -59,7 +65,7 @@ export async function staffBookAppointmentAction(input: StaffBookInput) {
     const service = new AppointmentAdminService(actor.supabase);
     const result = await service.book(data);
     revalidateAll();
-    return { ...result, whatsappUrl: await confirmationFor(actor.supabase, service, data.patientId, result) };
+    return { ...result, ...(await confirmationFor(actor.supabase, service, data.patientId, result)) };
   });
 }
 
@@ -71,7 +77,10 @@ export async function staffRescheduleAppointmentAction(input: { appointmentId: s
     const result = await service.reschedule(data.appointmentId, data.date);
     revalidateAll();
     const patientId = await service.patientOf(data.appointmentId);
-    return { ...result, whatsappUrl: patientId ? await confirmationFor(actor.supabase, service, patientId, result) : null };
+    return {
+      ...result,
+      ...(patientId ? await confirmationFor(actor.supabase, service, patientId, result) : { whatsappUrl: null, arrivalAt: null }),
+    };
   });
 }
 

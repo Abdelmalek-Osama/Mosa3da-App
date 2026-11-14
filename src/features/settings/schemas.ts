@@ -17,6 +17,7 @@ export const clinicSettingsSchema = z.object({
   bookingHorizonDays: int(1, 365, "a number of days"),
   cancellationCutoffMinutes: int(0, 10080, "a number of minutes"),
   slotIntervalMinutes: int(5, 120, "an interval"),
+  arrivalBufferMinutes: int(0, 120, "a number of minutes"),
   clinicAddress: z.string().trim().max(300).default(""),
   clinicMapUrl: z
     .string()

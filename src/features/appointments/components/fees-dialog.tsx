@@ -1,11 +1,11 @@
 "use client";
 
-import { HeartHandshake, ReceiptText } from "lucide-react";
+import { Clock, HeartHandshake, ReceiptText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Locale } from "@/i18n/config";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, formatTime } from "@/lib/format";
 
 export interface FeesInfo {
   clinicName: string;
@@ -14,11 +14,24 @@ export interface FeesInfo {
 }
 
 /**
- * Shown once, right after a first-time visitor's first booking: a welcome
- * note and the doctor's current fees. "Understood / Continue" closes it and
- * leaves her on the appointment summary underneath.
+ * Shown right after a booking: the confirmation title, her arrival time, the
+ * doctor's current fees and one "Understood / Continue" button. No extra
+ * descriptive line under the title (the details below already say it all).
  */
-export function FeesDialog({ fees, open, onContinue }: { fees: FeesInfo; open: boolean; onContinue: () => void }) {
+export function FeesDialog({
+  fees,
+  open,
+  onContinue,
+  arrivalAt,
+  timeZone,
+}: {
+  fees: FeesInfo;
+  open: boolean;
+  onContinue: () => void;
+  /** Patient-facing arrival time (real slot minus the early-arrival buffer). */
+  arrivalAt?: string;
+  timeZone?: string;
+}) {
   const t = useTranslations("portal.fees");
   const locale = useLocale() as Locale;
   const clinic = locale === "en" ? fees.clinicName : fees.clinicNameAr;
@@ -35,10 +48,21 @@ export function FeesDialog({ fees, open, onContinue }: { fees: FeesInfo; open: b
             <HeartHandshake className="h-7 w-7 text-teal-600" aria-hidden />
           </span>
           <DialogTitle className="text-xl text-navy-900">{t("title")}</DialogTitle>
-          <DialogDescription className="text-sm leading-relaxed text-navy-900/80">
+          {/* Screen readers only: the visible pop-up keeps just the title. */}
+          <DialogDescription className="sr-only">
             {t("welcome", { clinic })} {t("booked")}
           </DialogDescription>
         </DialogHeader>
+
+        {arrivalAt ? (
+          <div className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4 text-center" data-testid="fees-arrival">
+            <p className="text-sm font-medium text-navy-900">{t("arriveAt")}</p>
+            <p className="tabular mt-1 flex items-center justify-center gap-2 text-2xl font-bold text-navy-900">
+              <Clock className="h-5 w-5 text-teal-600" aria-hidden />
+              {formatTime(arrivalAt, timeZone, locale)}
+            </p>
+          </div>
+        ) : null}
 
         {fees.services.length ? (
           <div className="rounded-2xl border bg-muted/40 p-4">

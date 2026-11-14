@@ -55,6 +55,8 @@ const SENTINELS: Record<string, string> = {
   "20261104001700_custom_visit_reasons.sql": "select to_regclass('public.custom_visit_reasons') is not null as applied",
   "20261108001800_smart_clinic_features.sql": "select to_regclass('public.clinic_services') is not null as applied",
   "20261108001900_smart_clinic_round2.sql": "select to_regclass('public.visit_feedback') is not null as applied",
+  "20261114002000_arrival_buffer_and_staff_roles.sql":
+    "select to_regprocedure('public.sync_staff_role_from_app_metadata()') is not null as applied",
 };
 
 async function main() {
