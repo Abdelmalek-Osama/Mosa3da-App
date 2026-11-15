@@ -40,6 +40,8 @@ export interface ConsultationLog {
    * positive = entered late, negative = early. Null for walk-ins (no booked time).
    */
   entryShiftMinutes: number | null;
+  /** Check-in at reception ("Confirm arrival") to Start Consultation, in whole minutes. Null without a check-in time. */
+  lobbyWaitMinutes: number | null;
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -83,6 +85,7 @@ const rowSchema = z.object({
   appointment: z
     .object({
       scheduled_start: z.string().nullable(),
+      checked_in_at: z.string().nullable(),
       duration_minutes: z.number().int(),
       visit_reason_details: z.string().nullable(),
       source: z.string(),
@@ -97,7 +100,7 @@ export async function listConsultationLogs(db: SupabaseClient, from: string, to:
     const { data, error } = await db
       .from("queue_entries")
       .select(
-        "id, clinic_date, visit_reason, estimated_duration_minutes, arrived_at, started_at, finished_at, patient:patients(full_name, full_name_en), appointment:appointments(scheduled_start, duration_minutes, visit_reason_details, source)",
+        "id, clinic_date, visit_reason, estimated_duration_minutes, arrived_at, started_at, finished_at, patient:patients(full_name, full_name_en), appointment:appointments(scheduled_start, checked_in_at, duration_minutes, visit_reason_details, source)",
       )
       .eq("status", "finished")
       .gte("clinic_date", from)
@@ -115,11 +118,13 @@ export async function listConsultationLogs(db: SupabaseClient, from: string, to:
     const expected = r.appointment?.duration_minutes ?? r.estimated_duration_minutes;
     const actual = Math.max(0, Math.round((Date.parse(r.finished_at) - Date.parse(r.started_at)) / 60_000));
     const scheduled = r.appointment?.scheduled_start ?? null;
+    // The appointment keeps the first check-in; the entry's arrived_at moves when an absent visitor returns.
+    const arrived = r.appointment?.checked_in_at ?? r.arrived_at;
     return {
       id: r.id,
       clinicDate: r.clinic_date,
       scheduledStart: scheduled,
-      arrivedAt: r.arrived_at,
+      arrivedAt: arrived,
       startedAt: r.started_at,
       finishedAt: r.finished_at,
       patientName: r.patient?.full_name ?? "—",
@@ -131,6 +136,7 @@ export async function listConsultationLogs(db: SupabaseClient, from: string, to:
       actualMinutes: actual,
       varianceMinutes: actual - expected,
       entryShiftMinutes: scheduled ? Math.round((Date.parse(r.started_at) - Date.parse(scheduled)) / 60_000) : null,
+      lobbyWaitMinutes: arrived ? Math.max(0, Math.round((Date.parse(r.started_at) - Date.parse(arrived)) / 60_000)) : null,
     };
   });
 }
@@ -160,7 +166,7 @@ export function filterLogs(logs: ConsultationLog[], q: string, labelOf?: (l: Con
 }
 
 export function summarizeLogs(logs: ConsultationLog[]) {
-  if (!logs.length) return { count: 0, avgActual: 0, avgExpected: 0, overCount: 0, underCount: 0, onTimeCount: 0, avgEntryShift: null };
+  if (!logs.length) return { count: 0, avgActual: 0, avgExpected: 0, overCount: 0, underCount: 0, onTimeCount: 0, avgEntryShift: null, avgLobbyWait: null };
   const sum = (f: (l: ConsultationLog) => number) => logs.reduce((a, l) => a + f(l), 0);
   return {
     count: logs.length,
@@ -170,6 +176,7 @@ export function summarizeLogs(logs: ConsultationLog[]) {
     underCount: logs.filter((l) => l.varianceMinutes < 0).length,
     onTimeCount: logs.filter((l) => l.varianceMinutes === 0).length,
     avgEntryShift: avgOrNull(logs.map((l) => l.entryShiftMinutes)),
+    avgLobbyWait: avgOrNull(logs.map((l) => l.lobbyWaitMinutes)),
   };
 }
 

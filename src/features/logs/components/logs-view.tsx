@@ -21,6 +21,8 @@ interface Summary {
   overCount: number;
   /** Average minutes between booked time and actual entry (booked visits only). */
   avgEntryShift: number | null;
+  /** Average minutes from check-in at reception to entering the room. */
+  avgLobbyWait: number | null;
 }
 
 /** Consultation logs screen: filters, export, summary tiles, paginated table. */
@@ -89,7 +91,7 @@ export async function LogsView({
         <p className="text-sm text-muted-foreground">{period}</p>
       </Card>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         <Stat label={t("stats.count")} value={String(summary.count)} />
         <Stat
           label={t("stats.avgEntryShift")}
@@ -101,6 +103,11 @@ export async function LogsView({
                 : `${summary.avgEntryShift > 0 ? "+" : "−"}${t("minutes", { count: Math.abs(summary.avgEntryShift) })}`
           }
           tone={summary.avgEntryShift !== null && summary.avgEntryShift > 10 ? "bad" : undefined}
+        />
+        <Stat
+          label={t("stats.avgLobbyWait")}
+          value={summary.avgLobbyWait === null ? "—" : t("minutes", { count: summary.avgLobbyWait })}
+          tone={summary.avgLobbyWait !== null && summary.avgLobbyWait > 30 ? "bad" : undefined}
         />
         <Stat label={t("stats.avgActual")} value={t("minutes", { count: summary.avgActual })} />
         <Stat label={t("stats.avgExpected")} value={t("minutes", { count: summary.avgExpected })} />
@@ -126,7 +133,9 @@ export async function LogsView({
                 <TableHead>{t("col.patient")}</TableHead>
                 <TableHead>{t("col.reason")}</TableHead>
                 <TableHead className="whitespace-nowrap">{t("col.scheduled")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.arrived")}</TableHead>
                 <TableHead className="whitespace-nowrap">{t("col.entered")}</TableHead>
+                <TableHead className="whitespace-nowrap">{t("col.lobbyWait")}</TableHead>
                 <TableHead className="whitespace-nowrap">{t("col.entryShift")}</TableHead>
                 <TableHead className="whitespace-nowrap text-end">{t("col.expected")}</TableHead>
                 <TableHead className="whitespace-nowrap text-end">{t("col.actual")}</TableHead>
@@ -150,7 +159,17 @@ export async function LogsView({
                   <TableCell className="tabular whitespace-nowrap align-top">
                     {l.scheduledStart ? formatTime(l.scheduledStart, tz, locale) : <span className="text-muted-foreground">{t("walkIn")}</span>}
                   </TableCell>
+                  <TableCell className="tabular whitespace-nowrap align-top">
+                    {l.arrivedAt ? formatTime(l.arrivedAt, tz, locale) : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
                   <TableCell className="tabular whitespace-nowrap align-top font-medium text-navy-900">{formatTime(l.startedAt, tz, locale)}</TableCell>
+                  <TableCell className="whitespace-nowrap align-top">
+                    {l.lobbyWaitMinutes === null ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <WaitPill minutes={l.lobbyWaitMinutes} label={t("minutes", { count: l.lobbyWaitMinutes })} />
+                    )}
+                  </TableCell>
                   <TableCell className="whitespace-nowrap align-top">
                     {l.entryShiftMinutes === null ? (
                       <span className="text-muted-foreground">—</span>
@@ -220,6 +239,17 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "ba
       <p className={cn("tabular mt-1 text-2xl font-semibold text-navy-900", tone === "bad" && "text-red-600")}>{value}</p>
     </Card>
   );
+}
+
+/** Lobby wait: neutral up to 15 min, amber up to 30, red beyond. */
+function WaitPill({ minutes, label }: { minutes: number; label: string }) {
+  const tone =
+    minutes > 30
+      ? "bg-red-50 text-red-700 ring-red-200 dark:bg-red-500/15 dark:text-red-300 dark:ring-red-500/30"
+      : minutes > 15
+        ? "bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/30"
+        : "bg-muted text-muted-foreground ring-border";
+  return <span className={cn("tabular inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset", tone)}>{label}</span>;
 }
 
 /** +7 min (over, red) · −2 min (under, green) · on time. */

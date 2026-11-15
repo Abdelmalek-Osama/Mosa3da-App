@@ -950,7 +950,7 @@
  },
  "logs": {
   "title": "Consultation logs",
-  "subtitle": "When each visitor was booked, when she actually entered the room, and how long the consultation took.",
+  "subtitle": "When each visitor was booked, when she checked in at reception, when she entered the room, and how long the consultation took.",
   "export": "Export to CSV",
   "search": "Search by visitor name or visit reason",
   "range": {
@@ -967,7 +967,8 @@
    "avgActual": "Average actual",
    "avgExpected": "Average expected",
    "over": "Over expected time",
-   "avgEntryShift": "Average entry shift"
+   "avgEntryShift": "Average entry shift",
+   "avgLobbyWait": "Average lobby wait"
   },
   "col": {
    "dateTime": "Date & time",
@@ -979,7 +980,9 @@
    "date": "Visit date",
    "scheduled": "Scheduled time",
    "entered": "Actual entry",
-   "entryShift": "Entry shift"
+   "entryShift": "Entry shift",
+   "arrived": "Arrival / check-in",
+   "lobbyWait": "Lobby wait"
   },
   "minutes": "{count} min",
   "minShort": "min",
@@ -1016,7 +1019,9 @@
    "entryShift": "Entry shift (min)",
    "entryResult": "Entry",
    "late": "Late",
-   "early": "Early"
+   "early": "Early",
+   "arrived": "Arrival / check-in time",
+   "lobbyWait": "Lobby wait (min)"
   }
  },
  "reviews": {
