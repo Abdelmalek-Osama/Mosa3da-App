@@ -57,6 +57,9 @@ const SENTINELS: Record<string, string> = {
   "20261108001900_smart_clinic_round2.sql": "select to_regclass('public.visit_feedback') is not null as applied",
   "20261114002000_arrival_buffer_and_staff_roles.sql":
     "select to_regprocedure('public.sync_staff_role_from_app_metadata()') is not null as applied",
+  // Function body change only: no new object to detect, and re-running it is harmless.
+  "20261115002100_booking_order_until_called.sql":
+    "select pg_get_functiondef('public._sequence_waiting(uuid)'::regprocedure) like '%v_demote_booked%' as applied",
 };
 
 async function main() {
