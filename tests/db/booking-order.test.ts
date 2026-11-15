@@ -102,6 +102,15 @@ describe.skipIf(!enabled)("booking order until called (PostgreSQL)", () => {
     await act(await entryOf(b3), "mark_arrived");
     expect(await line()).toEqual([walk, await entryOf(b1), await entryOf(b2), await entryOf(b3)]);
 
+    // Numbers of waiting patients follow the queue order (migration 20261115002200).
+    const nums = (
+      await as<{ n: number }>("service", `
+        select q.queue_number as n from public.queue_entries q
+        where q.clinic_date = public.clinic_today() and q.status in ('ready', 'arrived', 'late')
+        order by case q.status when 'ready' then 0 else 1 end, q.position`)
+    ).map((r) => r.n);
+    expect(nums).toEqual([...nums].sort((a, b) => a - b));
+
     await act(walk, "finish_consultation");
     await act(await entryOf(b1), "start_consultation");
     expect(await line()).toEqual([await entryOf(b1), await entryOf(b2), await entryOf(b3)]);

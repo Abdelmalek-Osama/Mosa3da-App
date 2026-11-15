@@ -60,6 +60,7 @@ const SENTINELS: Record<string, string> = {
   // Function body change only: no new object to detect, and re-running it is harmless.
   "20261115002100_booking_order_until_called.sql":
     "select pg_get_functiondef('public._sequence_waiting(uuid)'::regprocedure) like '%v_demote_booked%' as applied",
+  "20261115002200_queue_numbers_follow_order.sql": "select to_regprocedure('public._renumber_waiting(uuid)') is not null as applied",
 };
 
 async function main() {
