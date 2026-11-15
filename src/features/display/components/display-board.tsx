@@ -90,9 +90,11 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
   const shape = `${viewport}|${bilingual}|${rowCount}|${!!board?.current}|${!!board?.next}|${stale}|${empty}`;
   useEffect(() => setFit({ scale: 1, visible: MAX_RENDER }), [shape]);
   useIsoLayoutEffect(() => {
+    // Phones scroll instead (see max-sm classes); fitting is for TVs and monitors.
+    if (window.innerWidth < 640) return;
     const lists = Array.from(mainRef.current?.querySelectorAll<HTMLElement>("[data-fit-list]") ?? []);
     if (!lists.length) return;
-    const overflowing = lists.some((ol) => ol.scrollHeight > ol.clientHeight + 1 || ol.scrollWidth > ol.clientWidth + 1);
+    const overflowing = lists.some((ol) => ol.scrollHeight > ol.clientHeight || ol.scrollWidth > ol.clientWidth);
     if (!overflowing) return;
     if (fit.scale > MIN_FIT + 1e-6) {
       setFit((f) => ({ ...f, scale: Math.max(MIN_FIT, Math.round((f.scale - FIT_STEP) * 100) / 100) }));
@@ -114,18 +116,22 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
       style={{ "--fit": fit.scale } as React.CSSProperties}
       className={cn(
         "keep-palette flex h-dvh flex-col overflow-hidden bg-navy-950 text-white",
+        // Phones: the page scrolls at a readable size instead of shrinking to fit.
+        "max-sm:h-auto max-sm:min-h-dvh max-sm:overflow-visible",
         // One base size from the smaller of width and height, so 16:9 TVs, 16:10 and
         // 4:3 monitors all fit at 100% zoom. Arabic-only mode uses the whole width.
         bilingual
           ? "[font-size:calc(clamp(11px,min(0.9vw,1.85vh),36px)*var(--fit,1))]"
           : "[font-size:calc(clamp(12px,min(1.15vw,2.1vh),46px)*var(--fit,1))]",
+        // Narrow (phone) screens: size from the width instead.
+        "max-sm:[font-size:calc(clamp(13px,3.6vw,18px)*var(--fit,1))]",
       )}
     >
       <header className="flex shrink-0 items-center justify-between gap-[1em] border-b border-white/10 px-[1.6em] py-[0.5em]">
         <div className="flex items-center gap-4">
           <BrandMark className="h-[2.6em] w-[2.6em] [&_svg]:h-[1.4em] [&_svg]:w-[1.4em]" />
           <div className="leading-tight">
-            <p className="font-arabic text-[1.6em] font-semibold">{board?.clinic.name_ar ?? "عيادة د. رودينا مدحت"}</p>
+            <p className="font-arabic text-[1.3em] font-semibold sm:text-[1.6em]">{board?.clinic.name_ar ?? "عيادة د. رودينا مدحت"}</p>
             {bilingual ? (
               <p dir="ltr" className="text-start font-sans text-[1.1em] text-teal-300">
                 {board?.clinic.name ?? "Dr. Rodaina Medhat Clinic"}
@@ -134,7 +140,7 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
           </div>
         </div>
         <div className="text-end leading-tight">
-          <p className="tabular text-[2em] font-semibold" suppressHydrationWarning>
+          <p className="tabular whitespace-nowrap text-[1.5em] font-semibold sm:text-[2em]" suppressHydrationWarning>
             {clock(now, tz, "ar")}
           </p>
           <p className="text-[1em] text-navy-200" suppressHydrationWarning>
@@ -158,7 +164,7 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
       {empty ? (
         <ClosedState bilingual={bilingual} />
       ) : (
-        <main ref={mainRef} className={cn("grid min-h-0 flex-1 gap-[1.2em] overflow-hidden px-[1.6em] py-[1em]", bilingual ? "grid-cols-2" : "grid-cols-1")}>
+        <main ref={mainRef} className={cn("grid min-h-0 flex-1 gap-[1.2em] overflow-hidden px-[1.6em] py-[1em] max-sm:flex-none max-sm:overflow-visible max-sm:px-[1em]", bilingual ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1")}>
           {langs.map((lang) => (
             <LobbyColumn key={lang} lang={lang} board={board!} now={now} tz={tz} flash={flash} wide={!bilingual} maxRows={fit.visible} />
           ))}
@@ -224,8 +230,8 @@ function LobbyColumn({
   const twoCols = wide && shown.length > 5;
 
   return (
-    <div dir={lang === "ar" ? "rtl" : "ltr"} lang={lang} className={cn("flex min-h-0 flex-col gap-[0.9em] overflow-hidden", lang === "ar" ? "font-arabic" : "font-sans")}>
-      <div className={cn("grid shrink-0 gap-[0.9em]", wide && board.next ? "grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
+    <div dir={lang === "ar" ? "rtl" : "ltr"} lang={lang} className={cn("flex min-h-0 flex-col gap-[0.9em] overflow-hidden max-sm:overflow-visible", lang === "ar" ? "font-arabic" : "font-sans")}>
+      <div className={cn("grid shrink-0 gap-[0.9em]", wide && board.next ? "grid-cols-1 sm:grid-cols-[1.3fr_1fr]" : "grid-cols-1")}>
         {/* Now consulting. Idle state instead of empty blocks when nobody is inside (P2-13). */}
         {board.current ? (
           <section
@@ -272,7 +278,7 @@ function LobbyColumn({
       </div>
 
       {/* Waiting + today's bookings */}
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.2em] bg-white/[0.04] px-[1.2em] py-[0.9em] ring-1 ring-inset ring-white/10">
+      <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.2em] max-sm:flex-none max-sm:overflow-visible bg-white/[0.04] px-[1.2em] py-[0.9em] ring-1 ring-inset ring-white/10">
         <div className="flex items-baseline justify-between">
           <p className="text-[1.2em] font-semibold text-navy-100">{t.waiting}</p>
           <span className="tabular text-[1.1em] text-navy-200">{rows.length}</span>
@@ -283,13 +289,18 @@ function LobbyColumn({
           <ol
             data-fit-list
             className={cn(
-              "relative mt-[0.6em] min-h-0 flex-1 overflow-hidden",
-              twoCols ? "grid grid-flow-col grid-cols-2 content-start gap-x-[1em] gap-y-[0.4em]" : "space-y-[0.4em]",
+              "relative mt-[0.6em] min-h-0 flex-1 overflow-hidden max-sm:flex-none max-sm:overflow-visible",
+              twoCols
+                ? "space-y-[0.4em] sm:grid sm:grid-flow-col sm:grid-cols-2 sm:content-start sm:gap-x-[1em] sm:gap-y-[0.4em] sm:space-y-0"
+                : "space-y-[0.4em]",
             )}
             style={twoCols ? { gridTemplateRows: `repeat(${Math.ceil(shown.length / 2)}, auto)` } : undefined}
           >
             {shown.map((r) => (
-              <li key={r.key} className="grid grid-cols-[2.6em_minmax(0,1fr)_auto] items-center gap-[0.8em] rounded-[0.7em] bg-white/[0.05] px-[0.9em] py-[0.45em]">
+              <li
+                key={r.key}
+                className="grid grid-cols-[2.6em_minmax(0,1fr)] items-center gap-x-[0.8em] gap-y-[0.3em] rounded-[0.7em] bg-white/[0.05] px-[0.9em] py-[0.45em] sm:grid-cols-[2.6em_minmax(0,1fr)_auto]"
+              >
                 <span className="tabular text-[1.6em] font-bold leading-none">{r.kind === "lobby" ? (r.number ?? "—") : "·"}</span>
                 <div className="min-w-0">
                   <p dir="auto" className="line-clamp-2 text-[1.25em] font-medium leading-tight [overflow-wrap:anywhere]">
@@ -321,7 +332,7 @@ function LobbyColumn({
                     ) : null}
                   </div>
                 </div>
-                <Timing lang={lang} at={r.at} now={now} tz={tz} align="end" hideEta={r.kind === "booked"} />
+                <Timing lang={lang} at={r.at} now={now} tz={tz} hideEta={r.kind === "booked"} className="col-start-2 text-start sm:col-start-auto sm:text-end" />
               </li>
             ))}
           </ol>
@@ -337,12 +348,28 @@ function LobbyColumn({
 }
 
 /** Live countdown (updates every second, shown per minute) + 12-hour expected entry time (P2-14). */
-function Timing({ lang, at, now, tz, align, hideEta }: { lang: Lang; at: string | null; now: number; tz: string; align?: "end"; hideEta?: boolean }) {
+function Timing({
+  lang,
+  at,
+  now,
+  tz,
+  align,
+  hideEta,
+  className,
+}: {
+  lang: Lang;
+  at: string | null;
+  now: number;
+  tz: string;
+  align?: "end";
+  hideEta?: boolean;
+  className?: string;
+}) {
   if (!at) return null;
   const t = TEXT[lang];
   const minutes = Math.ceil((new Date(at).getTime() - now) / 60_000);
   return (
-    <div className={cn("tabular leading-tight", align === "end" && "text-end")}>
+    <div className={cn("tabular leading-tight", align === "end" && "text-end", className)}>
       <p className="whitespace-nowrap text-[1.1em] font-semibold text-amber-200">{minutes <= 0 ? t.anyMinute : `${t.left ? `${t.left} ` : ""}${remaining(minutes, lang)}`}</p>
       {hideEta ? null : (
         <p className="whitespace-nowrap text-[0.9em] text-navy-200">
