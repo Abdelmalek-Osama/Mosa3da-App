@@ -10,6 +10,8 @@ import { TEXT, clock, longDate, remaining, type Lang } from "@/features/display/
 
 const POLL_MS = 5_000;
 const STALE_AFTER_MS = 20_000;
+/** Clean reload to keep long-running TV browsers light; done right after a successful poll (server reachable). */
+const RELOAD_AFTER_MS = 50 * 60_000;
 /** Rows rendered before fitting; the auto-fit below hides any that still do not fit. */
 const MAX_RENDER = 40;
 /** The board shrinks in steps down to this fraction before rows are hidden ("+N more"). */
@@ -40,6 +42,7 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
   const [now, setNow] = useState(() => Date.now());
   const [flash, setFlash] = useState(false);
   const currentNumber = useRef(initial?.current?.queue_number ?? null);
+  const startedAt = useRef(Date.now());
 
   const poll = useCallback(async () => {
     try {
@@ -54,6 +57,7 @@ export function DisplayBoardView({ initial }: { initial: DisplayBoard | null }) 
       currentNumber.current = n;
       setBoard(next);
       setLastOk(Date.now());
+      if (Date.now() - startedAt.current > RELOAD_AFTER_MS) window.location.reload();
     } catch {
       /* keep the last good board; the stale banner explains it */
     }

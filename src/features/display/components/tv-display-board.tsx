@@ -2,28 +2,66 @@ import type { DisplayBoard } from "@/features/queue/schemas";
 import { DEFAULT_TIMEZONE } from "@/lib/format";
 import { TEXT, clock, longDate, remaining } from "@/features/display/display-text";
 
-/** Seconds between automatic reloads of the TV board. */
-export const TV_REFRESH_SECONDS = 15;
+/** Seconds between background updates of the TV board. */
+export const TV_UPDATE_SECONDS = 15;
+/** Clean full reload (only when the server is reachable) to keep TV browser memory low. */
+export const TV_RELOAD_MINUTES = 50;
+/** Without JavaScript the page can only reload itself; slower, to limit risk on a flaky network. */
+const TV_NOSCRIPT_REFRESH_SECONDS = 60;
 const PER_COLUMN = 8;
 
 /**
- * Lobby board for smart-TV and other old browsers: fully server-rendered, no
- * client JavaScript needed, and only CSS that old engines understand (no
- * grid, no CSS variables, no clamp()/min(), no space-separated rgb(), no flex
- * gap). It reloads itself every TV_REFRESH_SECONDS. Modern browsers get the
- * live board (DisplayBoardView) instead; see src/app/display/page.tsx.
+ * Lobby board for smart-TV and other old browsers. Only CSS that old engines
+ * understand (no grid, no CSS variables, no clamp()/min(), no space-separated
+ * rgb(), no flex gap) and a tiny ES5 script:
+ *   - loads once, then every TV_UPDATE_SECONDS fetches the new board HTML from
+ *     /api/display/tv and swaps it in (only when it changed);
+ *   - if the network or server fails, the last board stays on screen with a
+ *     small "Reconnecting" note: never a browser error page;
+ *   - every TV_RELOAD_MINUTES it does a clean reload, but only right after a
+ *     successful update (server reachable), to free the TV browser's memory;
+ *   - asks the browser to keep the screen awake where supported.
+ * Modern browsers get the live board (DisplayBoardView); see src/app/display/page.tsx.
  */
 export function TvDisplayBoard({ board, now }: { board: DisplayBoard | null; now: number }) {
+  return (
+    <div className="tv-root" dir="rtl" lang="ar">
+      <style dangerouslySetInnerHTML={{ __html: TV_CSS }} />
+      <noscript>
+        <meta httpEquiv="refresh" content={String(TV_NOSCRIPT_REFRESH_SECONDS)} />
+      </noscript>
+      <div id="tv-content" className="tv-content" dangerouslySetInnerHTML={{ __html: renderTvBoardHtml(board, now) }} />
+      <div id="tv-offline" className="tv-offline">
+        {TEXT.ar.reconnecting}
+      </div>
+      <script dangerouslySetInnerHTML={{ __html: TV_SCRIPT }} />
+    </div>
+  );
+}
+
+const esc = (v: unknown): string =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+/**
+ * Everything that changes (clock, cards, list) as plain HTML: used for the
+ * first render and served by /api/display/tv for the in-place updates. Every
+ * value is escaped.
+ */
+export function renderTvBoardHtml(board: DisplayBoard | null, now: number): string {
   const tz = board?.clinic.timezone ?? DEFAULT_TIMEZONE;
   const bilingual = board?.clinic.bilingual ?? false;
   const t = TEXT.ar;
   const empty = !board || (!board.session_open && !board.current && board.waiting.length === 0 && (board.booked?.length ?? 0) === 0);
 
-  type Row = { key: string; number: string; name: string; nameEn: string | null; at: string | null; lobby: boolean; late: boolean; shifted: boolean; delayed: boolean; slot: string | null };
+  type Row = { number: string; name: string; nameEn: string | null; at: string | null; lobby: boolean; late: boolean; shifted: boolean; delayed: boolean; slot: string | null };
   const rows: Row[] = board
     ? [
-        ...board.waiting.map((w, i) => ({
-          key: `w${i}`,
+        ...board.waiting.map((w) => ({
           number: w.queue_number != null ? String(w.queue_number) : "—",
           name: w.name_ar ?? w.display_name ?? "",
           nameEn: bilingual ? (w.name_en ?? null) : null,
@@ -34,8 +72,7 @@ export function TvDisplayBoard({ board, now }: { board: DisplayBoard | null; now
           delayed: false,
           slot: null,
         })),
-        ...(board.booked ?? []).map((b, i) => ({
-          key: `b${i}`,
+        ...(board.booked ?? []).map((b) => ({
           number: "·",
           name: b.name_ar,
           nameEn: bilingual ? b.name_en : null,
@@ -53,133 +90,66 @@ export function TvDisplayBoard({ board, now }: { board: DisplayBoard | null; now
   const hidden = rows.length - shown.length;
 
   const timing = (at: string | null, withEta: boolean) => {
-    if (!at) return null;
+    if (!at) return "";
     const minutes = Math.ceil((new Date(at).getTime() - now) / 60_000);
     return (
-      <div className="tv-timing">
-        <div className="tv-left">{minutes <= 0 ? t.anyMinute : `${t.left} ${remaining(minutes, "ar")}`}</div>
-        {withEta ? (
-          <div className="tv-eta">
-            {t.eta} {clock(at, tz, "ar")}
-          </div>
-        ) : null}
-      </div>
+      `<div class="tv-timing"><div class="tv-left">${esc(minutes <= 0 ? t.anyMinute : `${t.left} ${remaining(minutes, "ar")}`)}</div>` +
+      (withEta ? `<div class="tv-eta">${esc(`${t.eta} ${clock(at, tz, "ar")}`)}</div>` : "") +
+      `</div>`
     );
   };
   const nameOf = (p: { name_ar?: string; display_name?: string }) => p.name_ar ?? p.display_name ?? "";
 
-  return (
-    <div className="tv-root" dir="rtl" lang="ar">
-      <style dangerouslySetInnerHTML={{ __html: TV_CSS }} />
-      {/* Reload: meta refresh works without JavaScript; the timer is a second safety net. */}
-      <meta httpEquiv="refresh" content={String(TV_REFRESH_SECONDS)} />
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `setTimeout(function(){try{location.reload()}catch(e){}},${(TV_REFRESH_SECONDS + 5) * 1000});`,
-        }}
-      />
+  let html =
+    `<div class="tv-header"><div class="tv-brand"><div class="tv-clinic">${esc(board?.clinic.name_ar ?? "عيادة د. رودينا مدحت")}</div>` +
+    (bilingual ? `<div class="tv-clinic-en" dir="ltr">${esc(board?.clinic.name ?? "")}</div>` : "") +
+    `</div><div class="tv-clock"><div class="tv-time">${esc(clock(now, tz, "ar"))}</div><div class="tv-date">${esc(longDate(now, tz, "ar"))}</div></div></div>`;
 
-      <div className="tv-header">
-        <div className="tv-brand">
-          <div className="tv-clinic">{board?.clinic.name_ar ?? "عيادة د. رودينا مدحت"}</div>
-          {bilingual ? <div className="tv-clinic-en" dir="ltr">{board?.clinic.name ?? ""}</div> : null}
-        </div>
-        <div className="tv-clock">
-          <div className="tv-time">{clock(now, tz, "ar")}</div>
-          <div className="tv-date">{longDate(now, tz, "ar")}</div>
-        </div>
-      </div>
+  if (empty) {
+    html +=
+      `<div class="tv-closed"><div class="tv-closed-title">${esc(t.closed)}</div>` +
+      (bilingual ? `<div class="tv-closed-en" dir="ltr">${esc(TEXT.en.closed)}</div>` : "") +
+      `<div class="tv-closed-body">${esc(t.closedBody)}</div></div>`;
+  } else {
+    const b = board!;
+    html += `<div class="tv-main"><div class="tv-cards">`;
+    html += b.current
+      ? `<div class="tv-card tv-now"><div class="tv-card-label">${esc(t.now)}</div><div class="tv-card-body"><div class="tv-big">${esc(b.current.queue_number ?? "—")}</div>` +
+        `<div class="tv-card-info"><div class="tv-card-name">${esc(nameOf(b.current))}</div><div class="tv-card-sub">${esc(t.comeIn)}</div></div></div></div>`
+      : `<div class="tv-card tv-idle"><div class="tv-idle-text">${esc(t.idle)}</div></div>`;
+    if (b.next) {
+      html +=
+        `<div class="tv-card tv-next"><div class="tv-card-label tv-amber">${esc(t.next)}</div><div class="tv-card-body">` +
+        `<div class="tv-big tv-big-next tv-amber">${esc(b.next.queue_number ?? "—")}</div>` +
+        `<div class="tv-card-info"><div class="tv-card-name tv-next-name">${esc(nameOf(b.next))}</div>${timing(b.next.expected_start_at, true)}</div></div></div>`;
+    }
+    html += `</div><div class="tv-list"><div class="tv-list-head"><span class="tv-list-title">${esc(t.waiting)}</span><span class="tv-count">${rows.length}</span></div>`;
+    if (shown.length === 0) {
+      html += `<div class="tv-nobody">${esc(t.nobody)}</div>`;
+    } else {
+      html += `<div class="${twoCols ? "tv-rows tv-two" : "tv-rows"}">`;
+      for (const r of shown) {
+        const badges =
+          (r.lobby ? `<span class="tv-badge tv-b-green">${esc(t.inLobby)}</span>` : `<span class="tv-badge tv-b-blue">${esc(t.notArrived)}</span>`) +
+          (r.delayed ? `<span class="tv-badge tv-b-red">${esc(t.delayed)}</span>` : "") +
+          (r.shifted ? `<span class="tv-badge tv-b-amber">${esc(t.shifted)}</span>` : "") +
+          (r.late ? `<span class="tv-badge tv-b-red">${esc(t.late)}</span>` : "") +
+          (r.slot ? `<span class="tv-slot">${esc(`${t.slot} ${r.slot}`)}</span>` : "");
+        html +=
+          `<div class="tv-row-wrap"><div class="tv-row"><div class="tv-num">${esc(r.number)}</div>` +
+          `<div class="tv-info"><div class="tv-name">${esc(r.name)}</div>` +
+          (r.nameEn ? `<div class="tv-name-en" dir="ltr">${esc(r.nameEn)}</div>` : "") +
+          `<div class="tv-badges">${badges}</div></div>${timing(r.at, r.lobby)}</div></div>`;
+      }
+      html += `</div>`;
+    }
+    if (hidden > 0) html += `<div class="tv-more">+${hidden} ${esc(t.more)}</div>`;
+    html += `</div></div>`;
+  }
 
-      {empty ? (
-        <div className="tv-closed">
-          <div className="tv-closed-title">{t.closed}</div>
-          {bilingual ? <div className="tv-closed-en" dir="ltr">{TEXT.en.closed}</div> : null}
-          <div className="tv-closed-body">{t.closedBody}</div>
-        </div>
-      ) : (
-        <div className="tv-main">
-          <div className="tv-cards">
-            {board!.current ? (
-              <div className="tv-card tv-now">
-                <div className="tv-card-label">{t.now}</div>
-                <div className="tv-card-body">
-                  <div className="tv-big">{board!.current.queue_number ?? "—"}</div>
-                  <div className="tv-card-info">
-                    <div className="tv-card-name">{nameOf(board!.current)}</div>
-                    <div className="tv-card-sub">{t.comeIn}</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="tv-card tv-idle">
-                <div className="tv-idle-text">{t.idle}</div>
-              </div>
-            )}
-            {board!.next ? (
-              <div className="tv-card tv-next">
-                <div className="tv-card-label tv-amber">{t.next}</div>
-                <div className="tv-card-body">
-                  <div className="tv-big tv-big-next tv-amber">{board!.next.queue_number ?? "—"}</div>
-                  <div className="tv-card-info">
-                    <div className="tv-card-name tv-next-name">{nameOf(board!.next)}</div>
-                    {timing(board!.next.expected_start_at, true)}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="tv-list">
-            <div className="tv-list-head">
-              <span className="tv-list-title">{t.waiting}</span>
-              <span className="tv-count">{rows.length}</span>
-            </div>
-            {shown.length === 0 ? (
-              <div className="tv-nobody">{t.nobody}</div>
-            ) : (
-              <div className={twoCols ? "tv-rows tv-two" : "tv-rows"}>
-                {shown.map((r) => (
-                  <div key={r.key} className="tv-row-wrap">
-                    <div className="tv-row">
-                      <div className="tv-num">{r.number}</div>
-                      <div className="tv-info">
-                        <div className="tv-name">{r.name}</div>
-                        {r.nameEn ? <div className="tv-name-en" dir="ltr">{r.nameEn}</div> : null}
-                        <div className="tv-badges">
-                          {r.lobby ? <span className="tv-badge tv-b-green">{t.inLobby}</span> : <span className="tv-badge tv-b-blue">{t.notArrived}</span>}
-                          {r.delayed ? <span className="tv-badge tv-b-red">{t.delayed}</span> : null}
-                          {r.shifted ? <span className="tv-badge tv-b-amber">{t.shifted}</span> : null}
-                          {r.late ? <span className="tv-badge tv-b-red">{t.late}</span> : null}
-                          {r.slot ? (
-                            <span className="tv-slot">
-                              {t.slot} {r.slot}
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      {timing(r.at, r.lobby)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {hidden > 0 ? (
-              <div className="tv-more">
-                +{hidden} {t.more}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      )}
-
-      <div className="tv-footer">
-        <span>{t.estimates}</span>
-        <span>{t.checkIn}</span>
-      </div>
-    </div>
-  );
+  html += `<div class="tv-footer"><span>${esc(t.estimates)}</span><span>${esc(t.checkIn)}</span></div>`;
+  return html;
 }
-
 
 /*
  * Old-engine-safe CSS. Base size from the screen: width-based on 16:9 and
@@ -193,6 +163,10 @@ html,body{margin:0;padding:0;background:#111c33;}
   display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;}
 @media (min-aspect-ratio: 16/9){.tv-root{font-size:2.05vh;}}
 .tv-root *{box-sizing:border-box;}
+.tv-content{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;
+  display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;}
+.tv-offline{display:none;position:absolute;top:0;left:50%;width:30em;margin-left:-15em;z-index:5;text-align:center;
+  background:#f59e0b;color:#111c33;font-weight:bold;font-size:0.95em;padding:0.25em 0.8em;border-radius:0 0 0.7em 0.7em;}
 .tv-header{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;align-items:center;
   padding:0.5em 1.6em;border-bottom:1px solid rgba(255,255,255,0.1);-webkit-flex-shrink:0;flex-shrink:0;}
 .tv-clinic{font-size:1.6em;font-weight:bold;}
@@ -248,3 +222,42 @@ html,body{margin:0;padding:0;background:#111c33;}
 .tv-footer{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;
   padding:0.45em 1.6em;border-top:1px solid rgba(255,255,255,0.1);font-size:0.9em;color:#c4d4ec;-webkit-flex-shrink:0;flex-shrink:0;}
 `;
+
+/*
+ * ES5 only (old TV engines): no arrow functions, const/let, fetch or promises
+ * (except behind a feature check). Defensive: every step is wrapped so one
+ * failure never blanks the screen.
+ */
+const TV_SCRIPT = `(function(){
+  var UPDATE_MS=${TV_UPDATE_SECONDS * 1000}, RELOAD_MS=${TV_RELOAD_MINUTES * 60 * 1000};
+  var started=new Date().getTime(), fails=0, busy=false, last='';
+  var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline');
+  function setOffline(on){ try{ note.style.display=on?'block':'none'; }catch(e){} }
+  function update(){
+    if(busy) return; busy=true;
+    var x, done=false;
+    function finish(ok, html){
+      if(done) return; done=true; busy=false;
+      if(ok && html && html.indexOf('tv-header')>=0){
+        fails=0; setOffline(false);
+        if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
+        if(new Date().getTime()-started>RELOAD_MS){ try{ window.location.reload(); }catch(e){} }
+      } else {
+        fails++; if(fails>=2) setOffline(true);
+      }
+    }
+    try{
+      x=new XMLHttpRequest();
+      x.open('GET','/api/display/tv?t='+new Date().getTime(),true);
+      try{ x.timeout=10000; x.ontimeout=function(){ finish(false); }; }catch(e){}
+      x.onreadystatechange=function(){ if(x.readyState===4){ finish(x.status===200, x.responseText); } };
+      x.onerror=function(){ finish(false); };
+      x.send();
+      setTimeout(function(){ if(!done){ try{ x.abort(); }catch(e){} finish(false); } },12000);
+    }catch(e){ finish(false); }
+  }
+  setInterval(update, UPDATE_MS);
+  function wake(){ try{ if(navigator.wakeLock && navigator.wakeLock.request){ navigator.wakeLock.request('screen')['catch'](function(){}); } }catch(e){} }
+  wake();
+  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ wake(); update(); } }); }catch(e){}
+})();`;
