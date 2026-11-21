@@ -33,6 +33,7 @@ export function TvDisplayBoard({ board, now }: { board: DisplayBoard | null; now
       <div id="tv-content" className="tv-content" dangerouslySetInnerHTML={{ __html: renderTvBoardHtml(board, now) }} />
       <div id="tv-offline" className="tv-offline">
         {TEXT.ar.reconnecting}
+        <span id="tv-offline-why" className="tv-offline-why" />
       </div>
       <script dangerouslySetInnerHTML={{ __html: TV_SCRIPT }} />
     </div>
@@ -165,6 +166,7 @@ html,body{margin:0;padding:0;background:#111c33;}
 .tv-root *{box-sizing:border-box;}
 .tv-content{position:absolute;top:0;right:0;bottom:0;left:0;overflow:hidden;
   display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;}
+.tv-offline-why{font-weight:normal;font-size:0.8em;opacity:0.8;}
 .tv-offline{display:none;position:absolute;top:0;left:50%;width:30em;margin-left:-15em;z-index:5;text-align:center;
   background:#f59e0b;color:#111c33;font-weight:bold;font-size:0.95em;padding:0.25em 0.8em;border-radius:0 0 0.7em 0.7em;}
 .tv-header{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;align-items:center;
@@ -230,33 +232,64 @@ html,body{margin:0;padding:0;background:#111c33;}
  */
 const TV_SCRIPT = `(function(){
   var UPDATE_MS=${TV_UPDATE_SECONDS * 1000}, RELOAD_MS=${TV_RELOAD_MINUTES * 60 * 1000};
-  var started=new Date().getTime(), fails=0, busy=false, last='';
-  var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline');
-  function setOffline(on){ try{ note.style.display=on?'block':'none'; }catch(e){} }
-  function update(){
-    if(busy) return; busy=true;
-    var x, done=false;
-    function finish(ok, html){
-      if(done) return; done=true; busy=false;
-      if(ok && html && html.indexOf('tv-header')>=0){
-        fails=0; setOffline(false);
-        if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
-        if(new Date().getTime()-started>RELOAD_MS){ try{ window.location.reload(); }catch(e){} }
-      } else {
-        fails++; if(fails>=2) setOffline(true);
-      }
-    }
+  var started=new Date().getTime(), fails=0, busy=false, last='', seq=0;
+  /* Two ways to fetch: 'x' = XMLHttpRequest, 's' = script tag (works on every TV engine). Switch after a failure. */
+  var mode='x';
+  var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline'), why=document.getElementById('tv-offline-why');
+  function setOffline(on, code){ try{ note.style.display=on?'block':'none'; if(why){ why.innerHTML=on&&code?' ('+code+')':''; } }catch(e){} }
+  function apply(html){
+    fails=0; setOffline(false);
+    if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
+    if(new Date().getTime()-started>RELOAD_MS){ try{ window.location.reload(); }catch(e){} }
+  }
+  function viaXhr(done){
+    var x, ended=false;
+    function end(ok, html, code){ if(ended) return; ended=true; done(ok, html, code); }
     try{
       x=new XMLHttpRequest();
       x.open('GET','/api/display/tv?t='+new Date().getTime(),true);
-      try{ x.timeout=10000; x.ontimeout=function(){ finish(false); }; }catch(e){}
-      x.onreadystatechange=function(){ if(x.readyState===4){ finish(x.status===200, x.responseText); } };
-      x.onerror=function(){ finish(false); };
-      x.send();
-      setTimeout(function(){ if(!done){ try{ x.abort(); }catch(e){} finish(false); } },12000);
-    }catch(e){ finish(false); }
+      try{ x.timeout=10000; x.ontimeout=function(){ end(false,'','xt'); }; }catch(e){}
+      x.onreadystatechange=function(){ if(x.readyState===4){ end(x.status===200, x.responseText, 'x'+x.status); } };
+      try{ x.onerror=function(){ end(false,'','xe'); }; }catch(e){}
+      x.send(null);
+      setTimeout(function(){ if(!ended){ try{ x.abort(); }catch(e){} end(false,'','xw'); } },12000);
+    }catch(e){ end(false,'','xc'); }
+  }
+  function viaScript(done){
+    var name='__tvUpdate'+(++seq), s, ended=false;
+    var head=document.getElementsByTagName('head')[0]||document.body;
+    function end(ok, html, code){
+      if(ended) return; ended=true;
+      try{ window[name]=function(){}; }catch(e){}
+      try{ if(s&&s.parentNode){ s.parentNode.removeChild(s); } }catch(e){}
+      done(ok, html, code);
+    }
+    try{
+      window[name]=function(html){ end(true, html, 's'); };
+      s=document.createElement('script');
+      s.type='text/javascript';
+      s.onerror=function(){ end(false,'','se'); };
+      s.src='/api/display/tv?cb='+name+'&t='+new Date().getTime();
+      head.appendChild(s);
+      setTimeout(function(){ end(false,'','sw'); },12000);
+    }catch(e){ end(false,'','sc'); }
+  }
+  function update(){
+    if(busy) return; busy=true;
+    var fetcher = mode==='x' ? viaXhr : viaScript;
+    fetcher(function(ok, html, code){
+      busy=false;
+      if(ok && html && html.indexOf('tv-header')>=0){ apply(html); }
+      else {
+        fails++; mode = mode==='x' ? 's' : 'x';
+        if(fails>=3) setOffline(true, code);
+        /* Retry right away with the other method instead of waiting a full interval. */
+        if(fails===1){ setTimeout(update, 1500); }
+      }
+    });
   }
   setInterval(update, UPDATE_MS);
+  setTimeout(update, 3000);
   function wake(){ try{ if(navigator.wakeLock && navigator.wakeLock.request){ navigator.wakeLock.request('screen')['catch'](function(){}); } }catch(e){} }
   wake();
   try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ wake(); update(); } }); }catch(e){}
