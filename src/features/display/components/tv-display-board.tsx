@@ -235,18 +235,22 @@ const TV_SCRIPT = `(function(){
   var started=new Date().getTime(), fails=0, busy=false, last='', seq=0;
   /* Short Wi-Fi blips are retried silently; the note shows only after this long without a successful update. */
   var OFFLINE_AFTER_MS=120000, lastOk=started;
-  /* Self-heal: after this long without an update, check the connection with a tiny image (a different
-     path from the updates). Only if it loads is the page reloaded, so the TV never reloads while offline. */
+  /* Self-heal: after this long without an update, fetch the board page itself. Only if it comes back
+     complete (200 and the TV board inside, not an error or firewall challenge page) is the page reloaded,
+     so the TV never reloads into a blank or error screen. */
   var HEAL_AFTER_MS=180000, probing=false;
   function heal(){
     if(probing) return; probing=true;
+    var p, ended=false;
+    function end(ok){ if(ended) return; ended=true; probing=false; if(ok){ try{ window.location.reload(); }catch(e){} } }
     try{
-      var img=new Image(), ended=false;
-      img.onload=function(){ if(ended) return; ended=true; probing=false; try{ window.location.reload(); }catch(e){} };
-      img.onerror=function(){ if(ended) return; ended=true; probing=false; };
-      setTimeout(function(){ if(!ended){ ended=true; probing=false; } },10000);
-      img.src='/icons/icon-192.png?probe='+new Date().getTime();
-    }catch(e){ probing=false; }
+      p=new XMLHttpRequest();
+      p.open('GET','/display?probe='+new Date().getTime(),true);
+      p.onreadystatechange=function(){ if(p.readyState===4){ end(p.status===200 && (p.responseText||'').indexOf('tv-root')>=0); } };
+      try{ p.onerror=function(){ end(false); }; }catch(e){}
+      p.send(null);
+      setTimeout(function(){ if(!ended){ try{ p.abort(); }catch(e){} end(false); } },12000);
+    }catch(e){ end(false); }
   }
   /* Two ways to fetch: 'x' = XMLHttpRequest, 's' = script tag (works on every TV engine). Switch after a failure. */
   var mode='x';
@@ -264,7 +268,15 @@ const TV_SCRIPT = `(function(){
       x=new XMLHttpRequest();
       x.open('GET','/api/display/tv?via=x&t='+new Date().getTime(),true);
       try{ x.timeout=10000; x.ontimeout=function(){ end(false,'','xt'); }; }catch(e){}
-      x.onreadystatechange=function(){ if(x.readyState===4){ end(x.status===200, x.responseText, 'x'+x.status); } };
+      x.onreadystatechange=function(){
+        if(x.readyState!==4) return;
+        var code='x'+x.status;
+        if(x.status!==200){
+          /* Who refused: Vercel's firewall marks its blocks with x-vercel-mitigated; a proxy has another server name. */
+          try{ var m=x.getResponseHeader('x-vercel-mitigated'), sv=x.getResponseHeader('server'); if(m){ code+=' '+m; } if(sv){ code+=' '+String(sv).slice(0,16); } }catch(e){}
+        }
+        end(x.status===200, x.responseText, code);
+      };
       try{ x.onerror=function(){ end(false,'','xe'); }; }catch(e){}
       x.send(null);
       setTimeout(function(){ if(!ended){ try{ x.abort(); }catch(e){} end(false,'','xw'); } },12000);
