@@ -11,7 +11,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
  */
 export const HEARTBEAT_BUCKET = "display-heartbeats";
 
-export type HeartbeatVia = "page" | "x" | "s";
+export type HeartbeatVia = "page" | "x" | "s" | "d";
 
 let lastKey = "";
 let bucketReady = false;

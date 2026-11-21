@@ -1,11 +1,12 @@
 import type { DisplayBoard } from "@/features/queue/schemas";
 import { DEFAULT_TIMEZONE } from "@/lib/format";
+import { publicEnv } from "@/lib/env";
 import { TEXT, clock, longDate, remaining } from "@/features/display/display-text";
 
 /** Seconds between background updates of the TV board. */
 export const TV_UPDATE_SECONDS = 15;
-/** Clean full reload (only when the server is reachable) to keep TV browser memory low. */
-export const TV_RELOAD_MINUTES = 50;
+/** Occasional clean reload (only when the board page is reachable) to refresh the page and free memory. */
+export const TV_RELOAD_HOURS = 12;
 /** Without JavaScript the page can only reload itself; slower, to limit risk on a flaky network. */
 const TV_NOSCRIPT_REFRESH_SECONDS = 60;
 const PER_COLUMN = 8;
@@ -14,12 +15,12 @@ const PER_COLUMN = 8;
  * Lobby board for smart-TV and other old browsers. Only CSS that old engines
  * understand (no grid, no CSS variables, no clamp()/min(), no space-separated
  * rgb(), no flex gap) and a tiny ES5 script:
- *   - loads once, then every TV_UPDATE_SECONDS fetches the new board HTML from
- *     /api/display/tv and swaps it in (only when it changed);
+ *   - loads once, then every TV_UPDATE_SECONDS fetches the board straight from
+ *     Supabase (fallback: /api/display/tv) and swaps it in when it changed;
  *   - if the network or server fails, the last board stays on screen with a
  *     small "Reconnecting" note: never a browser error page;
- *   - every TV_RELOAD_MINUTES it does a clean reload, but only right after a
- *     successful update (server reachable), to free the TV browser's memory;
+ *   - every TV_RELOAD_HOURS it may do a clean reload, only when the board page
+ *     is reachable, to refresh the page and free the TV browser's memory;
  *   - asks the browser to keep the screen awake where supported.
  * Modern browsers get the live board (DisplayBoardView); see src/app/display/page.tsx.
  */
@@ -35,7 +36,19 @@ export function TvDisplayBoard({ board, now }: { board: DisplayBoard | null; now
         {TEXT.ar.reconnecting}
         <span id="tv-offline-why" className="tv-offline-why" />
       </div>
-      <script dangerouslySetInnerHTML={{ __html: TV_SCRIPT }} />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: tvScript({
+            supabaseUrl: publicEnv.supabaseUrl,
+            supabaseKey: publicEnv.supabaseKey,
+            tzOffsetMinutes: tzOffsetMinutes(board?.clinic.timezone ?? DEFAULT_TIMEZONE),
+            text: TEXT.ar,
+            closedEn: TEXT.en.closed,
+            defaultClinicAr: "عيادة د. رودينا مدحت",
+            perColumn: PER_COLUMN,
+          }),
+        }}
+      />
     </div>
   );
 }
@@ -225,63 +238,155 @@ html,body{margin:0;padding:0;background:#111c33;}
   padding:0.45em 1.6em;border-top:1px solid rgba(255,255,255,0.1);font-size:0.9em;color:#c4d4ec;-webkit-flex-shrink:0;flex-shrink:0;}
 `;
 
+/** Everything the TV script needs, rendered into the page by the server (all public values). */
+export interface TvScriptConfig {
+  supabaseUrl: string;
+  supabaseKey: string;
+  /** Clinic timezone offset from UTC in minutes, at page render (refreshed by the occasional reload). */
+  tzOffsetMinutes: number;
+  text: (typeof TEXT)["ar"];
+  closedEn: string;
+  defaultClinicAr: string;
+  perColumn: number;
+}
+
+/** Current UTC offset of a timezone in minutes (e.g. Africa/Cairo → 120 or 180). */
+export function tzOffsetMinutes(timeZone: string, at = Date.now()): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(at));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour") % 24, get("minute"));
+  return Math.round((asUtc - Math.floor(at / 60_000) * 60_000) / 60_000);
+}
+
 /*
- * ES5 only (old TV engines): no arrow functions, const/let, fetch or promises
- * (except behind a feature check). Defensive: every step is wrapped so one
- * failure never blanks the screen.
+ * ES5 only (the clinic TV is Chrome 47): no arrow functions, const/let,
+ * fetch or promises (except behind a feature check). Defensive: every step is
+ * wrapped so one failure never blanks the screen.
+ *
+ * Updates: primary path is a direct XHR to Supabase (rpc/get_display_board,
+ * public anon access, CORS *), rendered here with the same markup as
+ * renderTvBoardHtml(). It does not go through Vercel, whose firewall
+ * challenges this old browser. Fallbacks: /api/display/tv via XHR, then via a
+ * script tag. A Vercel beacon each minute keeps the "last seen" log and the
+ * WhatsApp timers going; its failures are ignored.
+ *
+ * Reloads: only after a probe of the board page itself (XHR /display?probe,
+ * 200 with the TV board inside) succeeds: after 3+ minutes without updates,
+ * and every 12 hours to refresh the page. Never into a challenge or error page.
  */
-const TV_SCRIPT = `(function(){
-  var UPDATE_MS=${TV_UPDATE_SECONDS * 1000}, RELOAD_MS=${TV_RELOAD_MINUTES * 60 * 1000};
-  var started=new Date().getTime(), fails=0, busy=false, last='', seq=0;
-  /* Short Wi-Fi blips are retried silently; the note shows only after this long without a successful update. */
-  var OFFLINE_AFTER_MS=120000, lastOk=started;
-  /* Self-heal: after this long without an update, fetch the board page itself. Only if it comes back
-     complete (200 and the TV board inside, not an error or firewall challenge page) is the page reloaded,
-     so the TV never reloads into a blank or error screen. */
-  var HEAL_AFTER_MS=180000, probing=false;
-  function heal(){
-    if(probing) return; probing=true;
-    var p, ended=false;
-    function end(ok){ if(ended) return; ended=true; probing=false; if(ok){ try{ window.location.reload(); }catch(e){} } }
-    try{
-      p=new XMLHttpRequest();
-      p.open('GET','/display?probe='+new Date().getTime(),true);
-      p.onreadystatechange=function(){ if(p.readyState===4){ end(p.status===200 && (p.responseText||'').indexOf('tv-root')>=0); } };
-      try{ p.onerror=function(){ end(false); }; }catch(e){}
-      p.send(null);
-      setTimeout(function(){ if(!ended){ try{ p.abort(); }catch(e){} end(false); } },12000);
-    }catch(e){ end(false); }
-  }
-  /* Two ways to fetch: 'x' = XMLHttpRequest, 's' = script tag (works on every TV engine). Switch after a failure. */
-  var mode='x';
+function tvScript(cfg: TvScriptConfig): string {
+  const json = JSON.stringify(cfg).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+  return `(function(){
+  var C=${json};
+  var UPDATE_MS=${TV_UPDATE_SECONDS * 1000}, RELOAD_MS=${TV_RELOAD_HOURS * 3600 * 1000}, HEAL_AFTER_MS=180000, OFFLINE_AFTER_MS=120000, BEACON_MS=60000;
+  var started=new Date().getTime(), lastOk=started, busy=false, last='', seq=0, probing=false;
+  var modes=['d','x','s'], mode=0, chain=0;
   var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline'), why=document.getElementById('tv-offline-why');
+  var T=C.text;
+  function now(){ return new Date().getTime(); }
   function setOffline(on, code){ try{ note.style.display=on?'block':'none'; if(why){ why.innerHTML=on&&code?' ('+code+')':''; } }catch(e){} }
-  function apply(html){
-    fails=0; lastOk=new Date().getTime(); setOffline(false);
-    if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
-    if(new Date().getTime()-started>RELOAD_MS){ try{ window.location.reload(); }catch(e){} }
+
+  /* ---- formatting (clinic time from a fixed UTC offset) ---- */
+  function pad(n){ return (n<10?'0':'')+n; }
+  function ms(iso){ if(typeof iso==='number') return iso; var t=Date.parse(String(iso).replace(/(\\.\\d{3})\\d+/,'$1').replace(' ','T')); return isNaN(t)?0:t; }
+  function local(t){ return new Date(ms(t)+C.tzOffsetMinutes*60000); }
+  function clock(t){ var d=local(t), h=d.getUTCHours(), h12=h%12||12; return pad(h12)+':'+pad(d.getUTCMinutes())+' '+(h<12?'ص':'م'); }
+  var DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  function longDate(t){ var d=local(t); return DAYS[d.getUTCDay()]+'، '+d.getUTCDate()+' '+MONTHS[d.getUTCMonth()]; }
+  function remaining(total){
+    var h=Math.floor(total/60), m=total%60;
+    var hours=h===1?'ساعة':h===2?'ساعتان':h<=10?h+' ساعات':h+' ساعة';
+    var mins=m===1?'دقيقة':m===2?'دقيقتان':m<=10?m+' دقائق':m+' دقيقة';
+    if(!h) return mins;
+    return m?hours+' و'+mins:hours;
   }
-  function viaXhr(done){
+  function esc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  /* ---- same markup as renderTvBoardHtml() ---- */
+  function render(b){
+    var nowMs=ms(b && b.generated_at) || now();
+    var bilingual=!!(b && b.clinic && b.clinic.bilingual);
+    var waiting=(b && b.waiting) || [], booked=(b && b.booked) || [];
+    var empty=!b || (!b.session_open && !b.current && waiting.length===0 && booked.length===0);
+    var rows=[], i, r;
+    for(i=0;i<waiting.length;i++){ var w=waiting[i]; rows.push({ number: w.queue_number!=null?String(w.queue_number):'—', name: w.name_ar||w.display_name||'', nameEn: bilingual?(w.name_en||null):null, at: w.expected_start_at||null, lobby:true, late:!!w.is_late, shifted:false, delayed:false, slot:null }); }
+    for(i=0;i<booked.length;i++){ var k=booked[i]; rows.push({ number:'·', name:k.name_ar||'', nameEn: bilingual?(k.name_en||null):null, at:k.slot_start, lobby:false, late:false, shifted:(k.grace_shifts||0)>0 && !k.is_delayed, delayed:!!k.is_delayed, slot: clock(k.slot_start)+(k.slot_end?' - '+clock(k.slot_end):'') }); }
+    rows.sort(function(a,c){ var x=a.at?ms(a.at):9e15, y=c.at?ms(c.at):9e15; return x-y; });
+    var two=rows.length>6, shown=rows.slice(0, two?C.perColumn*2:6), hidden=rows.length-shown.length;
+    function timing(at, eta){
+      if(!at) return '';
+      var mins=Math.ceil((ms(at)-nowMs)/60000);
+      return '<div class="tv-timing"><div class="tv-left">'+esc(mins<=0?T.anyMinute:(T.left+' '+remaining(mins)))+'</div>'+(eta?'<div class="tv-eta">'+esc(T.eta+' '+clock(at))+'</div>':'')+'</div>';
+    }
+    function nameOf(p){ return p.name_ar||p.display_name||''; }
+    var clinicAr=(b && b.clinic && b.clinic.name_ar) || C.defaultClinicAr;
+    var html='<div class="tv-header"><div class="tv-brand"><div class="tv-clinic">'+esc(clinicAr)+'</div>'+(bilingual?'<div class="tv-clinic-en" dir="ltr">'+esc(b.clinic.name||'')+'</div>':'')+
+      '</div><div class="tv-clock"><div class="tv-time">'+esc(clock(nowMs))+'</div><div class="tv-date">'+esc(longDate(nowMs))+'</div></div></div>';
+    if(empty){
+      html+='<div class="tv-closed"><div class="tv-closed-title">'+esc(T.closed)+'</div>'+(bilingual?'<div class="tv-closed-en" dir="ltr">'+esc(C.closedEn)+'</div>':'')+'<div class="tv-closed-body">'+esc(T.closedBody)+'</div></div>';
+    } else {
+      html+='<div class="tv-main"><div class="tv-cards">';
+      html+= b.current
+        ? '<div class="tv-card tv-now"><div class="tv-card-label">'+esc(T.now)+'</div><div class="tv-card-body"><div class="tv-big">'+esc(b.current.queue_number!=null?b.current.queue_number:'—')+'</div><div class="tv-card-info"><div class="tv-card-name">'+esc(nameOf(b.current))+'</div><div class="tv-card-sub">'+esc(T.comeIn)+'</div></div></div></div>'
+        : '<div class="tv-card tv-idle"><div class="tv-idle-text">'+esc(T.idle)+'</div></div>';
+      if(b.next){
+        html+='<div class="tv-card tv-next"><div class="tv-card-label tv-amber">'+esc(T.next)+'</div><div class="tv-card-body"><div class="tv-big tv-big-next tv-amber">'+esc(b.next.queue_number!=null?b.next.queue_number:'—')+'</div><div class="tv-card-info"><div class="tv-card-name tv-next-name">'+esc(nameOf(b.next))+'</div>'+timing(b.next.expected_start_at,true)+'</div></div></div>';
+      }
+      html+='</div><div class="tv-list"><div class="tv-list-head"><span class="tv-list-title">'+esc(T.waiting)+'</span><span class="tv-count">'+rows.length+'</span></div>';
+      if(shown.length===0){ html+='<div class="tv-nobody">'+esc(T.nobody)+'</div>'; }
+      else {
+        html+='<div class="'+(two?'tv-rows tv-two':'tv-rows')+'">';
+        for(i=0;i<shown.length;i++){
+          r=shown[i];
+          var badges=(r.lobby?'<span class="tv-badge tv-b-green">'+esc(T.inLobby)+'</span>':'<span class="tv-badge tv-b-blue">'+esc(T.notArrived)+'</span>')+
+            (r.delayed?'<span class="tv-badge tv-b-red">'+esc(T.delayed)+'</span>':'')+
+            (r.shifted?'<span class="tv-badge tv-b-amber">'+esc(T.shifted)+'</span>':'')+
+            (r.late?'<span class="tv-badge tv-b-red">'+esc(T.late)+'</span>':'')+
+            (r.slot?'<span class="tv-slot">'+esc(T.slot+' '+r.slot)+'</span>':'');
+          html+='<div class="tv-row-wrap"><div class="tv-row"><div class="tv-num">'+esc(r.number)+'</div><div class="tv-info"><div class="tv-name">'+esc(r.name)+'</div>'+
+            (r.nameEn?'<div class="tv-name-en" dir="ltr">'+esc(r.nameEn)+'</div>':'')+'<div class="tv-badges">'+badges+'</div></div>'+timing(r.at,r.lobby)+'</div></div>';
+        }
+        html+='</div>';
+      }
+      if(hidden>0) html+='<div class="tv-more">+'+hidden+' '+esc(T.more)+'</div>';
+      html+='</div></div>';
+    }
+    html+='<div class="tv-footer"><span>'+esc(T.estimates)+'</span><span>'+esc(T.checkIn)+'</span></div>';
+    return html;
+  }
+
+  /* ---- transports ---- */
+  function xhr(method, url, headers, body, done, tag){
     var x, ended=false;
-    function end(ok, html, code){ if(ended) return; ended=true; done(ok, html, code); }
+    function end(ok, text, code){ if(ended) return; ended=true; done(ok, text, code); }
     try{
       x=new XMLHttpRequest();
-      x.open('GET','/api/display/tv?via=x&t='+new Date().getTime(),true);
-      try{ x.timeout=10000; x.ontimeout=function(){ end(false,'','xt'); }; }catch(e){}
+      x.open(method, url, true);
+      for(var h in headers){ if(headers.hasOwnProperty(h)){ x.setRequestHeader(h, headers[h]); } }
+      try{ x.timeout=10000; x.ontimeout=function(){ end(false,'',tag+'t'); }; }catch(e){}
       x.onreadystatechange=function(){
         if(x.readyState!==4) return;
-        var code='x'+x.status;
-        if(x.status!==200){
-          /* Who refused: Vercel's firewall marks its blocks with x-vercel-mitigated; a proxy has another server name. */
-          try{ var m=x.getResponseHeader('x-vercel-mitigated'), sv=x.getResponseHeader('server'); if(m){ code+=' '+m; } if(sv){ code+=' '+String(sv).slice(0,16); } }catch(e){}
-        }
+        var code=tag+x.status;
+        if(x.status!==200){ try{ var m=x.getResponseHeader('x-vercel-mitigated'); if(m){ code+=' '+m; } }catch(e){} }
         end(x.status===200, x.responseText, code);
       };
-      try{ x.onerror=function(){ end(false,'','xe'); }; }catch(e){}
-      x.send(null);
-      setTimeout(function(){ if(!ended){ try{ x.abort(); }catch(e){} end(false,'','xw'); } },12000);
-    }catch(e){ end(false,'','xc'); }
+      try{ x.onerror=function(){ end(false,'',tag+'e'); }; }catch(e){}
+      x.send(body);
+      setTimeout(function(){ if(!ended){ try{ x.abort(); }catch(e){} end(false,'',tag+'w'); } },12000);
+    }catch(e){ end(false,'',tag+'c'); }
   }
+  function viaSupabase(done){
+    var headers={ 'apikey': C.supabaseKey, 'Content-Type': 'application/json' };
+    if(C.supabaseKey.indexOf('eyJ')===0){ headers['Authorization']='Bearer '+C.supabaseKey; }
+    xhr('POST', C.supabaseUrl+'/rest/v1/rpc/get_display_board', headers, '{}', function(ok, text, code){
+      if(!ok){ done(false,'',code); return; }
+      var b=null; try{ b=JSON.parse(text); }catch(e){ done(false,'','sbj'); return; }
+      var html=''; try{ html=render(b); }catch(e){ done(false,'','sbr'); return; }
+      done(true, html, 'sb');
+    }, 'sb');
+  }
+  function viaVercel(done){ xhr('GET','/api/display/tv?via=x&t='+now(),{},null,done,'x'); }
   function viaScript(done){
     var name='__tvUpdate'+(++seq), s, ended=false;
     var head=document.getElementsByTagName('head')[0]||document.body;
@@ -296,29 +401,49 @@ const TV_SCRIPT = `(function(){
       s=document.createElement('script');
       s.type='text/javascript';
       s.onerror=function(){ end(false,'','se'); };
-      s.src='/api/display/tv?via=s&cb='+name+'&t='+new Date().getTime();
+      s.src='/api/display/tv?via=s&cb='+name+'&t='+now();
       head.appendChild(s);
       setTimeout(function(){ end(false,'','sw'); },12000);
     }catch(e){ end(false,'','sc'); }
   }
+
+  /* ---- reload only when the board page itself is reachable ---- */
+  function reloadIfPageReachable(){
+    if(probing) return; probing=true;
+    xhr('GET','/display?probe='+now(),{},null,function(ok, text){
+      probing=false;
+      if(ok && (text||'').indexOf('tv-root')>=0){ try{ window.location.reload(); }catch(e){} }
+    },'p');
+  }
+
+  function apply(html){
+    lastOk=now(); setOffline(false);
+    if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
+    if(now()-started>RELOAD_MS) reloadIfPageReachable();
+  }
   function update(){
     if(busy) return; busy=true;
-    var fetcher = mode==='x' ? viaXhr : viaScript;
+    var m=modes[mode], fetcher=m==='d'?viaSupabase:(m==='x'?viaVercel:viaScript);
     fetcher(function(ok, html, code){
       busy=false;
-      if(ok && html && html.indexOf('tv-header')>=0){ apply(html); }
-      else {
-        fails++; mode = mode==='x' ? 's' : 'x';
-        if(new Date().getTime()-lastOk>=OFFLINE_AFTER_MS) setOffline(true, code);
-        if(new Date().getTime()-lastOk>=HEAL_AFTER_MS) heal();
-        /* Retry right away with the other method instead of waiting a full interval. */
-        if(fails===1){ setTimeout(update, 1500); }
-      }
+      if(ok && html && html.indexOf('tv-header')>=0){ apply(html); return; }
+      /* Supabase first; Vercel paths only while Supabase fails. */
+      mode=(mode+1)%modes.length;
+      if(now()-lastOk>=OFFLINE_AFTER_MS) setOffline(true, code);
+      if(now()-lastOk>=HEAL_AFTER_MS) reloadIfPageReachable();
+      if(chain<2){ chain++; setTimeout(update, 1500); }
     });
   }
-  setInterval(update, UPDATE_MS);
-  setTimeout(update, 3000);
+  /* Back to Supabase after any fallback success, on the next round. */
+  setInterval(function(){ mode=0; chain=0; update(); }, UPDATE_MS);
+  setTimeout(update, 2000);
+
+  /* "Last seen" log + WhatsApp timers via Vercel; failures don't matter. */
+  function beacon(){ try{ var i=new Image(); i.src='/api/display/tv?via=d&t='+now(); }catch(e){} }
+  setInterval(beacon, BEACON_MS); setTimeout(beacon, 5000);
+
   function wake(){ try{ if(navigator.wakeLock && navigator.wakeLock.request){ navigator.wakeLock.request('screen')['catch'](function(){}); } }catch(e){} }
   wake();
-  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ wake(); update(); } }); }catch(e){}
+  try{ document.addEventListener('visibilitychange', function(){ if(!document.hidden){ wake(); mode=0; update(); } }); }catch(e){}
 })();`;
+}

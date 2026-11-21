@@ -23,7 +23,9 @@ export async function GET(request: NextRequest) {
   const cb = request.nextUrl.searchParams.get("cb");
   const callback = cb && CALLBACK.test(cb) ? cb : null;
   try {
-    const via = request.nextUrl.searchParams.get("via") === "s" || callback ? "s" : "x";
+    const param = request.nextUrl.searchParams.get("via");
+    // d = beacon from a TV that updates directly from Supabase; s = script tag; x = XHR.
+    const via = callback || param === "s" ? "s" : param === "d" ? "d" : "x";
     const [board] = await Promise.all([
       new QueueService(createSupabasePublicClient()).getDisplayBoard(),
       tickNotificationsBounded(),
