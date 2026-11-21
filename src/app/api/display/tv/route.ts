@@ -4,6 +4,7 @@ import { createSupabasePublicClient } from "@/lib/supabase/server";
 import { renderTvBoardHtml } from "@/features/display/components/tv-display-board";
 import { tickNotificationsBounded } from "@/server/application/notifications/process-notifications";
 import { QueueService } from "@/server/application/queue/queue-service";
+import { recordTvHeartbeat } from "@/server/application/display/tv-heartbeat";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,7 +23,12 @@ export async function GET(request: NextRequest) {
   const cb = request.nextUrl.searchParams.get("cb");
   const callback = cb && CALLBACK.test(cb) ? cb : null;
   try {
-    const [board] = await Promise.all([new QueueService(createSupabasePublicClient()).getDisplayBoard(), tickNotificationsBounded()]);
+    const via = request.nextUrl.searchParams.get("via") === "s" || callback ? "s" : "x";
+    const [board] = await Promise.all([
+      new QueueService(createSupabasePublicClient()).getDisplayBoard(),
+      tickNotificationsBounded(),
+      recordTvHeartbeat(via, request.headers.get("user-agent") ?? ""),
+    ]);
     const html = renderTvBoardHtml(board, Date.now());
     if (callback) {
       // U+2028/2029 are valid in JSON but not in old JavaScript string literals.

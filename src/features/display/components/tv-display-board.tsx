@@ -235,6 +235,19 @@ const TV_SCRIPT = `(function(){
   var started=new Date().getTime(), fails=0, busy=false, last='', seq=0;
   /* Short Wi-Fi blips are retried silently; the note shows only after this long without a successful update. */
   var OFFLINE_AFTER_MS=120000, lastOk=started;
+  /* Self-heal: after this long without an update, check the connection with a tiny image (a different
+     path from the updates). Only if it loads is the page reloaded, so the TV never reloads while offline. */
+  var HEAL_AFTER_MS=180000, probing=false;
+  function heal(){
+    if(probing) return; probing=true;
+    try{
+      var img=new Image(), ended=false;
+      img.onload=function(){ if(ended) return; ended=true; probing=false; try{ window.location.reload(); }catch(e){} };
+      img.onerror=function(){ if(ended) return; ended=true; probing=false; };
+      setTimeout(function(){ if(!ended){ ended=true; probing=false; } },10000);
+      img.src='/icons/icon-192.png?probe='+new Date().getTime();
+    }catch(e){ probing=false; }
+  }
   /* Two ways to fetch: 'x' = XMLHttpRequest, 's' = script tag (works on every TV engine). Switch after a failure. */
   var mode='x';
   var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline'), why=document.getElementById('tv-offline-why');
@@ -249,7 +262,7 @@ const TV_SCRIPT = `(function(){
     function end(ok, html, code){ if(ended) return; ended=true; done(ok, html, code); }
     try{
       x=new XMLHttpRequest();
-      x.open('GET','/api/display/tv?t='+new Date().getTime(),true);
+      x.open('GET','/api/display/tv?via=x&t='+new Date().getTime(),true);
       try{ x.timeout=10000; x.ontimeout=function(){ end(false,'','xt'); }; }catch(e){}
       x.onreadystatechange=function(){ if(x.readyState===4){ end(x.status===200, x.responseText, 'x'+x.status); } };
       try{ x.onerror=function(){ end(false,'','xe'); }; }catch(e){}
@@ -271,7 +284,7 @@ const TV_SCRIPT = `(function(){
       s=document.createElement('script');
       s.type='text/javascript';
       s.onerror=function(){ end(false,'','se'); };
-      s.src='/api/display/tv?cb='+name+'&t='+new Date().getTime();
+      s.src='/api/display/tv?via=s&cb='+name+'&t='+new Date().getTime();
       head.appendChild(s);
       setTimeout(function(){ end(false,'','sw'); },12000);
     }catch(e){ end(false,'','sc'); }
@@ -285,6 +298,7 @@ const TV_SCRIPT = `(function(){
       else {
         fails++; mode = mode==='x' ? 's' : 'x';
         if(new Date().getTime()-lastOk>=OFFLINE_AFTER_MS) setOffline(true, code);
+        if(new Date().getTime()-lastOk>=HEAL_AFTER_MS) heal();
         /* Retry right away with the other method instead of waiting a full interval. */
         if(fails===1){ setTimeout(update, 1500); }
       }

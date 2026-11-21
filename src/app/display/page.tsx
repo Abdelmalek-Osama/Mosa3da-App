@@ -8,6 +8,7 @@ import type { DisplayBoard } from "@/features/queue/schemas";
 import { DisplayBoardView } from "@/features/display/components/display-board";
 import { TvDisplayBoard } from "@/features/display/components/tv-display-board";
 import { wantsTvBoard } from "@/features/display/tv-detect";
+import { recordTvHeartbeat } from "@/server/application/display/tv-heartbeat";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("nav");
@@ -24,7 +25,9 @@ export default async function DisplayPage({ searchParams }: { searchParams: { mo
   } catch (error) {
     logger.error("display.initial_failed", { error });
   }
-  if (wantsTvBoard(headers().get("user-agent") ?? "", searchParams.mode)) {
+  const userAgent = headers().get("user-agent") ?? "";
+  if (wantsTvBoard(userAgent, searchParams.mode)) {
+    await recordTvHeartbeat("page", userAgent);
     return <TvDisplayBoard board={initial} now={Date.now()} />;
   }
   return <DisplayBoardView initial={initial} />;
