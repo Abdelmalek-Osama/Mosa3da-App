@@ -233,12 +233,14 @@ html,body{margin:0;padding:0;background:#111c33;}
 const TV_SCRIPT = `(function(){
   var UPDATE_MS=${TV_UPDATE_SECONDS * 1000}, RELOAD_MS=${TV_RELOAD_MINUTES * 60 * 1000};
   var started=new Date().getTime(), fails=0, busy=false, last='', seq=0;
+  /* Short Wi-Fi blips are retried silently; the note shows only after this long without a successful update. */
+  var OFFLINE_AFTER_MS=120000, lastOk=started;
   /* Two ways to fetch: 'x' = XMLHttpRequest, 's' = script tag (works on every TV engine). Switch after a failure. */
   var mode='x';
   var box=document.getElementById('tv-content'), note=document.getElementById('tv-offline'), why=document.getElementById('tv-offline-why');
   function setOffline(on, code){ try{ note.style.display=on?'block':'none'; if(why){ why.innerHTML=on&&code?' ('+code+')':''; } }catch(e){} }
   function apply(html){
-    fails=0; setOffline(false);
+    fails=0; lastOk=new Date().getTime(); setOffline(false);
     if(html!==last){ try{ box.innerHTML=html; last=html; }catch(e){} }
     if(new Date().getTime()-started>RELOAD_MS){ try{ window.location.reload(); }catch(e){} }
   }
@@ -282,7 +284,7 @@ const TV_SCRIPT = `(function(){
       if(ok && html && html.indexOf('tv-header')>=0){ apply(html); }
       else {
         fails++; mode = mode==='x' ? 's' : 'x';
-        if(fails>=3) setOffline(true, code);
+        if(new Date().getTime()-lastOk>=OFFLINE_AFTER_MS) setOffline(true, code);
         /* Retry right away with the other method instead of waiting a full interval. */
         if(fails===1){ setTimeout(update, 1500); }
       }

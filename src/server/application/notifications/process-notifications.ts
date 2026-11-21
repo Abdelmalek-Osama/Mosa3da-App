@@ -146,3 +146,12 @@ export async function tickNotifications(): Promise<void> {
   lastTick = now;
   await processDueNotificationsSafely();
 }
+
+/**
+ * For the lobby display endpoints: run the ticker but never make the screen
+ * wait longer than `maxWaitMs` for it (a slow WhatsApp send must not make the
+ * TV's update time out). Unfinished work simply continues or runs next tick.
+ */
+export async function tickNotificationsBounded(maxWaitMs = 1500): Promise<void> {
+  await Promise.race([tickNotifications(), new Promise<void>((resolve) => setTimeout(resolve, maxWaitMs))]);
+}

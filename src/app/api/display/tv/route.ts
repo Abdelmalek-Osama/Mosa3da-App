@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { logger } from "@/lib/logger";
 import { createSupabasePublicClient } from "@/lib/supabase/server";
 import { renderTvBoardHtml } from "@/features/display/components/tv-display-board";
-import { tickNotifications } from "@/server/application/notifications/process-notifications";
+import { tickNotificationsBounded } from "@/server/application/notifications/process-notifications";
 import { QueueService } from "@/server/application/queue/queue-service";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   const cb = request.nextUrl.searchParams.get("cb");
   const callback = cb && CALLBACK.test(cb) ? cb : null;
   try {
-    const [board] = await Promise.all([new QueueService(createSupabasePublicClient()).getDisplayBoard(), tickNotifications()]);
+    const [board] = await Promise.all([new QueueService(createSupabasePublicClient()).getDisplayBoard(), tickNotificationsBounded()]);
     const html = renderTvBoardHtml(board, Date.now());
     if (callback) {
       // U+2028/2029 are valid in JSON but not in old JavaScript string literals.
